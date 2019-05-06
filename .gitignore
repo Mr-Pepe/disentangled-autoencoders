@@ -1,2 +1,7 @@
+/datasets/**
 
 \.idea/
+
+*.directory
+
+!*.gitkeep

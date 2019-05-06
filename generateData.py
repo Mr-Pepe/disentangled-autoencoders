@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 import time
+import os
 
 pygame.init()
 
@@ -9,8 +10,12 @@ T_FRAME = 1/30
 WINDOW_SIZE_X = 800
 WINDOW_SIZE_Y = 800
 
+T_MAX = 5
 
-screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
+save_dir_path = "./datasets/ball"
+
+if not os.path.isdir(save_dir_path):
+    os.makedirs(save_dir_path)
 
 
 class Ball(pygame.sprite.Sprite):
@@ -44,6 +49,8 @@ def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
     return x_new, y_new, vx_new, vy_new
 
 
+screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
+
 radius = 50
 ball = Ball(radius)
 x_max = WINDOW_SIZE_X - radius
@@ -58,18 +65,21 @@ vy = 0
 ax = 50
 ay = 25
 
+n_frames = 0
 t = 0
-running = True
-while running:
+while t < T_MAX:
 
     screen.fill((0, 0, 0))
     screen.blit(ball.surf, (x - radius, y - radius))
     pygame.display.flip()
 
+    save_path = os.path.join(save_dir_path, 'frame' + str(n_frames) + '.jpeg')
+    pygame.image.save(screen, save_path)
 
     x, y, vx, vy = get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, T_FRAME)
 
     time.sleep(T_FRAME)
     t += T_FRAME
+    n_frames += 1
 
 
