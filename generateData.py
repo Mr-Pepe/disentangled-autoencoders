@@ -2,15 +2,17 @@ import pygame
 import numpy as np
 import time
 import os
+import math
 
 pygame.init()
 
 
 T_FRAME = 1/30
-WINDOW_SIZE_X = 800
-WINDOW_SIZE_Y = 800
+WINDOW_SIZE_X = 100
+WINDOW_SIZE_Y = 100
+V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
 
-T_MAX = 5
+T_MAX = 1000
 
 save_dir_path = "./datasets/ball"
 
@@ -51,7 +53,7 @@ def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
 
 screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
 
-radius = 50
+radius = 10
 ball = Ball(radius)
 x_max = WINDOW_SIZE_X - radius
 x_min = radius
@@ -60,14 +62,15 @@ y_min = radius
 
 x = WINDOW_SIZE_X / 2
 y = WINDOW_SIZE_Y / 2
-vx = 0
-vy = 0
-ax = 50
-ay = 25
+vx = 100
+vy = 200
+# ax = np.random.uniform(-1, 1, (int(T_MAX/T_FRAME), ))*500
+ax = np.zeros((int(T_MAX/T_FRAME), ))
+ay = np.zeros((int(T_MAX/T_FRAME), ))
 
 n_frames = 0
 t = 0
-while t < T_MAX:
+while (T_MAX - t) > 1e-5: # This is basically (t < T_MAX) but accounting for floats
 
     screen.fill((0, 0, 0))
     screen.blit(ball.surf, (x - radius, y - radius))
@@ -76,9 +79,13 @@ while t < T_MAX:
     save_path = os.path.join(save_dir_path, 'frame' + str(n_frames) + '.jpeg')
     pygame.image.save(screen, save_path)
 
-    x, y, vx, vy = get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, T_FRAME)
+    # Limit velocities to V_MAX
+    vx = math.copysign(V_MAX, vx) if abs(vx) > V_MAX else vx
+    vy = math.copysign(V_MAX, vy) if abs(vy) > V_MAX else vy
 
-    time.sleep(T_FRAME)
+    x, y, vx, vy = get_new_state(x, y, vx, vy, ax[n_frames], ay[n_frames], x_min, x_max, y_min, y_max, T_FRAME)
+
+    # time.sleep(T_FRAME)
     t += T_FRAME
     n_frames += 1
 
