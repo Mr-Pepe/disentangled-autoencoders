@@ -88,5 +88,3 @@ while (T_MAX - t) > 1e-5: # This is basically (t < T_MAX) but accounting for flo
     # time.sleep(T_FRAME)
     t += T_FRAME
     n_frames += 1
-
-
