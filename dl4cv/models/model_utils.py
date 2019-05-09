@@ -18,26 +18,6 @@ class ConvLayer(nn.Module):
         return out
 
 
-class TransposeConvLayer(nn.Module):
-    """ TransposeConvBlock
-    simple convolution with reflection padding
-    """
-    def __init__(self, in_channels, out_channels, kernel_size, stride):
-        super(TransposeConvLayer, self).__init__()
-        reflection_padding = int(np.floor(kernel_size / 2))
-        self.reflection_pad = nn.ReflectionPad2d(reflection_padding)
-        self.t_conv2d = nn.ConvTranspose2d(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            stride=stride)
-
-    def forward(self, x):
-        out = self.reflection_pad(x)
-        out = self.t_conv2d(out)
-        return out
-
-
 class ResidualBlock(nn.Module):
     """ ResidualBlock
     introduced in: https://arxiv.org/abs/1512.03385
