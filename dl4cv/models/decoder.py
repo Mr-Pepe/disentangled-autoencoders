@@ -3,7 +3,7 @@ File to store all decoder architectures
 """
 import torch.nn as nn
 
-from models.model_utils import TransposeConvLayer, ResidualBlock
+from dl4cv.models.model_utils import TransposeConvLayer, ResidualBlock
 
 
 class VanillaDecoder(nn.Module):

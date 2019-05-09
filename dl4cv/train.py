@@ -4,7 +4,7 @@ import os
 import torch
 import torch.nn as nn
 
-from models.models import VanillaVAE
+from dl4cv.models.models import VanillaVAE
 from torch.utils.data import DataLoader
 from torchvision import datasets
 
@@ -44,8 +44,7 @@ else:
 
 logging.info("Loading dataset..")
 
-scriptDir = os.path.dirname(os.path.realpath('__file__'))
-DATASET = scriptDir + "/datasets/ball/"
+DATASET = "../datasets/"
 IMAGE_SIZE = 256
 
 train_dataset = datasets.ImageFolder(DATASET)
@@ -91,3 +90,4 @@ def train(epoch):
 if __name__ == "__main__":
     for epoch in range(1, args.epochs + 1):
         train(epoch)
+

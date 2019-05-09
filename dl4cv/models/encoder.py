@@ -3,7 +3,7 @@ File to store all encoder architectures
 """
 import torch.nn as nn
 
-from models.model_utils import ConvLayer, ResidualBlock
+from dl4cv.models.model_utils import ConvLayer, ResidualBlock
 
 
 class VanillaEncoder(nn.Module):

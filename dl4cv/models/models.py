@@ -3,8 +3,8 @@ File to store all model architectures
 """
 import torch.nn as nn
 
-from models.encoder import VanillaEncoder
-from models.decoder import VanillaDecoder
+from dl4cv.models.encoder import VanillaEncoder
+from dl4cv.models.decoder import VanillaDecoder
 
 
 class VanillaVAE(nn.Module):
