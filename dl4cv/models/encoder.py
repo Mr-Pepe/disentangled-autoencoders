@@ -3,15 +3,15 @@ File to store all encoder architectures
 """
 import torch.nn as nn
 
-from dl4cv.models.model_utils import ConvLayer, ResidualBlock
+from dl4cv.models.model_utils import Conv2dReflectionPadding, ResidualBlock
 
 
 class VanillaEncoder(nn.Module):
     def __init__(self):
         super(VanillaEncoder, self).__init__()
         # Initial convolutions
-        self.conv1 = ConvLayer(3, 256, kernel_size=4, stride=2)
-        self.conv2 = ConvLayer(256, 256, kernel_size=4, stride=2)
+        self.conv1 = Conv2dReflectionPadding(3, 256, kernel_size=4, stride=2, padding=1)
+        self.conv2 = Conv2dReflectionPadding(256, 256, kernel_size=4, stride=2, padding=1)
 
         # Residual blocks
         self.res1 = ResidualBlock(256)
