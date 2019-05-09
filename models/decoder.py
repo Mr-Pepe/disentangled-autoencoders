@@ -1,5 +1,5 @@
 """
-Subfile to store all decoder architectures
+File to store all decoder architectures
 """
 import torch.nn as nn
 
