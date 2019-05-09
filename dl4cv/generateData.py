@@ -6,15 +6,20 @@ import math
 
 pygame.init()
 
+USE_NUM_IMAGES = True
+NUM_IMAGES = 1
 
 T_FRAME = 1/30
 WINDOW_SIZE_X = 100
 WINDOW_SIZE_Y = 100
 V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
 
-T_MAX = 1000
+if USE_NUM_IMAGES:
+    T_MAX = NUM_IMAGES * T_FRAME
+else:
+    T_MAX = 1000
 
-save_dir_path = "./datasets/ball"
+save_dir_path = "../datasets/ball"
 
 if not os.path.isdir(save_dir_path):
     os.makedirs(save_dir_path)
