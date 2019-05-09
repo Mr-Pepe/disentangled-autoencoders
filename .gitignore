@@ -1,5 +1,6 @@
 /datasets/**
 /saves/**
+*/**/__pycache__
 
 \.idea/
 
