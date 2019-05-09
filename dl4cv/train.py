@@ -3,6 +3,7 @@ import logging
 import os
 import torch
 import torch.nn as nn
+from torchvision import transforms
 
 from dl4cv.models.models import VanillaVAE
 from torch.utils.data import DataLoader
@@ -46,7 +47,7 @@ logging.info("Loading dataset..")
 DATASET = "../datasets/"
 IMAGE_SIZE = 256
 
-train_dataset = datasets.ImageFolder(DATASET)
+train_dataset = datasets.ImageFolder(DATASET, transform=transforms.ToTensor())
 train_loader = DataLoader(
     train_dataset, batch_size=args.epochs, shuffle=False, **kwargs)
 
