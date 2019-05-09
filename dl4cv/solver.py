@@ -27,7 +27,6 @@ class Solver(object):
             self.optim = optim
 
         self.criterion = loss_criterion
-        self.lr = self.optim
 
         self.stop_reason = ''
 
