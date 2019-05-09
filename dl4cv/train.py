@@ -8,6 +8,7 @@ from torchvision import transforms
 from dl4cv.models.models import VanillaVAE
 from torch.utils.data import DataLoader
 from torchvision import datasets
+from dl4cv.solver import Solver
 
 
 parser = argparse.ArgumentParser(description='Train VAE')
@@ -49,45 +50,41 @@ IMAGE_SIZE = 256
 
 train_dataset = datasets.ImageFolder(DATASET, transform=transforms.ToTensor())
 train_loader = DataLoader(
-    train_dataset, batch_size=args.epochs, shuffle=False, **kwargs)
+    train_dataset, batch_size=1, shuffle=False, **kwargs)
 
 
 """ Init Network """
 
-model = VanillaVAE().to(device)
+model = VanillaVAE()
 
 
 """ Prepare Training """
 
 LR = 2e-4
-NUM_EPOCHS = 1
+NUM_EPOCHS = 100
 
 # init loss
 mse_loss = nn.MSELoss()
 # init optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
-
-def train(epoch):
-    model.train()
-    train_loss = 0
-    logging.info("Start training on {}...".format(device))
-    for i, (x, _) in enumerate(train_loader):
-        optimizer.zero_grad()
-        x = x.to(device)
-
-        generated = model(x)
-        loss = mse_loss(generated, x)
-        loss.backward()
-        train_loss += loss.item()
-        optimizer.step()
-
-    print('====> Epoch: {} Average loss: {:.4f}'.format(
-        epoch, train_loss / len(train_loader.dataset)))
+solver = Solver()
 
 
 """ Perform training """
 if __name__ == "__main__":
-    for epoch in range(1, args.epochs + 1):
-        train(epoch)
+    solver.train(model=model,
+                 optim=optimizer,
+                 loss_criterion=mse_loss,
+                 num_epochs=NUM_EPOCHS,
+                 max_train_time_s=None,
+                 start_epoch=0,
+                 lr_decay=1,
+                 lr_decay_interval=1,
+                 train_loader=train_loader,
+                 val_loader=train_loader,
+                 log_after_iters=5,
+                 save_after_epochs=10,
+                 save_path='../saves',
+                 device=device)
 
