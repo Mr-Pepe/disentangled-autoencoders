@@ -14,12 +14,11 @@ parser.add_argument('--batch-size', type=int, default=1, metavar='N',
                     help='input batch size for training (default: 1)')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--no-cuda', action='store_true', default=False,
+parser.add_argument('--use-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 args = parser.parse_args()
-args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 
 """ Add a seed to have reproducible results """
@@ -29,7 +28,7 @@ torch.manual_seed(args.seed)
 
 """ Configure training with or without cuda """
 
-if args.cuda:
+if args.use_cuda and torch.cuda.is_available():
     device = torch.device("cuda")
     torch.cuda.manual_seed(args.seed)
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
