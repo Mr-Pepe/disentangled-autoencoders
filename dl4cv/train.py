@@ -17,7 +17,6 @@ config = {
 
     # Training continuation
     'continue_training':   False,      # Specify whether to continue training with an existing model and solver
-    'start_epoch':            100,             # Specify the number of training epochs of the existing model
     'model_path': '',
     'solver_path': '',
 
@@ -95,7 +94,6 @@ val_data_loader     = torch.utils.data.DataLoader(dataset=dataset, batch_size=co
 if config['continue_training']:
     model = torch.load(config['model_path'])
     solver = pickle.load(open(config['solver_path'], 'rb'))
-    start_epoch = config['start_epoch']
     loss_criterion = None
     optimizer = None
 
@@ -104,7 +102,6 @@ else:
     solver = Solver()
     loss_criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
-    start_epoch = 0
 
 
 """ Perform training """
@@ -115,7 +112,6 @@ if __name__ == "__main__":
                  loss_criterion=loss_criterion,
                  num_epochs=config['num_epochs'],
                  max_train_time_s=config['max_train_time_s'],
-                 start_epoch=start_epoch,
                  train_loader=train_data_loader,
                  val_loader=val_data_loader,
                  log_after_iters=config['log_interval'],

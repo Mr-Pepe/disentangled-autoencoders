@@ -7,11 +7,12 @@ import math
 pygame.init()
 
 USE_NUM_IMAGES = True
-NUM_IMAGES = 1
+NUM_IMAGES = 1000
 
 T_FRAME = 1/30
-WINDOW_SIZE_X = 100
-WINDOW_SIZE_Y = 100
+WINDOW_SIZE_X = 32
+WINDOW_SIZE_Y = 32
+BALL_RADIUS = 5
 V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
 
 if USE_NUM_IMAGES:
@@ -58,17 +59,17 @@ def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
 
 screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
 
-radius = 10
-ball = Ball(radius)
-x_max = WINDOW_SIZE_X - radius
-x_min = radius
-y_max = WINDOW_SIZE_Y - radius
-y_min = radius
+
+ball = Ball(BALL_RADIUS)
+x_max = WINDOW_SIZE_X - BALL_RADIUS
+x_min = BALL_RADIUS
+y_max = WINDOW_SIZE_Y - BALL_RADIUS
+y_min = BALL_RADIUS
 
 x = WINDOW_SIZE_X / 2
 y = WINDOW_SIZE_Y / 2
-vx = 100
-vy = 200
+vx = 0
+vy = 0
 # ax = np.random.uniform(-1, 1, (int(T_MAX/T_FRAME), ))*500
 ax = np.zeros((int(T_MAX/T_FRAME), ))
 ay = np.zeros((int(T_MAX/T_FRAME), ))
@@ -78,7 +79,7 @@ t = 0
 while (T_MAX - t) > 1e-5: # This is basically (t < T_MAX) but accounting for floats
 
     screen.fill((0, 0, 0))
-    screen.blit(ball.surf, (x - radius, y - radius))
+    screen.blit(ball.surf, (x - BALL_RADIUS, y - BALL_RADIUS))
     pygame.display.flip()
 
     save_path = os.path.join(save_dir_path, 'frame' + str(n_frames) + '.jpeg')
