@@ -2,39 +2,59 @@ import argparse
 import logging
 import os
 import torch
+import pickle
 import torch.nn as nn
 from torchvision import transforms
 
 from dl4cv.models.models import VanillaVAE
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 from torchvision import datasets
 from dl4cv.solver import Solver
 
+config = {
 
-parser = argparse.ArgumentParser(description='Train VAE')
-parser.add_argument('--batch-size', type=int, default=1, metavar='N',
-                    help='input batch size for training (default: 1)')
-parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                    help='number of epochs to train (default: 10)')
-parser.add_argument('--use-cuda', action='store_true', default=False,
-                    help='enables CUDA training')
-parser.add_argument('--seed', type=int, default=1, metavar='S',
-                    help='random seed (default: 1)')
-args = parser.parse_args()
+    # Training continuation
+    'continue_training':   False,      # Specify whether to continue training with an existing model and solver
+    'start_epoch':            100,             # Specify the number of training epochs of the existing model
+    'model_path': '',
+    'solver_path': '',
+
+    # Data
+    'data_path':        '../datasets/', # Path to the parent directory of the image folder
+    'do_overfitting': True,             # Set overfit or regular training
+    'num_train_regular':    100000,     # Number of training samples for regular training
+    'num_val_regular':      1000,       # Number of validation samples for regular training
+    'num_train_overfit':    1,        # Number of training samples for overfitting test runs
+
+    'num_workers': 4,                   # Number of workers for data loading
+
+    ## Hyperparameters ##
+    'max_train_time_s': None,
+    'num_epochs': 1000,                  # Number of epochs to train
+    'batch_size': 1,
+    'learning_rate': 1e-3,
+    'betas': (0.9, 0.999),              # Beta coefficients for ADAM
+
+    ## Logging ##
+    'log_interval': 1,           # Number of mini-batches after which to print training loss
+    'save_interval': 50,         # Number of epochs after which to save model and solver
+    'save_path': '../saves'
+}
 
 
 """ Add a seed to have reproducible results """
 
-torch.manual_seed(args.seed)
+seed = 123
+torch.manual_seed(seed)
 
 
 """ Configure training with or without cuda """
 
-if args.use_cuda and torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda")
-    torch.cuda.manual_seed(args.seed)
+    torch.cuda.manual_seed(seed)
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
-    kwargs = {'num_workers': 4, 'pin_memory': True}
+    kwargs = {'pin_memory': True}
 else:
     device = torch.device("cpu")
     torch.set_default_tensor_type('torch.FloatTensor')
@@ -45,46 +65,59 @@ else:
 
 logging.info("Loading dataset..")
 
-DATASET = "../datasets/"
-IMAGE_SIZE = 256
+dataset = datasets.ImageFolder(config['data_path'], transform=transforms.ToTensor())
 
-train_dataset = datasets.ImageFolder(DATASET, transform=transforms.ToTensor())
-train_loader = DataLoader(
-    train_dataset, batch_size=1, shuffle=False, **kwargs)
+if config['batch_size'] > len(dataset):
+    raise Exception('Batch size bigger than the dataset.')
+
+if config['do_overfitting']:
+    if config['batch_size'] > config['num_train_overfit']:
+        raise Exception('Batchsize for overfitting bigger than the number of samples for overfitting.')
+    else:
+        train_data_sampler = SequentialSampler(range(config['num_train_overfit']))
+        val_data_sampler = SequentialSampler(range(config['num_train_overfit']))
+
+else:
+    if config['num_train_regular']+config['num_val_regular'] > len(dataset):
+        raise Exception('Trying to use more samples for training and validation than are available.')
+    else:
+        train_data_sampler  = SubsetRandomSampler(range(config['num_train_regular']))
+        val_data_sampler    = SubsetRandomSampler(range(config['num_train_regular'], config['num_train_regular']+config['num_val_regular']))
 
 
-""" Init Network """
+train_data_loader   = torch.utils.data.DataLoader(dataset=dataset, batch_size=config['batch_size'], num_workers=config['num_workers'], sampler=train_data_sampler, **kwargs)
+val_data_loader     = torch.utils.data.DataLoader(dataset=dataset, batch_size=config['batch_size'], num_workers=config['num_workers'], sampler=val_data_sampler, **kwargs)
 
-model = VanillaVAE()
 
+""" Initialize model and solver """
 
-""" Prepare Training """
+if config['continue_training']:
+    model = torch.load(config['model_path'])
+    solver = pickle.load(open(config['solver_path'], 'rb'))
+    start_epoch = config['start_epoch']
+    loss_criterion = None
+    optimizer = None
 
-LR = 2e-4
-NUM_EPOCHS = 100
-
-# init loss
-mse_loss = nn.MSELoss()
-# init optimizer
-optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-
-solver = Solver()
+else:
+    model = VanillaVAE()
+    solver = Solver()
+    loss_criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
+    start_epoch = 0
 
 
 """ Perform training """
+
 if __name__ == "__main__":
     solver.train(model=model,
                  optim=optimizer,
-                 loss_criterion=mse_loss,
-                 num_epochs=NUM_EPOCHS,
-                 max_train_time_s=None,
-                 start_epoch=0,
-                 lr_decay=1,
-                 lr_decay_interval=1,
-                 train_loader=train_loader,
-                 val_loader=train_loader,
-                 log_after_iters=5,
-                 save_after_epochs=10,
-                 save_path='../saves',
+                 loss_criterion=loss_criterion,
+                 num_epochs=config['num_epochs'],
+                 max_train_time_s=config['max_train_time_s'],
+                 start_epoch=start_epoch,
+                 train_loader=train_data_loader,
+                 val_loader=val_data_loader,
+                 log_after_iters=config['log_interval'],
+                 save_after_epochs=config['save_interval'],
+                 save_path=config['save_path'],
                  device=device)
-

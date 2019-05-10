@@ -14,21 +14,21 @@ class Solver(object):
                         'val_loss_history'  : []
                         }
 
+        self.optim = []
+        self.criterion = []
+        self.training_time_s = 0
+        self.stop_reason = ''
+
     def train(self, model, optim=None, loss_criterion=torch.nn.MSELoss(), num_epochs=10, max_train_time_s=None, start_epoch=0,
-              lr_decay=1, lr_decay_interval=1, train_loader=None, val_loader=None,
+              train_loader=None, val_loader=None,
               log_after_iters=1, save_after_epochs=None,
               save_path='../saves/train', device='cpu'):
 
         model.to(device)
 
-        if not optim:
-            self.optim = torch.optim.Adam(model.parameters())
-        else:
+        if start_epoch == 0:
             self.optim = optim
-
-        self.criterion = loss_criterion
-
-        self.stop_reason = ''
+            self.criterion = loss_criterion
 
         iter_per_epoch = len(train_loader)
 
@@ -171,7 +171,8 @@ class Solver(object):
 
         if self.stop_reason is "":
             self.stop_reason = "Reached number of specified epochs."
-        self.training_time_s = time.time() - t_start_training
+
+        self.training_time_s += time.time() - t_start_training
 
         # Save model and solver after training
         model.save(save_path + '/model' + str(i_epoch + 1))
