@@ -92,7 +92,7 @@ class Solver(object):
                           str(int((time.time()-t_start_iter)*1000)) + "ms")
 
             # Validate model
-            print("Validate model after epoch " + str(i_epoch+1))
+            print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
 
             # Set model to evaluation mode
             model.eval()
@@ -120,8 +120,8 @@ class Solver(object):
             val_loss /= num_val_batches
             self.history['val_loss_history'].append(val_loss)
 
-            print("Epoch " + str(i_epoch+1) + '/' + str(num_epochs) + 'Avg Train Loss: ' + "{0:.3f}".format(
-                train_loss_avg) + '   Val loss: ' + "{0:.3f}".format(val_loss) + "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms")
+            print('Avg Train Loss: ' + "{0:.3f}".format(
+                train_loss_avg) + '   Val loss: ' + "{0:.3f}".format(val_loss) + "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms\n")
 
             # Save model and solver
             if save_after_epochs is not None and ((i_epoch + 1) % save_after_epochs == 0):
