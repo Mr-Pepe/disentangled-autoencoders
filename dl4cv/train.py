@@ -13,6 +13,8 @@ from dl4cv.solver import Solver
 
 config = {
 
+    'use_cuda': False,
+
     # Training continuation
     'continue_training':   False,      # Specify whether to continue training with an existing model and solver
     'start_epoch':            100,             # Specify the number of training epochs of the existing model
@@ -24,15 +26,15 @@ config = {
     'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    100000,     # Number of training samples for regular training
     'num_val_regular':      1000,       # Number of validation samples for regular training
-    'num_train_overfit':    1,        # Number of training samples for overfitting test runs
+    'num_train_overfit':    100,        # Number of training samples for overfitting test runs
 
-    'num_workers': 4,                   # Number of workers for data loading
+    'num_workers': 1,                   # Number of workers for data loading
 
     ## Hyperparameters ##
     'max_train_time_s': None,
     'num_epochs': 1000,                  # Number of epochs to train
     'batch_size': 1,
-    'learning_rate': 1e-3,
+    'learning_rate': 2e-4,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
 
     ## Logging ##
@@ -50,10 +52,9 @@ torch.manual_seed(seed)
 
 """ Configure training with or without cuda """
 
-if torch.cuda.is_available():
+if config['use_cuda'] and torch.cuda.is_available():
     device = torch.device("cuda")
     torch.cuda.manual_seed(seed)
-    torch.set_default_tensor_type('torch.cuda.FloatTensor')
     kwargs = {'pin_memory': True}
 else:
     device = torch.device("cpu")
