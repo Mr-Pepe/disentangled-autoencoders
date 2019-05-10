@@ -13,7 +13,8 @@ class VanillaDecoder(nn.Module):
         self.res1 = ResidualBlock(256)
         self.res2 = ResidualBlock(256)
 
-        # Transposed convolutions
+        # Transposed convolutions for upsampling
+        # Convolutional layers are used to prevent checkerboard patterns
         self.t_conv1 = nn.ConvTranspose2d(in_channels=256, out_channels=256, kernel_size=4, stride=2,
                                             padding=1, output_padding=0)
         self.conv1  = Conv2dReflectionPadding(in_channels=256,out_channels=256, kernel_size=3, stride=1, padding=1)
