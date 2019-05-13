@@ -65,7 +65,8 @@ else:
 
 logging.info("Loading dataset..")
 
-dataset = datasets.ImageFolder(config['data_path'], transform=transforms.ToTensor())
+dataset = datasets.ImageFolder(config['data_path'], transform=transforms.Compose([transforms.ToTensor(),
+                                                                                  transforms.Normalize(mean=[0.5,0.5,0.5],std=[0.5,0.5,0.5])]))
 
 if config['batch_size'] > len(dataset):
     raise Exception('Batch size bigger than the dataset.')

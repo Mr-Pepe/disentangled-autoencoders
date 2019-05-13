@@ -20,9 +20,13 @@ class VanillaEncoder(nn.Module):
         # Non-linearities
         self.relu = nn.ReLU()
 
+        # Bottleneck
+        self.bottleneck = nn.Conv2d(256, 1, kernel_size=(8,8), stride=1, padding=0)
+
     def forward(self, x):
         y = self.conv1(x)
         y = self.conv2(y)
         y = self.res1(y)
         y = self.res2(y)
+        y = self.bottleneck(y)
         return y

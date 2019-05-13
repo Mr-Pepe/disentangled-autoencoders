@@ -27,7 +27,10 @@ def eval_model(model, images):
         plt.subplot(1,3,1)
         plt.imshow(to_pil(image))
 
+        renormalize = transforms.Normalize(mean=[-1,-1,-1],std=[2,2,2])
+
         restored = model(torch.unsqueeze(image, 0))
+        restored = renormalize(restored[0,:,:,:])
 
         plt.subplot(1,3,2)
         plt.imshow(to_pil(restored[0]))

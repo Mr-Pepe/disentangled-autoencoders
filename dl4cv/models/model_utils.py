@@ -61,9 +61,13 @@ class ResizeConvLayer(nn.Module):
     ref: https://distill.pub/2016/deconv-checkerboard/
     """
 
-    def __init__(self, in_channels, out_channels, kernel_size, padding, stride, scale_factor=2):
+    def __init__(self, in_channels, out_channels, kernel_size, padding, stride, scale_factor=2, use_relu=False):
         super(ResizeConvLayer, self).__init__()
+
+        self.use_relu = use_relu
+
         self.reflection_pad = nn.ReflectionPad2d(padding)
+
         self.nearest_neighbor = nn.Upsample(
             scale_factor=scale_factor,
             mode='nearest'
@@ -76,5 +80,6 @@ class ResizeConvLayer(nn.Module):
         out = self.nearest_neighbor(x_in)
         out = self.reflection_pad(out)
         out = self.conv2d(out)
-        out = self.relu(out)
+        if self.use_relu:
+            out = self.relu(out)
         return out
