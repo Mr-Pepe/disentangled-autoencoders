@@ -8,9 +8,9 @@ from torch.utils.data.sampler import SequentialSampler
 
 config = {
 
-    'data_path': '../dl4cv/datasets',  # Path to the parent directory of the image folder
+    'data_path': '../datasets',  # Path to the parent directory of the image folder
 
-    'model_path': '../dl4cv/saves/train20190513154226/model40',
+    'model_path': '../saves/train20190513154226/model40',
 
     'batch_size': 100,
     'num_show_images': 20,              # Number of images to show
