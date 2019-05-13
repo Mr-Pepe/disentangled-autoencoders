@@ -37,6 +37,6 @@ class VanillaDecoder(nn.Module):
     def forward(self, x):
         y = self.res1(x)
         y = self.res2(y)
-        y = self.relu(self.resizeConv1(y))
-        y = self.relu(self.resizeConv2(y))
+        y = self.resizeConv1(y)
+        y = self.resizeConv2(y)
         return y

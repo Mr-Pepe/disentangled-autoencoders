@@ -21,8 +21,8 @@ class VanillaEncoder(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        y = self.relu(self.conv1(x))
-        y = self.relu(self.conv2(y))
+        y = self.conv1(x)
+        y = self.conv2(y)
         y = self.res1(y)
         y = self.res2(y)
         return y
