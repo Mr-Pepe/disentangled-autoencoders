@@ -110,13 +110,7 @@ class Solver(object):
 
                 y = model(x)
 
-                loss = self.criterion(y, x)
-                loss = loss.cpu().detach().numpy()
-                # den = loss.shape[1]*loss.shape[2]*loss.shape[3]
-
-                # loss = loss.sum(3).sum(2).sum(1)/den
-
-                val_loss += loss.item()
+                val_loss += self.criterion(y, x).item()
 
             val_loss /= num_val_batches
             self.history['val_loss_history'].append(val_loss)
