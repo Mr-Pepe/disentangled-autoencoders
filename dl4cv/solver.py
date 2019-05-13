@@ -1,11 +1,9 @@
-from random import shuffle
-import numpy as np
 import datetime
 import torch
-from torch.autograd import Variable
 import os
 import pickle
 import time
+
 
 class Solver(object):
 
@@ -19,7 +17,8 @@ class Solver(object):
         self.training_time_s = 0
         self.stop_reason = ''
 
-    def train(self, model, optim=None, loss_criterion=torch.nn.MSELoss(), num_epochs=10, max_train_time_s=None,
+    def train(self, model, optim=None, loss_criterion=torch.nn.MSELoss(),
+              num_epochs=10, max_train_time_s=None,
               train_loader=None, val_loader=None,
               log_after_iters=1, save_after_epochs=None,
               save_path='../saves/train', device='cpu'):

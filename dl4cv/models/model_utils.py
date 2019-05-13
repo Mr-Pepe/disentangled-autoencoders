@@ -1,4 +1,3 @@
-import numpy as np
 import torch.nn as nn
 
 
@@ -25,8 +24,21 @@ class ResidualBlock(nn.Module):
 
     def __init__(self, channels):
         super(ResidualBlock, self).__init__()
-        self.conv1 = Conv2dReflectionPadding(channels, channels, kernel_size=3, stride=1, padding=1)
-        self.conv2 = Conv2dReflectionPadding(channels, channels, kernel_size=1, stride=1, padding=0)
+        self.conv1 = Conv2dReflectionPadding(
+            in_channels=channels,
+            out_channels=channels,
+            kernel_size=3,
+            stride=1,
+            padding=1
+        )
+        self.conv2 = Conv2dReflectionPadding(
+            in_channels=channels,
+            out_channels=channels,
+            kernel_size=1,
+            stride=1,
+            padding=0
+        )
+
         self.relu = nn.ReLU()
 
     def forward(self, x):
@@ -36,4 +48,28 @@ class ResidualBlock(nn.Module):
         out = self.relu(out)
         out = self.conv2(out)
         out = out + residual
+        return out
+
+
+class ResizeConvLayer(nn.Module):
+    """ ResizeConvLayer
+    Upsampling with Nearest neighbor interpolation and a ConvLayer
+    to avoid checkerboard artifacts.
+    ref: https://distill.pub/2016/deconv-checkerboard/
+    """
+
+    def __init__(self, in_channels, out_channels, kernel_size, padding, stride, scale_factor=2):
+        super(ResizeConvLayer, self).__init__()
+        self.reflection_pad = nn.ReflectionPad2d(padding)
+        self.nearest_neighbor = nn.Upsample(
+            scale_factor=scale_factor,
+            mode='nearest'
+        )
+        self.conv2d = nn.Conv2d(in_channels, out_channels, kernel_size, stride)
+
+    def forward(self, x):
+        x_in = x
+        out = self.nearest_neighbor(x_in)
+        out = self.reflection_pad(out)
+        out = self.conv2d(out)
         return out

@@ -17,9 +17,12 @@ class VanillaEncoder(nn.Module):
         self.res1 = ResidualBlock(256)
         self.res2 = ResidualBlock(256)
 
+        # Non-linearities
+        self.relu = nn.ReLU()
+
     def forward(self, x):
-        y = self.conv1(x)
-        y = self.conv2(y)
+        y = self.relu(self.conv1(x))
+        y = self.relu(self.conv2(y))
         y = self.res1(y)
         y = self.res2(y)
         return y
