@@ -16,7 +16,7 @@ def get_normalization_one_frame(filename: str, format: str):
             'RGB' for RGB images -> str
     """
     frame = Image.open(filename).convert(format)
-    loader = transforms.Compose([transforms.ToTensor()])
+    loader = transforms.ToTensor()
     frame = loader(frame)
     mean = frame.mean(dim=(1, 2))
     std = frame.std(dim=(1, 2))

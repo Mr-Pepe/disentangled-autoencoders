@@ -1,14 +1,18 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
+
+from dl4cv.utils import get_normalization_one_frame
 from torch.utils.data.sampler import SequentialSampler
 
 
 config = {
 
-    'data_path': '../datasets',  # Path to the parent directory of the image folder
+    'data_path': '../datasets', # Path to the parent directory of the image folder
+    'dataset_name': 'ball',     # Name of the image folder
 
     'model_path': '../saves/train20190513154226/model40',
 
@@ -28,23 +32,30 @@ def eval_model(model, images):
         restored = model(torch.unsqueeze(image, 0))
 
         plt.subplot(1, 3, 2)
-        plt.imshow(to_pil(restored[0]), cmap='gray')
+        plt.imshow(to_pil(restored[0]), cmap='gray')  # TODO: Unnormalize data before display?
 
         plt.subplot(1, 3, 3)
         plt.imshow(to_pil(abs(restored[0]-image)), cmap='gray')
         plt.show(block=True)
 
 
+mean, std = get_normalization_one_frame(
+    os.path.join(config['data_path'], config['dataset_name'], 'frame0'), 'L'
+)
+
 data_set = datasets.ImageFolder(
     config['data_path'],
     transform=transforms.Compose([
         transforms.Grayscale(),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5], std=[0.5])
+        transforms.Normalize(mean=mean, std=std)
     ])
 )
 
-data_loader = torch.utils.data.DataLoader(dataset=data_set, batch_size=config['batch_size'])
+data_loader = torch.utils.data.DataLoader(
+    dataset=data_set,
+    batch_size=config['batch_size']
+)
 
 model = torch.load(config['model_path'])
 
