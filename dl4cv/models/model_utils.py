@@ -40,13 +40,16 @@ class ResidualBlock(nn.Module):
         )
 
         self.relu = nn.ReLU()
+        self.batch_norm1 = nn.BatchNorm2d(channels)
+        self.batch_norm2 = nn.BatchNorm2d(channels)
 
     def forward(self, x):
         residual = x
-        out = self.relu(x)
-        out = self.conv1(out)
+        out = self.conv1(x)
+        out = self.batch_norm1(out)
         out = self.relu(out)
         out = self.conv2(out)
+        out = self.batch_norm2(out)
         out = out + residual
         return out
 
@@ -66,10 +69,12 @@ class ResizeConvLayer(nn.Module):
             mode='nearest'
         )
         self.conv2d = nn.Conv2d(in_channels, out_channels, kernel_size, stride)
+        self.relu = nn.ReLU()
 
     def forward(self, x):
         x_in = x
         out = self.nearest_neighbor(x_in)
         out = self.reflection_pad(out)
         out = self.conv2d(out)
+        out = self.relu(out)
         return out
