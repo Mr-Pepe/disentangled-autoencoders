@@ -30,7 +30,7 @@ class VanillaDecoder(nn.Module):
         )
         self.resizeConv2 = ResizeConvLayer(
             in_channels=256,
-            out_channels=3,
+            out_channels=1,
             kernel_size=3,
             padding=1,
             stride=1,

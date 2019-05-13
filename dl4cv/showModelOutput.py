@@ -13,10 +13,10 @@ config = {
 
     'data_path': '/home/felipe/Projects/dl4cv/datasets', # Path to the parent directory of the image folder
 
-    'model_path': '/home/felipe/Projects/dl4cv/saves/train20190510145000/model1',
+    'model_path': '/home/felipe/Projects/dl4cv/saves/train20190513154226/model40',
 
     'batch_size': 100,
-    'num_show_images': 10,              # Number of images to show
+    'num_show_images': 20,              # Number of images to show
 }
 
 def eval_model(model, images):
@@ -25,21 +25,20 @@ def eval_model(model, images):
         to_pil = transforms.ToPILImage()
 
         plt.subplot(1,3,1)
-        plt.imshow(to_pil(image))
-
-        renormalize = transforms.Normalize(mean=[-1,-1,-1],std=[2,2,2])
+        plt.imshow(to_pil(image), cmap='gray')
 
         restored = model(torch.unsqueeze(image, 0))
-        restored = renormalize(restored[0,:,:,:])
 
         plt.subplot(1,3,2)
-        plt.imshow(to_pil(restored[0]))
+        plt.imshow(to_pil(restored[0]), cmap='gray')
 
         plt.subplot(1, 3, 3)
-        plt.imshow(to_pil(restored[0]-image))
+        plt.imshow(to_pil(abs(restored[0]-image)), cmap='gray')
         plt.show(block=True)
 
-data_set = datasets.ImageFolder(config['data_path'], transform=transforms.Compose([transforms.ToTensor(), ]))
+data_set = datasets.ImageFolder(config['data_path'], transform=transforms.Compose([transforms.Grayscale(),
+                                                                                   transforms.ToTensor(),
+                                                                                   transforms.Normalize(mean=[0.5],std=[0.5])]))
 
 data_loader   = torch.utils.data.DataLoader(dataset=data_set, batch_size=config['batch_size'])
 

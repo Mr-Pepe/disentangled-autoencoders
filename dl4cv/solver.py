@@ -142,5 +142,5 @@ class Solver(object):
         print('FINISH.')
 
     def save(self, path):
-        print('Saving solver... %s' % path)
+        print('Saving solver... %s\n' % path)
         pickle.dump(self, open(path, 'wb'))
