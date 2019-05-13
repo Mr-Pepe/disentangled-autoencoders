@@ -12,7 +12,7 @@ class VanillaDecoder(nn.Module):
         super(VanillaDecoder, self).__init__()
 
         # Bottleneck
-        self.bottleneck = nn.ConvTranspose2d(1, 256, (8,8))
+        self.bottleneck = nn.ConvTranspose2d(1, 256, (8, 8))
 
         # Residual blocks
         self.res1 = ResidualBlock(256)
@@ -37,7 +37,6 @@ class VanillaDecoder(nn.Module):
             scale_factor=2,
             use_relu=False
         )
-
 
     def forward(self, x):
         y = self.bottleneck(x)

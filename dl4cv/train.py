@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 import torch
@@ -7,9 +6,10 @@ import torch.nn as nn
 from torchvision import transforms
 
 from dl4cv.models.models import VanillaVAE
+from dl4cv.solver import Solver
+from dl4cv.utils import get_normalization_one_frame
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 from torchvision import datasets
-from dl4cv.solver import Solver
 
 config = {
 
@@ -21,7 +21,8 @@ config = {
     'solver_path': '',
 
     # Data
-    'data_path':        '../datasets/', # Path to the parent directory of the image folder
+    'data_path': '../datasets/',        # Path to the parent directory of the image folder
+    'dataset_name': 'ball',             # Name of the image folder
     'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    100000,     # Number of training samples for regular training
     'num_val_regular':      1000,       # Number of validation samples for regular training
@@ -65,9 +66,18 @@ else:
 
 logging.info("Loading dataset..")
 
-dataset = datasets.ImageFolder(config['data_path'], transform=transforms.Compose([transforms.Grayscale(),
-                                                                                  transforms.ToTensor(),
-                                                                                  transforms.Normalize(mean=[0.5],std=[0.5])]))
+mean, std = get_normalization_one_frame(
+    os.path.join(config['data_path'], config['dataset_name'], 'frame0'), 'L'
+)
+
+dataset = datasets.ImageFolder(
+    config['data_path'],
+    transform=transforms.Compose([
+        transforms.Grayscale(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean, std=std)
+    ])
+)
 
 if config['batch_size'] > len(dataset):
     raise Exception('Batch size bigger than the dataset.')
@@ -83,12 +93,27 @@ else:
     if config['num_train_regular']+config['num_val_regular'] > len(dataset):
         raise Exception('Trying to use more samples for training and validation than are available.')
     else:
-        train_data_sampler  = SubsetRandomSampler(range(config['num_train_regular']))
-        val_data_sampler    = SubsetRandomSampler(range(config['num_train_regular'], config['num_train_regular']+config['num_val_regular']))
+        train_data_sampler = SubsetRandomSampler(range(config['num_train_regular']))
+        val_data_sampler = SubsetRandomSampler(range(
+            config['num_train_regular'],
+            config['num_train_regular']+config['num_val_regular']
+        ))
 
 
-train_data_loader   = torch.utils.data.DataLoader(dataset=dataset, batch_size=config['batch_size'], num_workers=config['num_workers'], sampler=train_data_sampler, **kwargs)
-val_data_loader     = torch.utils.data.DataLoader(dataset=dataset, batch_size=config['batch_size'], num_workers=config['num_workers'], sampler=val_data_sampler, **kwargs)
+train_data_loader = torch.utils.data.DataLoader(
+    dataset=dataset,
+    batch_size=config['batch_size'],
+    num_workers=config['num_workers'],
+    sampler=train_data_sampler,
+    **kwargs
+)
+val_data_loader = torch.utils.data.DataLoader(
+    dataset=dataset,
+    batch_size=config['batch_size'],
+    num_workers=config['num_workers'],
+    sampler=val_data_sampler,
+    **kwargs
+)
 
 
 """ Initialize model and solver """
