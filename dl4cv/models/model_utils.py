@@ -9,10 +9,14 @@ class Conv2dReflectionPadding(nn.Module):
         super(Conv2dReflectionPadding, self).__init__()
         self.reflection_pad = nn.ReflectionPad2d(padding)
         self.conv2d = nn.Conv2d(in_channels, out_channels, kernel_size, stride)
+        self.relu = nn.ReLU()
+        self.batch_norm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
         out = self.reflection_pad(x)
         out = self.conv2d(out)
+        out = self.relu(out)
+        out = self.batch_norm(out)
         return out
 
 
@@ -73,13 +77,18 @@ class ResizeConvLayer(nn.Module):
             mode='nearest'
         )
         self.conv2d = nn.Conv2d(in_channels, out_channels, kernel_size, stride)
+
+        self.batch_norm = nn.BatchNorm2d(out_channels)
+
         self.relu = nn.ReLU()
+
 
     def forward(self, x):
         x_in = x
         out = self.nearest_neighbor(x_in)
         out = self.reflection_pad(out)
         out = self.conv2d(out)
+        out = self.batch_norm(out)
         if self.use_relu:
             out = self.relu(out)
         return out
