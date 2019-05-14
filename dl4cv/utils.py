@@ -4,6 +4,7 @@ from PIL import Image
 import os
 from torch.utils.data.dataset import Dataset
 from torchvision.datasets.folder import pil_loader, has_file_allowed_extension, IMG_EXTENSIONS
+import random
 
 class customDataset(Dataset):
     def __init__(self, path, transform, sequence_length):
@@ -19,7 +20,10 @@ class customDataset(Dataset):
                     item_path = os.path.join(root, fname)
                     self.images.append(item_path)
 
-        self.indices = range(self.__len__()-self.sequence_length-1)
+        # The SubsetRandomSampler samples random subsets but the subsets themselves are
+        # contiguous. Therefore the indices are shuffled to have non-contiguous image series in a minibatch
+        self.indices = list(range(self.__len__()-self.sequence_length-1))
+        random.shuffle(self.indices)
 
 
     def __getitem__(self, index):
