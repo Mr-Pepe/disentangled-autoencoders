@@ -9,10 +9,14 @@ class Conv2dReflectionPadding(nn.Module):
         super(Conv2dReflectionPadding, self).__init__()
         self.reflection_pad = nn.ReflectionPad2d(padding)
         self.conv2d = nn.Conv2d(in_channels, out_channels, kernel_size, stride)
+        self.relu = nn.ReLU()
+        self.batch_norm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
         out = self.reflection_pad(x)
         out = self.conv2d(out)
+        out = self.relu(out)
+        out = self.batch_norm(out)
         return out
 
 
@@ -40,13 +44,16 @@ class ResidualBlock(nn.Module):
         )
 
         self.relu = nn.ReLU()
+        self.batch_norm1 = nn.BatchNorm2d(channels)
+        self.batch_norm2 = nn.BatchNorm2d(channels)
 
     def forward(self, x):
         residual = x
-        out = self.relu(x)
-        out = self.conv1(out)
+        out = self.conv1(x)
+        out = self.batch_norm1(out)
         out = self.relu(out)
         out = self.conv2(out)
+        out = self.batch_norm2(out)
         out = out + residual
         return out
 
@@ -58,18 +65,30 @@ class ResizeConvLayer(nn.Module):
     ref: https://distill.pub/2016/deconv-checkerboard/
     """
 
-    def __init__(self, in_channels, out_channels, kernel_size, padding, stride, scale_factor=2):
+    def __init__(self, in_channels, out_channels, kernel_size, padding, stride, scale_factor=2, use_relu=False):
         super(ResizeConvLayer, self).__init__()
+
+        self.use_relu = use_relu
+
         self.reflection_pad = nn.ReflectionPad2d(padding)
+
         self.nearest_neighbor = nn.Upsample(
             scale_factor=scale_factor,
             mode='nearest'
         )
         self.conv2d = nn.Conv2d(in_channels, out_channels, kernel_size, stride)
 
+        self.batch_norm = nn.BatchNorm2d(out_channels)
+
+        self.relu = nn.ReLU()
+
+
     def forward(self, x):
         x_in = x
         out = self.nearest_neighbor(x_in)
         out = self.reflection_pad(out)
         out = self.conv2d(out)
+        out = self.batch_norm(out)
+        if self.use_relu:
+            out = self.relu(out)
         return out

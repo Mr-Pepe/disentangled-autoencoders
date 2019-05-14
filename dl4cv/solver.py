@@ -88,9 +88,10 @@ class Solver(object):
                 train_loss_avg = (smooth_window_train-1)/smooth_window_train*train_loss_avg + 1/smooth_window_train*loss.item()
 
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
-                    print("Iteration " + str(i_iter) + "/" + str(n_iters) + "   Train loss: " +
-                          "{0:.6f}".format(loss.item()) + "   Avg: " + "{0:.6f}".format(train_loss_avg) + " - " +
-                          str(int((time.time()-t_start_iter)*1000)) + "ms")
+                    print("Iteration " + str(i_iter) + "/" + str(n_iters) +
+                          "   Train loss: " + "{0:.6f}".format(loss.item()) +
+                          "   Avg: " + "{0:.6f}".format(train_loss_avg) +
+                          " - " + str(int((time.time()-t_start_iter)*1000)) + "ms")
 
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
@@ -110,19 +111,14 @@ class Solver(object):
 
                 y = model(x)
 
-                loss = self.criterion(y, x)
-                loss = loss.cpu().detach().numpy()
-                # den = loss.shape[1]*loss.shape[2]*loss.shape[3]
-
-                # loss = loss.sum(3).sum(2).sum(1)/den
-
-                val_loss += loss.item()
+                val_loss += self.criterion(y, x).item()
 
             val_loss /= num_val_batches
             self.history['val_loss_history'].append(val_loss)
 
-            print('Avg Train Loss: ' + "{0:.6f}".format(
-                train_loss_avg) + '   Val loss: ' + "{0:.6f}".format(val_loss) + "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms\n")
+            print('Avg Train Loss: ' + "{0:.6f}".format(train_loss_avg) +
+                  '   Val loss: ' + "{0:.6f}".format(val_loss) +
+                  "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms\n")
 
             # Save model and solver
             if save_after_epochs is not None and ((i_epoch + 1) % save_after_epochs == 0):
@@ -148,5 +144,5 @@ class Solver(object):
         print('FINISH.')
 
     def save(self, path):
-        print('Saving solver... %s' % path)
+        print('Saving solver... %s\n' % path)
         pickle.dump(self, open(path, 'wb'))
