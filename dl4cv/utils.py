@@ -41,7 +41,7 @@ class customDataset(Dataset):
 
 
     def __len__(self):
-        return len(self.images)
+        return len(self.images)-self.sequence_length
 
 
 
