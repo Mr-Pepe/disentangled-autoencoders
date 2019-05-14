@@ -44,5 +44,5 @@ class VanillaDecoder(nn.Module):
         y = self.res2(y)
         y = self.resizeConv1(y)
         y = self.resizeConv2(y)
-        y = torch.tanh(y)
+        y = torch.sigmoid(y)
         return y

@@ -66,16 +66,11 @@ else:
 
 logging.info("Loading dataset..")
 
-mean, std = get_normalization_one_frame(
-    os.path.join(config['data_path'], config['dataset_name'], 'frame0'), 'L'
-)
-
 dataset = datasets.ImageFolder(
     config['data_path'],
     transform=transforms.Compose([
         transforms.Grayscale(),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=mean, std=std)
+        transforms.ToTensor()
     ])
 )
 
