@@ -10,8 +10,11 @@ class VanillaEncoder(nn.Module):
     def __init__(self):
         super(VanillaEncoder, self).__init__()
 
+        # Input normalization
+        self.normalization = nn.BatchNorm2d(3)
+
         # Initial convolutions
-        self.conv1 = Conv2dReflectionPadding(1, 256, kernel_size=4, stride=2, padding=1)
+        self.conv1 = Conv2dReflectionPadding(3, 256, kernel_size=4, stride=2, padding=1)
         self.conv2 = Conv2dReflectionPadding(256, 256, kernel_size=4, stride=2, padding=1)
 
         # Residual blocks
@@ -23,9 +26,6 @@ class VanillaEncoder(nn.Module):
 
         # Bottleneck
         self.bottleneck = nn.Conv2d(256, 1, kernel_size=(8,8), stride=1, padding=0)
-
-        # Input normalization
-        self.normalization = nn.BatchNorm2d(1)
 
     def forward(self, x):
         y = self.normalization(x)

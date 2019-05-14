@@ -5,6 +5,8 @@ import pickle
 import torch.nn as nn
 from torchvision import transforms
 
+from dl4cv.utils import customDataset
+
 from dl4cv.models.models import VanillaVAE
 from dl4cv.solver import Solver
 from dl4cv.utils import get_normalization_one_frame
@@ -66,13 +68,15 @@ else:
 
 logging.info("Loading dataset..")
 
-dataset = datasets.ImageFolder(
+dataset = customDataset(
     config['data_path'],
     transform=transforms.Compose([
         transforms.Grayscale(),
         transforms.ToTensor()
-    ])
+    ]),
+    sequence_length=4 # 3 images as input sequence, 1 predicted image
 )
+
 
 if config['batch_size'] > len(dataset):
     raise Exception('Batch size bigger than the dataset.')
