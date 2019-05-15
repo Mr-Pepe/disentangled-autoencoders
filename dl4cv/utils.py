@@ -6,7 +6,7 @@ from torch.utils.data.dataset import Dataset
 from torchvision.datasets.folder import pil_loader, has_file_allowed_extension, IMG_EXTENSIONS
 import random
 
-class customDataset(Dataset):
+class CustomDataset(Dataset):
     def __init__(self, path, transform, sequence_length):
         self.path = path
         self.transform = transform
