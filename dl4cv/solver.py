@@ -62,7 +62,7 @@ class Solver(object):
 
                 i_iter += 1
 
-                x, _ = batch
+                x, y = batch
 
                 # If the current minibatch does not have the full number of samples, skip it
                 if len(x) < train_loader.batch_size:
@@ -72,9 +72,9 @@ class Solver(object):
                 x = x.to(device)
 
                 # Forward pass
-                y = model(x)
+                y_pred = model(x)
 
-                loss = self.criterion(y, x)
+                loss = self.criterion(y_pred, y)
 
                 # Packpropagate and update weights
                 model.zero_grad()
@@ -105,13 +105,13 @@ class Solver(object):
             for i, batch in enumerate(val_loader):
                 num_val_batches += 1
 
-                x, _ = batch
+                x, y = batch
 
                 x = x.to(device)
 
-                y = model(x)
+                y_pred = model(x)
 
-                val_loss += self.criterion(y, x).item()
+                val_loss += self.criterion(y, y_pred).item()
 
             val_loss /= num_val_batches
             self.history['val_loss_history'].append(val_loss)
