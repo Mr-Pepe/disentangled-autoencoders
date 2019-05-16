@@ -6,6 +6,7 @@ from torch.utils.data.dataset import Dataset
 from torchvision.datasets.folder import pil_loader, has_file_allowed_extension, IMG_EXTENSIONS
 import random
 
+
 class CustomDataset(Dataset):
     def __init__(self, path, transform, sequence_length):
         self.path = path
@@ -22,9 +23,8 @@ class CustomDataset(Dataset):
 
         # The SubsetRandomSampler samples random subsets but the subsets themselves are
         # contiguous. Therefore the indices are shuffled to have non-contiguous image series in a minibatch
-        self.indices = list(range(self.__len__()-self.sequence_length-1))
+        self.indices = list(range(self.__len__()))
         random.shuffle(self.indices)
-
 
     def __getitem__(self, index):
         image_paths = self.images[index:index+self.sequence_length]
@@ -36,15 +36,10 @@ class CustomDataset(Dataset):
         x = torch.cat(images[:-1], 0)
         y = images[-1]
 
-        return (x,y)
-
-
+        return x, y
 
     def __len__(self):
         return len(self.images)-self.sequence_length
-
-
-
 
 
 def get_normalization_one_frame(filename: str, format: str):
