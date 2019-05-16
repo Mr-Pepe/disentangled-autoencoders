@@ -12,7 +12,7 @@ config = {
     'data_path': '../datasets/ball', # Path to the parent directory of the image folder
     'dataset_name': 'ball',     # Name of the image folder
 
-    'model_path': '/home/felipe/Projects/dl4cv/saves/train20190515144524/model400',
+    'model_path': '../saves/train20190515144524/model400',
 
     'batch_size': 100,
     'num_show_images': 2,              # Number of images to show
