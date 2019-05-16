@@ -52,4 +52,5 @@ class VanillaEncoder(nn.Module):
         y = self.res1(y)
         y = self.res2(y)
         y = self.bottleneck(y)
+        # output shape: [batch, bottleneck, 1, 1]
         return y
