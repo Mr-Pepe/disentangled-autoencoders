@@ -11,7 +11,7 @@ pygame.init()
 """
 When using this script from a server, make sure to add the -X flag to your
 ssh command. This will open all windows from the remote system on your
-local machine usind XQuartz.
+local machine using XQuartz.
 Otherwise the script will create only black images
 """
 
