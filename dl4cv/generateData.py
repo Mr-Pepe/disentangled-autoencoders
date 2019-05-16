@@ -6,6 +6,9 @@ import math
 
 pygame.init()
 
+# Dummy video driver to handle machines without video device (e.g. server)
+os.environ["SDL_VIDEODRIVER"] = "dummy"
+
 USE_NUM_IMAGES = True
 NUM_IMAGES = 1000
 
