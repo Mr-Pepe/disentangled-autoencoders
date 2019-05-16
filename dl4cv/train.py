@@ -23,7 +23,7 @@ config = {
     'solver_path': '',
 
     # Data
-    'data_path': '../datasets/',        # Path to the parent directory of the image folder
+    'data_path': '../datasets/ball/',        # Path to the parent directory of the image folder
     'dataset_name': 'ball',             # Name of the image folder
     'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    100000,     # Number of training samples for regular training
@@ -68,7 +68,7 @@ else:
 
 logging.info("Loading dataset..")
 
-sequence_length = 4 # 3 images as input sequence, 1 predicted image
+sequence_length = 4  # 3 images as input sequence, 1 predicted image
 
 dataset = CustomDataset(
     config['data_path'],
