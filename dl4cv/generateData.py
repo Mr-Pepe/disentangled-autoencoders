@@ -7,7 +7,13 @@ import math
 pygame.init()
 
 # Dummy video driver to handle machines without video device (e.g. server)
-os.environ["SDL_VIDEODRIVER"] = "dummy"
+# os.environ["SDL_VIDEODRIVER"] = "dummy"
+"""
+When using this script from a server, make sure to add the -X flag to your
+ssh command. This will open all windows from the remote system on your
+local machine usind XQuartz.
+Otherwise the script will create only black images
+"""
 
 USE_NUM_IMAGES = True
 NUM_IMAGES = 1000
@@ -79,7 +85,7 @@ ay = np.zeros((int(T_MAX/T_FRAME), ))
 
 n_frames = 0
 t = 0
-while (T_MAX - t) > 1e-5: # This is basically (t < T_MAX) but accounting for floats
+while (T_MAX - t) > 1e-5:  # This is basically (t < T_MAX) but accounting for floats
 
     screen.fill((0, 0, 0))
     screen.blit(ball.surf, (x - BALL_RADIUS, y - BALL_RADIUS))
