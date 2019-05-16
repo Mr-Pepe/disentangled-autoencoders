@@ -8,11 +8,15 @@ from dl4cv.models.model_utils import ResidualBlock, ResizeConvLayer
 
 
 class VanillaDecoder(nn.Module):
-    def __init__(self):
+    def __init__(self, bottleneck_channels, out_channels):
         super(VanillaDecoder, self).__init__()
 
         # Bottleneck
-        self.bottleneck = nn.ConvTranspose2d(1, 256, (8, 8))
+        self.bottleneck = nn.ConvTranspose2d(
+            in_channels=bottleneck_channels,
+            out_channels=256,
+            kernel_size=(8, 8)
+        )
 
         # Residual blocks
         self.res1 = ResidualBlock(256)
@@ -30,7 +34,7 @@ class VanillaDecoder(nn.Module):
         )
         self.resizeConv2 = ResizeConvLayer(
             in_channels=256,
-            out_channels=1,
+            out_channels=out_channels,
             kernel_size=3,
             padding=1,
             stride=1,

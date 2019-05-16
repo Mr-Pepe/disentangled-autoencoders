@@ -28,6 +28,8 @@ config = {
     'num_train_regular':    100000,     # Number of training samples for regular training
     'num_val_regular':      1000,       # Number of validation samples for regular training
     'num_train_overfit':    100,        # Number of training samples for overfitting test runs
+    'len_inp_sequence': 3,              # Length of training sequence
+    'len_out_sequence': 1,              # Number of generated images
 
     'num_workers': 1,                   # Number of workers for data loading
 
@@ -67,7 +69,7 @@ else:
 
 """ Load dataset """
 
-sequence_length = 4  # 3 images as input sequence, 1 predicted image
+sequence_length = config['len_inp_sequence'] + config['len_out_sequence']
 
 print("Loading dataset with sequence length {}...".format(sequence_length))
 
@@ -133,7 +135,11 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = VanillaVAE()
+    model = VanillaVAE(
+        len_in_sequence=config['len_inp_sequence'],
+        bottleneck_channels=6,
+        grayscale=True
+    )
     solver = Solver()
     loss_criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
