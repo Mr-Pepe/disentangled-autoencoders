@@ -9,10 +9,9 @@ from torch.utils.data.sampler import SequentialSampler
 
 config = {
 
-    'data_path': '../datasets/ball', # Path to the parent directory of the image folder
-    'dataset_name': 'ball',     # Name of the image folder
+    'data_path': '../datasets/ball/images',  # Path to directory of the image folder
 
-    'model_path': '/home/felipe/Projects/dl4cv/saves/train20190515144524/model400',
+    'model_path': '../saves/train20190515144524/model400',
 
     'batch_size': 100,
     'num_show_images': 2,              # Number of images to show
@@ -31,26 +30,28 @@ def eval_model(model, samples):
         to_pil = transforms.ToPILImage()
 
         for i in range(sequence_length-1):
-            plt.subplot(2, num_images/2, i+1)
+            ax = plt.subplot(2, num_images/2, i+1)
             plt.imshow(to_pil(x[i]), cmap='gray')
+            ax.set_title('frame t{}'.format(-(sequence_length-2) + i))
 
         ax = plt.subplot(2, num_images/2, sequence_length)
         plt.imshow(to_pil(y), cmap='gray')
-        ax.set_title('Ground truth')
+        ax.set_title('Ground truth t+1')
 
         y_pred = model(torch.unsqueeze(x, 0))
 
         ax = plt.subplot(2, num_images/2, sequence_length+1)
         plt.imshow(to_pil(y_pred[0]), cmap='gray')
-        ax.set_title('Prediction')
+        ax.set_title('Prediction t+1')
 
         ax = plt.subplot(2, num_images/2, sequence_length+2)
         plt.imshow(to_pil(abs(y_pred[0]-y)), cmap='gray')
         ax.set_title('Deviation')
+
         plt.show(block=True)
 
 
-sequence_length = 4 # 3 images as input sequence, 1 predicted image
+sequence_length = 4  # 3 images as input sequence, 1 predicted image
 
 dataset = CustomDataset(
     config['data_path'],

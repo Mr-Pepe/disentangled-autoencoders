@@ -4,7 +4,18 @@ import time
 import os
 import math
 
+from dl4cv.utils import save_csv
+
 pygame.init()
+
+# Dummy video driver to handle machines without video device (e.g. server)
+# os.environ["SDL_VIDEODRIVER"] = "dummy"
+"""
+When using this script from a server, make sure to add the -X flag to your
+ssh command. This will open all windows from the remote system on your
+local machine using XQuartz.
+Otherwise the script will create only black images
+"""
 
 USE_NUM_IMAGES = True
 NUM_IMAGES = 1000
@@ -22,8 +33,9 @@ else:
 
 save_dir_path = "../datasets/ball"
 
-if not os.path.isdir(save_dir_path):
-    os.makedirs(save_dir_path)
+os.makedirs(save_dir_path, exist_ok=True)
+os.makedirs(os.path.join(save_dir_path, 'images'), exist_ok=True)
+os.makedirs(os.path.join(save_dir_path, 'meta'), exist_ok=True)
 
 
 class Ball(pygame.sprite.Sprite):
@@ -68,22 +80,32 @@ y_min = BALL_RADIUS
 
 x = WINDOW_SIZE_X / 2
 y = WINDOW_SIZE_Y / 2
-vx = 0
+vx = 15
 vy = 0
 # ax = np.random.uniform(-1, 1, (int(T_MAX/T_FRAME), ))*500
 ax = np.zeros((int(T_MAX/T_FRAME), ))
-ay = np.zeros((int(T_MAX/T_FRAME), ))
+ay = np.ones((int(T_MAX/T_FRAME), )) * 9.81
 
 n_frames = 0
 t = 0
-while (T_MAX - t) > 1e-5: # This is basically (t < T_MAX) but accounting for floats
+while (T_MAX - t) > 1e-5:  # This is basically (t < T_MAX) but accounting for floats
 
     screen.fill((0, 0, 0))
     screen.blit(ball.surf, (x - BALL_RADIUS, y - BALL_RADIUS))
     pygame.display.flip()
 
-    save_path = os.path.join(save_dir_path, 'frame' + str(n_frames) + '.jpeg')
-    pygame.image.save(screen, save_path)
+    save_path_frames = os.path.join(
+        save_dir_path,
+        'images',
+        'frame' + str(n_frames) + '.jpeg'
+    )
+    pygame.image.save(screen, save_path_frames)
+    save_path_meta = os.path.join(
+        save_dir_path,
+        'meta',
+        'frame' + str(n_frames) + '.csv'
+    )
+    save_csv([x, y, vx, vy, ax[n_frames], ay[n_frames]], save_path_meta)
 
     # Limit velocities to V_MAX
     vx = math.copysign(V_MAX, vx) if abs(vx) > V_MAX else vx

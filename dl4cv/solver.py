@@ -32,13 +32,13 @@ class Solver(object):
             self.criterion = loss_criterion
 
         iter_per_epoch = len(train_loader)
+        print("Iterations per epoch: {}".format(iter_per_epoch))
 
         # Exponentially filtered training loss
         train_loss_avg = 0
 
-        # Generate save folder
+        # Path to save model and solver
         save_path = os.path.join(save_path, 'train' + datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
-        os.makedirs(save_path)
 
         # Calculate the total number of minibatches for the training procedure
         n_iters = num_epochs*iter_per_epoch
@@ -70,6 +70,7 @@ class Solver(object):
                     continue
 
                 x = x.to(device)
+                y = y.to(device)
 
                 # Forward pass
                 y_pred = model(x)
@@ -90,8 +91,8 @@ class Solver(object):
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
-                          "   Avg: " + "{0:.6f}".format(train_loss_avg) +
-                          " - " + str(int((time.time()-t_start_iter)*1000)) + "ms")
+                          "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
+                          " - Time for one iter " + str(int((time.time()-t_start_iter)*1000)) + "ms")
 
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
@@ -108,6 +109,7 @@ class Solver(object):
                 x, y = batch
 
                 x = x.to(device)
+                y = y.to(device)
 
                 y_pred = model(x)
 
@@ -122,6 +124,7 @@ class Solver(object):
 
             # Save model and solver
             if save_after_epochs is not None and ((i_epoch + 1) % save_after_epochs == 0):
+                os.makedirs(save_path, exist_ok=True)
                 model.save(save_path + '/model' + str(i_epoch + 1))
                 self.save(save_path + '/solver' + str(i_epoch + 1))
                 model.to(device)
@@ -138,6 +141,7 @@ class Solver(object):
         self.training_time_s += time.time() - t_start_training
 
         # Save model and solver after training
+        os.makedirs(save_path, exist_ok=True)
         model.save(save_path + '/model' + str(i_epoch + 1))
         self.save(save_path + '/solver' + str(i_epoch + 1))
 
