@@ -11,30 +11,28 @@ class PhysicsPVA(nn.Module):
     def __init__(self, dt: float):
         super(PhysicsPVA, self).__init__()
         d2 = 0.5 * (dt**2)
-        self.forwardMatrix = torch.tensor(
-            [[1., 0., 0., 0., 0., 0.],
-             [0., 1., 0., 0., 0., 0.],
-             [dt, 0., 1., 0., 0., 0.],
-             [0., dt, 0., 1., 0., 0.],
-             [d2, 0., dt, 0., 1., 0.],
-             [0., d2, 0., dt, 0., 1.]],
-            requires_grad=False
+        self.forwardMatrix = nn.Parameter(
+            torch.tensor(
+                [[1., 0., 0., 0., 0., 0.],
+                 [0., 1., 0., 0., 0., 0.],
+                 [dt, 0., 1., 0., 0., 0.],
+                 [0., dt, 0., 1., 0., 0.],
+                 [d2, 0., dt, 0., 1., 0.],
+                 [0., d2, 0., dt, 0., 1.]],
+            )
         )
+        self.forwardMatrix.requires_grad = False
         self.num_latents = 6
 
     def forward(self, x):
         """
-        x.shape: [1, 6]
-        [[
-        pos_x,
-        pos_y,
-        vel_x,
-        vel_y,
-        acc_x,
-        acc_y
-        ]]
+        x.shape: [batch, 6, 1, 1]
+        return shape: [batch, 6, 1, 1]
         """
-        return torch.mm(x, self.forwardMatrix)
+        return torch.mm(
+            x.flatten(start_dim=1),
+            self.forwardMatrix
+        )[:, :, None, None]
 
 
 """

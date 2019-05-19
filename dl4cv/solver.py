@@ -91,8 +91,8 @@ class Solver(object):
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
-                          "   Avg: " + "{0:.6f}".format(train_loss_avg) +
-                          " - " + str(int((time.time()-t_start_iter)*1000)) + "ms")
+                          "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
+                          " - Time for one iter " + str(int((time.time()-t_start_iter)*1000)) + "ms")
 
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))

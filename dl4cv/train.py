@@ -1,5 +1,3 @@
-import logging
-import os
 import torch
 import pickle
 import torch.nn as nn
@@ -7,11 +5,9 @@ from torchvision import transforms
 
 from dl4cv.utils import CustomDataset
 
-from dl4cv.models.models import VanillaVAE
+from dl4cv.models.models import VanillaVAE, PhysicsVAE
 from dl4cv.solver import Solver
-from dl4cv.utils import get_normalization_one_frame
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
-from torchvision import datasets
 
 config = {
 
@@ -24,6 +20,7 @@ config = {
 
     # Data
     'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
+    'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    100000,     # Number of training samples for regular training
     'num_val_regular':      1000,       # Number of validation samples for regular training
@@ -135,9 +132,9 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = VanillaVAE(
+    model = PhysicsVAE(
+        dt=config['dt'],
         len_in_sequence=config['len_inp_sequence'],
-        bottleneck_channels=6,
         greyscale=True
     )
     solver = Solver()

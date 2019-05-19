@@ -9,8 +9,7 @@ from torch.utils.data.sampler import SequentialSampler
 
 config = {
 
-    'data_path': '../datasets/ball', # Path to the parent directory of the image folder
-    'dataset_name': 'ball',     # Name of the image folder
+    'data_path': '../datasets/ball',  # Path to the parent directory of the image folder
 
     'model_path': '../saves/train20190515144524/model400',
 
