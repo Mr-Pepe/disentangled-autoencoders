@@ -1,20 +1,43 @@
 """
 File to store all model architectures
 """
+
+import abc
 import torch.nn as nn
 import torch
 
 from dl4cv.models.encoder import VanillaEncoder
+from dl4cv.models.physics_layer import PhysicsPVA
 from dl4cv.models.decoder import VanillaDecoder
 
 
-class VanillaVAE(nn.Module):
-    def __init__(self, len_in_sequence, bottleneck_channels, grayscale=False):
+class BaseModel(nn.Module):
+    def __init__(self):
+        super(BaseModel, self).__init__()
+
+    @abc.abstractmethod
+    def forward(self, x):
+        pass
+
+    def save(self, path):
+        """
+        Save model with its parameters to the given path. Conventionally the
+        path should end with "*.model".
+
+        Inputs:
+        - path: path string
+        """
+        print('Saving model... %s' % path)
+        torch.save(self.cpu(), path)
+
+
+class VanillaVAE(BaseModel):
+    def __init__(self, len_in_sequence, bottleneck_channels, greyscale=False):
         super(VanillaVAE, self).__init__()
         # input frames get concatenated, in_channels depends on the length
         # of the sequences
         # number of output channels depend only on using grayscale or not
-        if grayscale:
+        if greyscale:
             in_channels = len_in_sequence
             out_channels = 1
         else:
@@ -35,13 +58,30 @@ class VanillaVAE(nn.Module):
         y = self.decoder(z)
         return y
 
-    def save(self, path):
-        """
-        Save model with its parameters to the given path. Conventionally the
-        path should end with "*.model".
 
-        Inputs:
-        - path: path string
-        """
-        print('Saving model... %s' % path)
-        torch.save(self.cpu(), path)
+class PhysicsVAE(BaseModel):
+    def __init__(self, dt, len_in_sequence, greyscale=False):
+        super(PhysicsVAE, self).__init__()
+        if greyscale:
+            in_channels = len_in_sequence
+            out_channels = 1
+        else:
+            in_channels = len_in_sequence * 3
+            out_channels = 3
+
+        self.physics_layer = PhysicsPVA(dt=dt)
+
+        self.encoder = VanillaEncoder(
+            in_channels=in_channels,
+            bottleneck_channels=self.physics_layer.num_latents
+        )
+        self.decoder = VanillaDecoder(
+            bottleneck_channels=self.physics_layer.num_latents,
+            out_channels=out_channels
+        )
+
+    def forward(self, x):
+        z_t = self.encoder(x)
+        z_t_plus_1 = self.physics_layer(z_t)
+        y = self.decoder(z_t_plus_1)
+        return y
