@@ -19,7 +19,7 @@ config = {
     'solver_path': '',
 
     # Data
-    'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
+    'data_path': '../datasets/ball/images/',   # Path to the parent directory of the image folder
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    100000,     # Number of training samples for regular training

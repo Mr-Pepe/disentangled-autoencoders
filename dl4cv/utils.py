@@ -1,3 +1,6 @@
+import csv
+
+import numpy as np
 import torchvision.transforms as transforms
 import torch
 from PIL import Image
@@ -69,3 +72,13 @@ def tensor_denormalizer(mean, std):
     return transforms.Compose([
         transforms.Normalize(mean=[0., 0., 0.], std=1/std),
         transforms.Normalize(mean=-mean, std=[1., 1., 1.])])
+
+
+def save_csv(data, path):
+    with open(path, 'w') as f:
+        writer = csv.writer(f, delimiter='|')
+        writer.writerow(data)
+
+
+def read_csv(path):
+    return np.genfromtxt(path, dtype=np.float, delimiter='|', skip_header=0)
