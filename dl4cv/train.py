@@ -138,7 +138,7 @@ else:
     model = VanillaVAE(
         len_in_sequence=config['len_inp_sequence'],
         bottleneck_channels=6,
-        grayscale=True
+        greyscale=True
     )
     solver = Solver()
     loss_criterion = nn.MSELoss()
