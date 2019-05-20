@@ -16,34 +16,35 @@ class VanillaEncoder(nn.Module):
         # Initial convolutions
         self.conv1 = Conv2dReflectionPadding(
             in_channels=in_channels,
-            out_channels=256,
+            out_channels=32,
             kernel_size=4,
             stride=2,
             padding=1
         )
         self.conv2 = Conv2dReflectionPadding(
-            in_channels=256,
-            out_channels=256,
+            in_channels=32,
+            out_channels=64,
             kernel_size=4,
             stride=2,
             padding=1
         )
 
         # Residual blocks
-        self.res1 = ResidualBlock(256)
-        self.res2 = ResidualBlock(256)
+        self.res1 = ResidualBlock(64)
+        self.res2 = ResidualBlock(64)
 
         # Non-linearities
         self.relu = nn.ReLU()
 
         # Bottleneck
         self.bottleneck = nn.Conv2d(
-            in_channels=256,
+            in_channels=64,
             out_channels=bottleneck_channels,
             kernel_size=(8, 8),
             stride=1,
             padding=0
         )
+        self.bn = nn.BatchNorm2d(bottleneck_channels)
 
     def forward(self, x):
         y = self.normalization(x)
@@ -52,5 +53,6 @@ class VanillaEncoder(nn.Module):
         y = self.res1(y)
         y = self.res2(y)
         y = self.bottleneck(y)
+        y = self.bn(y)
         # output shape: [batch, bottleneck, 1, 1]
         return y
