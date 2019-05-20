@@ -3,6 +3,8 @@ import numpy as np
 import time
 import os
 import math
+import torch
+from torch import Tensor
 
 from dl4cv.utils import save_csv
 
@@ -18,7 +20,8 @@ Otherwise the script will create only black images
 """
 
 USE_NUM_IMAGES = True
-NUM_IMAGES = 1000
+NUM_SEQUENCES = 10
+SEQUENCE_LENGTH = 4 # including input and output
 
 T_FRAME = 1/30
 WINDOW_SIZE_X = 32
@@ -26,16 +29,9 @@ WINDOW_SIZE_Y = 32
 BALL_RADIUS = 5
 V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
 
-if USE_NUM_IMAGES:
-    T_MAX = NUM_IMAGES * T_FRAME
-else:
-    T_MAX = 1000
-
 save_dir_path = "../datasets/ball"
 
 os.makedirs(save_dir_path, exist_ok=True)
-os.makedirs(os.path.join(save_dir_path, 'images'), exist_ok=True)
-os.makedirs(os.path.join(save_dir_path, 'meta'), exist_ok=True)
 
 
 class Ball(pygame.sprite.Sprite):
@@ -68,7 +64,6 @@ def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
 
     return x_new, y_new, vx_new, vy_new
 
-
 screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
 
 
@@ -78,41 +73,59 @@ x_min = BALL_RADIUS
 y_max = WINDOW_SIZE_Y - BALL_RADIUS
 y_min = BALL_RADIUS
 
-x = WINDOW_SIZE_X / 2
-y = WINDOW_SIZE_Y / 2
-vx = 15
-vy = 0
-# ax = np.random.uniform(-1, 1, (int(T_MAX/T_FRAME), ))*500
-ax = np.zeros((int(T_MAX/T_FRAME), ))
-ay = np.ones((int(T_MAX/T_FRAME), )) * 9.81
+x_all = torch.normal(WINDOW_SIZE_X/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_X/4).int()
+y_all = torch.normal(WINDOW_SIZE_Y/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_Y/4).int()
 
-n_frames = 0
-t = 0
-while (T_MAX - t) > 1e-5:  # This is basically (t < T_MAX) but accounting for floats
+vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
+vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
 
-    screen.fill((0, 0, 0))
-    screen.blit(ball.surf, (x - BALL_RADIUS, y - BALL_RADIUS))
-    pygame.display.flip()
+ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
+ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
 
-    save_path_frames = os.path.join(
-        save_dir_path,
-        'images',
-        'frame' + str(n_frames) + '.jpeg'
+for i_sequence in range(NUM_SEQUENCES):
+
+    sequence = torch.Tensor()
+
+    x = min(x_max, max(x_min, x_all[i_sequence]))
+    y = min(y_max, max(y_max, y_all[i_sequence]))
+
+    vx = vx_all[i_sequence]
+    vy = vy_all[i_sequence]
+
+    ax = ax_all[i_sequence]
+    ay = ay_all[i_sequence]
+
+    save_path_sequence = os.path.join(
+            save_dir_path,
+            'seq' + str(i_sequence)
     )
-    pygame.image.save(screen, save_path_frames)
-    save_path_meta = os.path.join(
-        save_dir_path,
-        'meta',
-        'frame' + str(n_frames) + '.csv'
-    )
-    save_csv([x, y, vx, vy, ax[n_frames], ay[n_frames]], save_path_meta)
 
-    # Limit velocities to V_MAX
-    vx = math.copysign(V_MAX, vx) if abs(vx) > V_MAX else vx
-    vy = math.copysign(V_MAX, vy) if abs(vy) > V_MAX else vy
+    os.makedirs(save_path_sequence, exist_ok=True)
 
-    x, y, vx, vy = get_new_state(x, y, vx, vy, ax[n_frames], ay[n_frames], x_min, x_max, y_min, y_max, T_FRAME)
 
-    # time.sleep(T_FRAME)
-    t += T_FRAME
-    n_frames += 1
+    for i_frame in range(SEQUENCE_LENGTH):
+
+        screen.fill((0, 0, 0))
+        screen.blit(ball.surf, (x - BALL_RADIUS, y - BALL_RADIUS))
+        pygame.display.flip()
+
+        save_path_frame = os.path.join(
+            save_path_sequence,
+            'frame' + str(i_frame) + '.jpeg'
+        )
+
+        pygame.image.save(screen, save_path_frame)
+
+        save_path_meta = os.path.join(
+            save_path_sequence,
+            'meta.csv'
+        )
+        save_csv([x, y, vx, vy, ax, ay], save_path_meta)
+
+        # Limit velocities to V_MAX
+        vx = math.copysign(V_MAX, vx) if abs(vx) > V_MAX else vx
+        vy = math.copysign(V_MAX, vy) if abs(vy) > V_MAX else vy
+
+        x, y, vx, vy = get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, T_FRAME)
+
+        # time.sleep(T_FRAME)
