@@ -84,4 +84,4 @@ class PhysicsVAE(BaseModel):
         z_t = self.encoder(x)
         z_t_plus_1 = self.physics_layer(z_t)
         y = self.decoder(z_t_plus_1)
-        return y
+        return y, z_t

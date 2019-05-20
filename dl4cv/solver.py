@@ -73,7 +73,7 @@ class Solver(object):
                 y = y.to(device)
 
                 # Forward pass
-                y_pred = model(x)
+                y_pred, z = model(x)
 
                 loss = self.criterion(y_pred, y)
 
@@ -83,7 +83,7 @@ class Solver(object):
                 self.optim.step()
 
                 # Save loss to history
-                smooth_window_train = 100
+                smooth_window_train = 10
 
                 self.history['train_loss_history'].append(loss.item())
                 train_loss_avg = (smooth_window_train-1)/smooth_window_train*train_loss_avg + 1/smooth_window_train*loss.item()
@@ -111,7 +111,7 @@ class Solver(object):
                 x = x.to(device)
                 y = y.to(device)
 
-                y_pred = model(x)
+                y_pred, z = model(x)
 
                 val_loss += self.criterion(y, y_pred).item()
 

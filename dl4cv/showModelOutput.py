@@ -38,7 +38,7 @@ def eval_model(model, samples):
         plt.imshow(to_pil(y), cmap='gray')
         ax.set_title('Ground truth t+1')
 
-        y_pred = model(torch.unsqueeze(x, 0))
+        y_pred, z = model(torch.unsqueeze(x, 0))
 
         ax = plt.subplot(2, num_images/2, sequence_length+1)
         plt.imshow(to_pil(y_pred[0]), cmap='gray')
