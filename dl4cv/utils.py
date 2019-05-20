@@ -14,8 +14,8 @@ class CustomDataset(Dataset):
     def __init__(self, path, transform, sequence_length):
         self.path = path
         self.transform = transform
-        self.images = {}
-        self.sequences = []
+        self.sequences = {}
+        self.sequence_paths = []
         self.sequence_length = sequence_length
 
         # Find all sequences. Taken form torchvision.dataset.folder.make_dataset()
@@ -23,15 +23,20 @@ class CustomDataset(Dataset):
             for dir_name in sorted(dir_names, key=lambda s: int(s.split("seq")[1])):
                 seq_path = os.path.join(root, dir_name)
 
-                self.sequences.append(seq_path)
-                self.images[seq_path] = []
+                self.sequence_paths.append(seq_path)
+                self.sequences[seq_path] = {}
 
                 for _, _, fnames in os.walk(seq_path):
+
+                    self.sequences[seq_path]['meta'] = os.path.join(seq_path, 'meta.csv')
+                    self.sequences[seq_path]['images'] = []
+
                     fnames = [fname for fname in fnames if fname != 'meta.csv']
                     for fname in sorted(fnames, key=lambda s: int(s.split("frame")[1].split(".")[0])):
                         if has_file_allowed_extension(fname, IMG_EXTENSIONS):
                             item_path = os.path.join(seq_path, fname)
-                            self.images[seq_path].append(item_path)
+                            self.sequences[seq_path]['images'].append(item_path)
+
 
 
     def __getitem__(self, index):
@@ -43,9 +48,9 @@ class CustomDataset(Dataset):
             y: torch.tensor, shape [batch, channels, width, height]
             one image frame, the one to be predicted
         """
-        seq_path = self.sequences[index]
+        seq_path = self.sequence_paths[index]
 
-        images = [pil_loader(image_path) for image_path in self.images[seq_path]]
+        images = [pil_loader(image_path) for image_path in self.sequences[seq_path]['images']]
 
         images = [self.transform(image) for image in images]
 
@@ -55,7 +60,7 @@ class CustomDataset(Dataset):
         return x, y
 
     def __len__(self):
-        return len(self.sequences)
+        return len(self.sequence_paths)
 
 
 class EvalLatentDataset(Dataset):
