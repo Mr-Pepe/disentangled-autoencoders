@@ -21,7 +21,7 @@ class Solver(object):
               num_epochs=10, max_train_time_s=None,
               train_loader=None, val_loader=None,
               log_after_iters=1, save_after_epochs=None,
-              save_path='../saves/train', device='cpu'):
+              save_path='../saves/train', device='cpu', cov_penalty=0):
 
         model.to(device)
 
@@ -77,6 +77,14 @@ class Solver(object):
 
                 loss = self.criterion(y_pred, y)
 
+                # Calculate covariance
+                z = z[:,:,0,0]
+                z_mean = torch.mean(z, dim=0)
+                cov = 1/len(batch) * torch.mm((z - z_mean).transpose(0, 1), (z-z_mean))
+                cov = cov - torch.diag(torch.diag(cov)).to(device)
+                cov = torch.sum(cov*cov)
+                loss += cov_penalty * cov
+
                 # Packpropagate and update weights
                 model.zero_grad()
                 loss.backward()
@@ -92,7 +100,8 @@ class Solver(object):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
-                          " - Time for one iter " + str(int((time.time()-t_start_iter)*1000)) + "ms")
+                          " - Time for one iter " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
+                          " Cov loss: " + str(cov.item()))
 
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
