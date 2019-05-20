@@ -87,7 +87,7 @@ for i_sequence in range(NUM_SEQUENCES):
     sequence = torch.Tensor()
 
     x = min(x_max, max(x_min, x_all[i_sequence]))
-    y = min(y_max, max(y_max, y_all[i_sequence]))
+    y = min(y_max, max(y_min, y_all[i_sequence]))
 
     vx = vx_all[i_sequence]
     vy = vy_all[i_sequence]
