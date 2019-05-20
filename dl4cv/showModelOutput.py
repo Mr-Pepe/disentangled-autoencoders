@@ -11,10 +11,10 @@ config = {
 
     'data_path': '../datasets/ball',  # Path to directory of the image folder
 
-    'model_path': '../saves/train20190515144524/model400',
+    'model_path': '../saves/train20190520172753/model40',
 
     'batch_size': 100,
-    'num_show_images': 2,              # Number of images to show
+    'num_show_images': 10,              # Number of images to show
 }
 
 
@@ -25,7 +25,7 @@ def eval_model(model, samples):
 
     for sample in samples:
 
-        x, y = sample
+        x, y, meta = sample
 
         to_pil = transforms.ToPILImage()
 
@@ -39,6 +39,8 @@ def eval_model(model, samples):
         ax.set_title('Ground truth t+1')
 
         y_pred, z = model(torch.unsqueeze(x, 0))
+        print(z)
+        print(meta)
 
         ax = plt.subplot(2, num_images/2, sequence_length+1)
         plt.imshow(to_pil(y_pred[0]), cmap='gray')
@@ -69,9 +71,9 @@ data_loader = torch.utils.data.DataLoader(
 
 model = torch.load(config['model_path'])
 
-batch = next(iter(data_loader))
+x, y, meta = next(iter(data_loader))
 # Pick samples from the batch equidistantly based on "num_show_images"
 indices = np.linspace(0, config['batch_size'] - 1, config['num_show_images'], dtype=int).tolist()
-samples = [(batch[0][indices[i]], batch[1][indices[i]]) for i in range(len(indices))]
+samples = [(x[indices[i]], y[indices[i]], meta[indices[i]]) for i in range(len(indices))]
 
 eval_model(model, samples)

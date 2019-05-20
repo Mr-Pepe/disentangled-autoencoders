@@ -62,7 +62,7 @@ class Solver(object):
 
                 i_iter += 1
 
-                x, y = batch
+                x, y, _ = batch
 
                 # If the current minibatch does not have the full number of samples, skip it
                 if len(x) < train_loader.batch_size:
@@ -115,7 +115,7 @@ class Solver(object):
             for i, batch in enumerate(val_loader):
                 num_val_batches += 1
 
-                x, y = batch
+                x, y, _ = batch
 
                 x = x.to(device)
                 y = y.to(device)

@@ -50,6 +50,8 @@ class CustomDataset(Dataset):
         """
         seq_path = self.sequence_paths[index]
 
+        meta = read_csv(self.sequences[seq_path]['meta'])
+
         images = [pil_loader(image_path) for image_path in self.sequences[seq_path]['images']]
 
         images = [self.transform(image) for image in images]
@@ -57,7 +59,7 @@ class CustomDataset(Dataset):
         x = torch.cat(images[:-1], 0)
         y = images[-1]
 
-        return x, y
+        return x, y, meta
 
     def __len__(self):
         return len(self.sequence_paths)
