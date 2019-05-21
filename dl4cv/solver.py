@@ -135,6 +135,7 @@ class Solver(object):
             if save_after_epochs is not None and ((i_epoch + 1) % save_after_epochs == 0):
                 os.makedirs(save_path, exist_ok=True)
                 model.save(save_path + '/model' + str(i_epoch + 1))
+                self.training_time_s += time.time() - t_start_training
                 self.save(save_path + '/solver' + str(i_epoch + 1))
                 model.to(device)
 
@@ -147,15 +148,34 @@ class Solver(object):
         if self.stop_reason is "":
             self.stop_reason = "Reached number of specified epochs."
 
-        self.training_time_s += time.time() - t_start_training
+
 
         # Save model and solver after training
         os.makedirs(save_path, exist_ok=True)
         model.save(save_path + '/model' + str(i_epoch + 1))
+        self.training_time_s += time.time() - t_start_training
         self.save(save_path + '/solver' + str(i_epoch + 1))
 
         print('FINISH.')
 
     def save(self, path):
         print('Saving solver... %s\n' % path)
-        pickle.dump(self, open(path, 'wb'))
+        torch.save({
+            'history': self.history,
+            'stop_reason': self.stop_reason,
+            'training_time_s': self.training_time_s,
+            'criterion': self.criterion,
+            'optim_state_dict': self.optim.state_dict()
+        }, path)
+
+    def load(self, path, only_history=False):
+
+        checkpoint = torch.load(path)
+
+        if not only_history:
+            self.optim.load_state_dict(checkpoint['optim_state_dict'])
+            self.criterion = checkpoint['criterion']
+            
+        self.history = checkpoint['history']
+        self.stop_reason = checkpoint['stop_reason']
+        self.training_time_s = checkpoint['training_time_s']

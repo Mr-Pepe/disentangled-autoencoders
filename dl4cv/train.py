@@ -126,8 +126,12 @@ if config['continue_training']:
     print("Continuing training with model: {} and solver: {}".format(
         config['model_path'], config['solver_path'])
     )
+
     model = torch.load(config['model_path'])
-    solver = pickle.load(open(config['solver_path'], 'rb'))
+    model.to(device)
+    solver = Solver()
+    solver.optim = torch.optim.Adam(model.parameters())
+    solver.load(config['solver_path'])
     loss_criterion = None
     optimizer = None
 

@@ -2,11 +2,13 @@ import pickle
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
+from dl4cv.solver import Solver
 
-path = '/home/felipe/Projects/dl4cv/saves/train20190510145000/solver1'
+path = '../saves/train20190521135315/solver1'
 
 
-solver = pickle.load(open(path, 'rb'))
+solver = Solver()
+solver.load(path, only_history=True)
 
 print("Stop reason: %s" %solver.stop_reason)
 print("Stop time: %fs" %solver.training_time_s)
