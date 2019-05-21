@@ -120,7 +120,7 @@ for i_sequence in range(NUM_SEQUENCES):
             save_path_sequence,
             'meta.csv'
         )
-        save_csv([x, y, vx, vy, ax, ay], save_path_meta)
+        save_csv([float(x) for x in [x, y, vx, vy, ax, ay]], save_path_meta)
 
         # Limit velocities to V_MAX
         vx = math.copysign(V_MAX, vx) if abs(vx) > V_MAX else vx
