@@ -56,7 +56,7 @@ class VanillaVAE(BaseModel):
     def forward(self, x):
         z = self.encoder(x)
         y = self.decoder(z)
-        return y
+        return y, z
 
 
 class PhysicsVAE(BaseModel):
