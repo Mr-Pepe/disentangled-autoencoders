@@ -101,7 +101,9 @@ class Solver(object):
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
                           " - Time for one iter " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
-                          " Cov loss: " + str(cov.item()))
+                          "   Cov loss: " + "{0:.3f}".format(cov.item()) +
+                          "   z-mean: " + "{0:.3f}".format(z.mean().item()) +
+                          "   z-std: " + "{0:.3f}".format(z.std().item()))
 
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
@@ -175,7 +177,7 @@ class Solver(object):
         if not only_history:
             self.optim.load_state_dict(checkpoint['optim_state_dict'])
             self.criterion = checkpoint['criterion']
-            
+
         self.history = checkpoint['history']
         self.stop_reason = checkpoint['stop_reason']
         self.training_time_s = checkpoint['training_time_s']

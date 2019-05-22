@@ -8,12 +8,13 @@ from torch.utils.data.sampler import SequentialSampler
 
 
 config = {
+    'show_images': True,
 
     'data_path': '../datasets/ball',  # Path to directory of the image folder
 
-    'model_path': '../saves/train20190520172753/model40',
+    'model_path': '../saves/train20190522122921/model170',
 
-    'batch_size': 100,
+    'batch_size': 1000,
     'num_show_images': 10,              # Number of images to show
 }
 
@@ -23,35 +24,47 @@ def eval_model(model, samples):
 
     num_images = sequence_length+2
 
+    all_z = torch.Tensor()
+
     for sample in samples:
 
         x, y, meta = sample
 
-        to_pil = transforms.ToPILImage()
-
-        for i in range(sequence_length-1):
-            ax = plt.subplot(2, num_images/2, i+1)
-            plt.imshow(to_pil(x[i]), cmap='gray')
-            ax.set_title('frame t{}'.format(-(sequence_length-2) + i))
-
-        ax = plt.subplot(2, num_images/2, sequence_length)
-        plt.imshow(to_pil(y), cmap='gray')
-        ax.set_title('Ground truth t+1')
-
         y_pred, z = model(torch.unsqueeze(x, 0))
-        print(z)
-        print(meta)
+        print(z.view(z.numel()).data)
+        # print(meta.data)
 
-        ax = plt.subplot(2, num_images/2, sequence_length+1)
-        plt.imshow(to_pil(y_pred[0]), cmap='gray')
-        ax.set_title('Prediction t+1')
+        if all_z.numel() == 0:
+            all_z = z.view(z.numel(), 1)
+        else:
+            all_z = torch.cat((all_z, z.view(z.numel(), 1)), 1)
 
-        ax = plt.subplot(2, num_images/2, sequence_length+2)
-        plt.imshow(to_pil(abs(y_pred[0]-y)), cmap='gray')
-        ax.set_title('Deviation')
+        if config['show_images']:
 
-        plt.show(block=True)
+            to_pil = transforms.ToPILImage()
 
+            for i in range(sequence_length-1):
+                ax = plt.subplot(2, num_images/2, i+1)
+                plt.imshow(to_pil(x[i]), cmap='gray')
+                ax.set_title('frame t{}'.format(-(sequence_length-2) + i))
+
+            ax = plt.subplot(2, num_images/2, sequence_length)
+            plt.imshow(to_pil(y), cmap='gray')
+            ax.set_title('Ground truth t+1')
+
+            ax = plt.subplot(2, num_images/2, sequence_length+1)
+            plt.imshow(to_pil(y_pred[0]), cmap='gray')
+            ax.set_title('Prediction t+1')
+
+            ax = plt.subplot(2, num_images/2, sequence_length+2)
+            plt.imshow(to_pil(abs(y_pred[0]-y)), cmap='gray')
+            ax.set_title('Deviation')
+
+            plt.show(block=True)
+
+    for i_zdim in range(all_z.shape[0]):
+        plt.plot(all_z[i_zdim, :].detach().numpy())
+    plt.show()
 
 sequence_length = 4  # 3 images as input sequence, 1 predicted image
 

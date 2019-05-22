@@ -14,17 +14,17 @@ config = {
     'use_cuda': True,
 
     # Training continuation
-    'continue_training':   False,      # Specify whether to continue training with an existing model and solver
-    'model_path': '../saves/train20190520142457/model170',
-    'solver_path': '../saves/train20190520142457/solver170',
+    'continue_training':   True,      # Specify whether to continue training with an existing model and solver
+    'model_path': '../saves/train20190522121127/model140',
+    'solver_path': '../saves/train20190522121127/solver140',
 
     # Data
-    'data_path': '../datasets/ball/images/',   # Path to the parent directory of the image folder
+    'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': False,             # Set overfit or regular training
-    'num_train_regular':    2048,     # Number of training samples for regular training
-    'num_val_regular':      64,       # Number of validation samples for regular training
-    'num_train_overfit':    128,        # Number of training samples for overfitting test runs
+    'num_train_regular':    4096,       # Number of training samples for regular training
+    'num_val_regular':      256,        # Number of validation samples for regular training
+    'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 3,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
 
@@ -33,13 +33,13 @@ config = {
     ## Hyperparameters ##
     'max_train_time_s': None,
     'num_epochs': 400,                  # Number of epochs to train
-    'batch_size': 32,
+    'batch_size': 256,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
-    'cov_penalty': 1e-3,
+    'cov_penalty': 1e-1,
 
     ## Logging ##
-    'log_interval': 1,           # Number of mini-batches after which to print training loss
+    'log_interval': 3,           # Number of mini-batches after which to print training loss
     'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': '../saves'
 }
@@ -130,16 +130,16 @@ if config['continue_training']:
     model = torch.load(config['model_path'])
     model.to(device)
     solver = Solver()
-    solver.optim = torch.optim.Adam(model.parameters())
+    solver.optim = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
     solver.load(config['solver_path'])
     loss_criterion = None
     optimizer = None
 
 else:
     print("Initializing model...")
-    model = PhysicsVAE(
-        dt=config['dt'],
+    model = VanillaVAE(
         len_in_sequence=config['len_inp_sequence'],
+        bottleneck_channels=6,
         greyscale=True
     )
     solver = Solver()
