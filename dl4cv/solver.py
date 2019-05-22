@@ -21,7 +21,7 @@ class Solver(object):
               num_epochs=10, max_train_time_s=None,
               train_loader=None, val_loader=None,
               log_after_iters=1, save_after_epochs=None,
-              save_path='../saves/train', device='cpu'):
+              save_path='../saves/train', device='cpu', cov_penalty=0):
 
         model.to(device)
 
@@ -62,7 +62,7 @@ class Solver(object):
 
                 i_iter += 1
 
-                x, y = batch
+                x, y, _ = batch
 
                 # If the current minibatch does not have the full number of samples, skip it
                 if len(x) < train_loader.batch_size:
@@ -73,9 +73,17 @@ class Solver(object):
                 y = y.to(device)
 
                 # Forward pass
-                y_pred = model(x)
+                y_pred, z = model(x)
 
                 loss = self.criterion(y_pred, y)
+
+                # Calculate covariance
+                z = z[:,:,0,0]
+                z_mean = torch.mean(z, dim=0)
+                cov = 1/len(batch) * torch.mm((z - z_mean).transpose(0, 1), (z-z_mean))
+                cov = cov - torch.diag(torch.diag(cov)).to(device)
+                cov = torch.sum(cov*cov)
+                loss += cov_penalty * cov
 
                 # Packpropagate and update weights
                 model.zero_grad()
@@ -83,7 +91,7 @@ class Solver(object):
                 self.optim.step()
 
                 # Save loss to history
-                smooth_window_train = 100
+                smooth_window_train = 10
 
                 self.history['train_loss_history'].append(loss.item())
                 train_loss_avg = (smooth_window_train-1)/smooth_window_train*train_loss_avg + 1/smooth_window_train*loss.item()
@@ -92,7 +100,10 @@ class Solver(object):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
-                          " - Time for one iter " + str(int((time.time()-t_start_iter)*1000)) + "ms")
+                          " - Time for one iter " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
+                          "   Cov loss: " + "{0:.3f}".format(cov.item()) +
+                          "   z-mean: " + "{0:.3f}".format(z.mean().item()) +
+                          "   z-std: " + "{0:.3f}".format(z.std().item()))
 
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
@@ -106,12 +117,12 @@ class Solver(object):
             for i, batch in enumerate(val_loader):
                 num_val_batches += 1
 
-                x, y = batch
+                x, y, _ = batch
 
                 x = x.to(device)
                 y = y.to(device)
 
-                y_pred = model(x)
+                y_pred, z = model(x)
 
                 val_loss += self.criterion(y, y_pred).item()
 
@@ -126,6 +137,7 @@ class Solver(object):
             if save_after_epochs is not None and ((i_epoch + 1) % save_after_epochs == 0):
                 os.makedirs(save_path, exist_ok=True)
                 model.save(save_path + '/model' + str(i_epoch + 1))
+                self.training_time_s += time.time() - t_start_training
                 self.save(save_path + '/solver' + str(i_epoch + 1))
                 model.to(device)
 
@@ -138,15 +150,34 @@ class Solver(object):
         if self.stop_reason is "":
             self.stop_reason = "Reached number of specified epochs."
 
-        self.training_time_s += time.time() - t_start_training
+
 
         # Save model and solver after training
         os.makedirs(save_path, exist_ok=True)
         model.save(save_path + '/model' + str(i_epoch + 1))
+        self.training_time_s += time.time() - t_start_training
         self.save(save_path + '/solver' + str(i_epoch + 1))
 
         print('FINISH.')
 
     def save(self, path):
         print('Saving solver... %s\n' % path)
-        pickle.dump(self, open(path, 'wb'))
+        torch.save({
+            'history': self.history,
+            'stop_reason': self.stop_reason,
+            'training_time_s': self.training_time_s,
+            'criterion': self.criterion,
+            'optim_state_dict': self.optim.state_dict()
+        }, path)
+
+    def load(self, path, only_history=False):
+
+        checkpoint = torch.load(path)
+
+        if not only_history:
+            self.optim.load_state_dict(checkpoint['optim_state_dict'])
+            self.criterion = checkpoint['criterion']
+
+        self.history = checkpoint['history']
+        self.stop_reason = checkpoint['stop_reason']
+        self.training_time_s = checkpoint['training_time_s']

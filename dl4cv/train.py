@@ -14,32 +14,33 @@ config = {
     'use_cuda': True,
 
     # Training continuation
-    'continue_training':   False,      # Specify whether to continue training with an existing model and solver
-    'model_path': '',
-    'solver_path': '',
+    'continue_training':   True,      # Specify whether to continue training with an existing model and solver
+    'model_path': '../saves/train20190522121127/model140',
+    'solver_path': '../saves/train20190522121127/solver140',
 
     # Data
-    'data_path': '../datasets/ball/images/',   # Path to the parent directory of the image folder
+    'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
     'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': True,             # Set overfit or regular training
-    'num_train_regular':    100000,     # Number of training samples for regular training
-    'num_val_regular':      1000,       # Number of validation samples for regular training
-    'num_train_overfit':    100,        # Number of training samples for overfitting test runs
+    'do_overfitting': False,             # Set overfit or regular training
+    'num_train_regular':    4096,       # Number of training samples for regular training
+    'num_val_regular':      256,        # Number of validation samples for regular training
+    'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 3,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
 
-    'num_workers': 1,                   # Number of workers for data loading
+    'num_workers': 4,                   # Number of workers for data loading
 
     ## Hyperparameters ##
     'max_train_time_s': None,
     'num_epochs': 400,                  # Number of epochs to train
-    'batch_size': 1,
-    'learning_rate': 2e-4,
+    'batch_size': 256,
+    'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
+    'cov_penalty': 1e-1,
 
     ## Logging ##
-    'log_interval': 50,           # Number of mini-batches after which to print training loss
-    'save_interval': 100,         # Number of epochs after which to save model and solver
+    'log_interval': 3,           # Number of mini-batches after which to print training loss
+    'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': '../saves'
 }
 
@@ -125,16 +126,20 @@ if config['continue_training']:
     print("Continuing training with model: {} and solver: {}".format(
         config['model_path'], config['solver_path'])
     )
+
     model = torch.load(config['model_path'])
-    solver = pickle.load(open(config['solver_path'], 'rb'))
+    model.to(device)
+    solver = Solver()
+    solver.optim = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
+    solver.load(config['solver_path'])
     loss_criterion = None
     optimizer = None
 
 else:
     print("Initializing model...")
-    model = PhysicsVAE(
-        dt=config['dt'],
+    model = VanillaVAE(
         len_in_sequence=config['len_inp_sequence'],
+        bottleneck_channels=6,
         greyscale=True
     )
     solver = Solver()
@@ -155,4 +160,5 @@ if __name__ == "__main__":
                  log_after_iters=config['log_interval'],
                  save_after_epochs=config['save_interval'],
                  save_path=config['save_path'],
-                 device=device)
+                 device=device,
+                 cov_penalty=config['cov_penalty'])

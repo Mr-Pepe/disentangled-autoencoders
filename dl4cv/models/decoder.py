@@ -14,18 +14,18 @@ class VanillaDecoder(nn.Module):
         # Bottleneck
         self.bottleneck = nn.ConvTranspose2d(
             in_channels=bottleneck_channels,
-            out_channels=256,
+            out_channels=64,
             kernel_size=(8, 8)
         )
 
         # Residual blocks
-        self.res1 = ResidualBlock(256)
-        self.res2 = ResidualBlock(256)
+        self.res1 = ResidualBlock(64)
+        self.res2 = ResidualBlock(64)
 
         # Resize convolutional layers are used to prevent checkerboard patterns
         self.resizeConv1 = ResizeConvLayer(
-            in_channels=256,
-            out_channels=256,
+            in_channels=64,
+            out_channels=32,
             kernel_size=3,
             padding=1,
             stride=1,
@@ -33,7 +33,7 @@ class VanillaDecoder(nn.Module):
             use_relu=True
         )
         self.resizeConv2 = ResizeConvLayer(
-            in_channels=256,
+            in_channels=32,
             out_channels=out_channels,
             kernel_size=3,
             padding=1,

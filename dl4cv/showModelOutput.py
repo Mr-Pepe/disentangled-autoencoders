@@ -8,13 +8,14 @@ from torch.utils.data.sampler import SequentialSampler
 
 
 config = {
+    'show_images': True,
 
-    'data_path': '../datasets/ball/images',  # Path to directory of the image folder
+    'data_path': '../datasets/ball',  # Path to directory of the image folder
 
-    'model_path': '../saves/train20190515144524/model400',
+    'model_path': '../saves/train20190522122921/model170',
 
-    'batch_size': 100,
-    'num_show_images': 2,              # Number of images to show
+    'batch_size': 1000,
+    'num_show_images': 10,              # Number of images to show
 }
 
 
@@ -23,33 +24,47 @@ def eval_model(model, samples):
 
     num_images = sequence_length+2
 
+    all_z = torch.Tensor()
+
     for sample in samples:
 
-        x, y = sample
+        x, y, meta = sample
 
-        to_pil = transforms.ToPILImage()
+        y_pred, z = model(torch.unsqueeze(x, 0))
+        print(z.view(z.numel()).data)
+        # print(meta.data)
 
-        for i in range(sequence_length-1):
-            ax = plt.subplot(2, num_images/2, i+1)
-            plt.imshow(to_pil(x[i]), cmap='gray')
-            ax.set_title('frame t{}'.format(-(sequence_length-2) + i))
+        if all_z.numel() == 0:
+            all_z = z.view(z.numel(), 1)
+        else:
+            all_z = torch.cat((all_z, z.view(z.numel(), 1)), 1)
 
-        ax = plt.subplot(2, num_images/2, sequence_length)
-        plt.imshow(to_pil(y), cmap='gray')
-        ax.set_title('Ground truth t+1')
+        if config['show_images']:
 
-        y_pred = model(torch.unsqueeze(x, 0))
+            to_pil = transforms.ToPILImage()
 
-        ax = plt.subplot(2, num_images/2, sequence_length+1)
-        plt.imshow(to_pil(y_pred[0]), cmap='gray')
-        ax.set_title('Prediction t+1')
+            for i in range(sequence_length-1):
+                ax = plt.subplot(2, num_images/2, i+1)
+                plt.imshow(to_pil(x[i]), cmap='gray')
+                ax.set_title('frame t{}'.format(-(sequence_length-2) + i))
 
-        ax = plt.subplot(2, num_images/2, sequence_length+2)
-        plt.imshow(to_pil(abs(y_pred[0]-y)), cmap='gray')
-        ax.set_title('Deviation')
+            ax = plt.subplot(2, num_images/2, sequence_length)
+            plt.imshow(to_pil(y), cmap='gray')
+            ax.set_title('Ground truth t+1')
 
-        plt.show(block=True)
+            ax = plt.subplot(2, num_images/2, sequence_length+1)
+            plt.imshow(to_pil(y_pred[0]), cmap='gray')
+            ax.set_title('Prediction t+1')
 
+            ax = plt.subplot(2, num_images/2, sequence_length+2)
+            plt.imshow(to_pil(abs(y_pred[0]-y)), cmap='gray')
+            ax.set_title('Deviation')
+
+            plt.show(block=True)
+
+    for i_zdim in range(all_z.shape[0]):
+        plt.plot(all_z[i_zdim, :].detach().numpy())
+    plt.show()
 
 sequence_length = 4  # 3 images as input sequence, 1 predicted image
 
@@ -69,9 +84,9 @@ data_loader = torch.utils.data.DataLoader(
 
 model = torch.load(config['model_path'])
 
-batch = next(iter(data_loader))
+x, y, meta = next(iter(data_loader))
 # Pick samples from the batch equidistantly based on "num_show_images"
 indices = np.linspace(0, config['batch_size'] - 1, config['num_show_images'], dtype=int).tolist()
-samples = [(batch[0][indices[i]], batch[1][indices[i]]) for i in range(len(indices))]
+samples = [(x[indices[i]], y[indices[i]], meta[indices[i]]) for i in range(len(indices))]
 
 eval_model(model, samples)

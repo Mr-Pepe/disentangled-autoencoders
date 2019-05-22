@@ -14,20 +14,30 @@ class CustomDataset(Dataset):
     def __init__(self, path, transform, sequence_length):
         self.path = path
         self.transform = transform
-        self.images = []
+        self.sequences = {}
+        self.sequence_paths = []
         self.sequence_length = sequence_length
 
-        # Find all images in folder. Taken form torchvision.dataset.folder.make_dataset()
-        for root, _, fnames in sorted(os.walk(path)):
-            for fname in sorted(fnames, key=lambda s: int(s.split("frame")[1].split(".")[0])):
-                if has_file_allowed_extension(fname, IMG_EXTENSIONS):
-                    item_path = os.path.join(root, fname)
-                    self.images.append(item_path)
+        # Find all sequences. Taken form torchvision.dataset.folder.make_dataset()
+        for root, dir_names, _ in sorted(os.walk(path)):
+            for dir_name in sorted(dir_names, key=lambda s: int(s.split("seq")[1])):
+                seq_path = os.path.join(root, dir_name)
 
-        # The SubsetRandomSampler samples random subsets but the subsets themselves are
-        # contiguous. Therefore the indices are shuffled to have non-contiguous image series in a minibatch
-        self.indices = list(range(self.__len__()))
-        random.shuffle(self.indices)
+                self.sequence_paths.append(seq_path)
+                self.sequences[seq_path] = {}
+
+                for _, _, fnames in os.walk(seq_path):
+
+                    self.sequences[seq_path]['meta'] = os.path.join(seq_path, 'meta.csv')
+                    self.sequences[seq_path]['images'] = []
+
+                    fnames = [fname for fname in fnames if fname != 'meta.csv']
+                    for fname in sorted(fnames, key=lambda s: int(s.split("frame")[1].split(".")[0])):
+                        if has_file_allowed_extension(fname, IMG_EXTENSIONS):
+                            item_path = os.path.join(seq_path, fname)
+                            self.sequences[seq_path]['images'].append(item_path)
+
+
 
     def __getitem__(self, index):
         """
@@ -38,19 +48,21 @@ class CustomDataset(Dataset):
             y: torch.tensor, shape [batch, channels, width, height]
             one image frame, the one to be predicted
         """
-        image_paths = self.images[index:index+self.sequence_length]
+        seq_path = self.sequence_paths[index]
 
-        images = [pil_loader(image_path) for image_path in image_paths]
+        meta = read_csv(self.sequences[seq_path]['meta'])
+
+        images = [pil_loader(image_path) for image_path in self.sequences[seq_path]['images']]
 
         images = [self.transform(image) for image in images]
 
         x = torch.cat(images[:-1], 0)
         y = images[-1]
 
-        return x, y
+        return x, y, meta
 
     def __len__(self):
-        return len(self.images)-self.sequence_length
+        return len(self.sequence_paths)
 
 
 class EvalLatentDataset(Dataset):
