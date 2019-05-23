@@ -75,7 +75,7 @@ class Solver(object):
                 # Forward pass
                 y_pred, z = model(x)
 
-                loss = self.criterion(y_pred, y)
+                reconstruction_loss = self.criterion(y_pred, y)
 
                 # Calculate covariance
                 z = z[:,:,0,0]
@@ -83,7 +83,8 @@ class Solver(object):
                 cov = 1/len(batch) * torch.mm((z - z_mean).transpose(0, 1), (z-z_mean))
                 cov = cov - torch.diag(torch.diag(cov)).to(device)
                 cov = torch.sum(cov*cov)
-                loss += cov_penalty * cov
+                cov = cov_penalty * cov
+                loss = reconstruction_loss + cov
 
                 # Packpropagate and update weights
                 model.zero_grad()
@@ -98,12 +99,13 @@ class Solver(object):
 
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
+                          "   Reconstruction loss: " + "{0:.6f}".format(reconstruction_loss.item()),
+                          "   Cov loss: " + "{0:.3f}".format(cov.item()) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
-                          " - Time for one iter " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
-                          "   Cov loss: " + "{0:.3f}".format(cov.item()) +
-                          "   z-mean: " + "{0:.3f}".format(z.mean().item()) +
-                          "   z-std: " + "{0:.3f}".format(z.std().item()))
+                          " - Time/iter " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
+                          "   z-mean: " + str(z.mean(dim=0).data) +
+                          "   z-std: " + str(z.std(dim=0).data))
 
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
