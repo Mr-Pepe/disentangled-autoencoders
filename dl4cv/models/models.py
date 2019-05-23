@@ -73,10 +73,10 @@ class PhysicsVAE(BaseModel):
 
         self.encoder = VanillaEncoder(
             in_channels=in_channels,
-            bottleneck_channels=self.physics_layer.num_latents
+            bottleneck_channels=self.physics_layer.num_latents_in
         )
         self.decoder = VanillaDecoder(
-            bottleneck_channels=self.physics_layer.num_latents,
+            bottleneck_channels=self.physics_layer.num_latents_out,
             out_channels=out_channels
         )
 

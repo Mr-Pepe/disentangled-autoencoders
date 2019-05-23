@@ -14,9 +14,9 @@ config = {
     'use_cuda': True,
 
     # Training continuation
-    'continue_training':   True,      # Specify whether to continue training with an existing model and solver
-    'model_path': '../saves/train20190522121127/model140',
-    'solver_path': '../saves/train20190522121127/solver140',
+    'continue_training':   False,      # Specify whether to continue training with an existing model and solver
+    'model_path': '../saves/train20190523144416/model20',
+    'solver_path': '../saves/train20190523144416/solver20',
 
     # Data
     'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
@@ -137,9 +137,9 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = VanillaVAE(
+    model = PhysicsVAE(
+        dt=config['dt'],
         len_in_sequence=config['len_inp_sequence'],
-        bottleneck_channels=6,
         greyscale=True
     )
     solver = Solver()
