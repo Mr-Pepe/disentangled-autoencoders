@@ -57,7 +57,7 @@ class AutoEncoder(BaseModel):
     def forward(self, x):
         z = self.encoder(x)
         y = self.decoder(z)
-        return y, z
+        return y, (z,)
 
 
 class PhysicsAutoEncoder(BaseModel):
@@ -85,7 +85,7 @@ class PhysicsAutoEncoder(BaseModel):
         z_t = self.encoder(x)
         z_t_plus_1 = self.physics_layer(z_t)
         y = self.decoder(z_t_plus_1)
-        return y, z_t
+        return y, tuple(z_t,)
 
 
 class VariationalAutoEncoder(BaseModel):
@@ -97,10 +97,10 @@ class VariationalAutoEncoder(BaseModel):
 
         self.encoder = VanillaEncoder(
             in_channels=len_in_sequence,
-            bottleneck_channels=z_dim*2
+            z_dim=z_dim*2
         )
         self.decoder = VanillaDecoder(
-            bottleneck_channels=z_dim,
+            z_dim=z_dim,
             out_channels=1
         )
 
@@ -114,4 +114,4 @@ class VariationalAutoEncoder(BaseModel):
         z = utils.reparametrize(mu, logvar)
         y = self.decoder(z)
 
-        return y, mu, logvar
+        return y, (mu, logvar)

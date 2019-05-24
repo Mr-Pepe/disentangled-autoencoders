@@ -4,12 +4,16 @@ import os
 import pickle
 import time
 
+from dl4cv.utils import kl_divergence
+
 
 class Solver(object):
 
     def __init__(self):
         self.history = {'train_loss_history': [],
-                        'val_loss_history'  : []
+                        'val_loss_history'  : [],
+                        'kl_divergence_history': [],
+                        'cov_history': []
                         }
 
         self.optim = []
@@ -21,7 +25,7 @@ class Solver(object):
               num_epochs=10, max_train_time_s=None,
               train_loader=None, val_loader=None,
               log_after_iters=1, save_after_epochs=None,
-              save_path='../saves/train', device='cpu', cov_penalty=0):
+              save_path='../saves/train', device='cpu', cov_penalty=0, beta=1):
 
         model.to(device)
 
@@ -30,6 +34,8 @@ class Solver(object):
         if start_epoch == 0:
             self.optim = optim
             self.criterion = loss_criterion
+
+        self.beta = beta
 
         iter_per_epoch = len(train_loader)
         print("Iterations per epoch: {}".format(iter_per_epoch))
@@ -73,18 +79,28 @@ class Solver(object):
                 y = y.to(device)
 
                 # Forward pass
-                y_pred, z = model(x)
+                y_pred, latent_stuff = model(x)
 
+                cov = torch.zeros(1, device=device)
+                total_kl_divergence = torch.zeros(1, device=device)
                 reconstruction_loss = self.criterion(y_pred, y)
 
-                # Calculate covariance
-                z = z[:,:,0,0]
-                z_mean = torch.mean(z, dim=0)
-                cov = 1/len(batch) * torch.mm((z - z_mean).transpose(0, 1), (z-z_mean))
-                cov = cov - torch.diag(torch.diag(cov)).to(device)
-                cov = torch.sum(cov*cov)
-                cov = cov_penalty * cov
-                loss = reconstruction_loss + cov
+                # KL-loss if latent_stuff contains mu and logvar
+                if len(latent_stuff) == 2:
+                    mu, logvar = latent_stuff
+                    total_kl_divergence, dim_wise_kld, mean_kld = kl_divergence(mu, logvar)
+
+                elif len(latent_stuff) == 1:
+                    z = latent_stuff[0]
+
+                    # Calculate covariance
+                    z = z[:,:,0,0]
+                    z_mean = torch.mean(z, dim=0)
+                    cov = 1/len(batch) * torch.mm((z - z_mean).transpose(0, 1), (z-z_mean))
+                    cov = cov - torch.diag(torch.diag(cov)).to(device)
+                    cov = torch.sum(cov*cov)
+
+                loss = reconstruction_loss + cov_penalty * cov + self.beta * total_kl_divergence
 
                 # Packpropagate and update weights
                 model.zero_grad()
@@ -97,15 +113,17 @@ class Solver(object):
                 self.history['train_loss_history'].append(loss.item())
                 train_loss_avg = (smooth_window_train-1)/smooth_window_train*train_loss_avg + 1/smooth_window_train*loss.item()
 
+                self.history['kl_divergence_history'].append(total_kl_divergence.item())
+                self.history['cov_history'].append(cov.item())
+
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
                           "   Reconstruction loss: " + "{0:.6f}".format(reconstruction_loss.item()),
                           "   Cov loss: " + "{0:.3f}".format(cov.item()) +
+                          "   KL loss: " + "{0:.6f}".format(total_kl_divergence.item()) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
-                          " - Time/iter " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
-                          "   z-mean: " + str(z.mean(dim=0).data) +
-                          "   z-std: " + str(z.std(dim=0).data))
+                          " - Time/iter " + str(int((time.time()-t_start_iter)*1000)) + "ms")
 
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
@@ -124,7 +142,7 @@ class Solver(object):
                 x = x.to(device)
                 y = y.to(device)
 
-                y_pred, z = model(x)
+                y_pred, latent_stuff = model(x)
 
                 val_loss += self.criterion(y, y_pred).item()
 

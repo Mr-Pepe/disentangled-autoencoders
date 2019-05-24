@@ -9,25 +9,19 @@ from torch.utils.data.sampler import SequentialSampler
 to_pil = transforms.ToPILImage()
 
 config = {
-
-    'data_path': '../datasets/ball/images',  # Path to directory of the image folder
-
-    'model_path': '../saves/train20190522122921/model170',
-
-    'batch_size': 100,
-    'num_show_images': 100,              # Number of images to show
+    'model_path': '../saves/train20190524114640/model140',
 }
 
 model = torch.load(config['model_path'])
 model.eval()
 
-z_dim = 6
+z_dim = 5
 
 for i_variable in range(z_dim):
     print("Modifying variable " + str(i_variable + 1))
     z = torch.zeros((z_dim,))
 
-    for value_variable in torch.linspace(-0.4, 0.4, 50):
+    for value_variable in torch.linspace(-0.1, 0.1, 10):
         z[i_variable] = value_variable
 
         plt.imshow(to_pil(model.decoder(z.view(1, z_dim, 1, 1)).detach()[0]), cmap='gray')

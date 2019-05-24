@@ -29,7 +29,7 @@ def kl_divergence(mu, logvar):
 def reparametrize(mu, logvar):
     # Taken from https://github.com/1Konny/Beta-VAE/blob/master/model.py
     std = logvar.div(2).exp()
-    eps = torch.Variable(std.data.new(std.size()).normal_())
+    eps = torch.autograd.Variable(std.data.new(std.size()).normal_())
     return mu + std*eps
 
 class CustomDataset(Dataset):
