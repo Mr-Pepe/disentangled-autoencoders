@@ -11,12 +11,13 @@ import random
 
 
 class CustomDataset(Dataset):
-    def __init__(self, path, transform, sequence_length):
+    def __init__(self, path, transform, sequence_length, load_meta=False):
         self.path = path
         self.transform = transform
         self.sequences = {}
         self.sequence_paths = []
         self.sequence_length = sequence_length
+        self.load_meta = load_meta
 
         # Find all sequences. Taken form torchvision.dataset.folder.make_dataset()
         for root, dir_names, _ in sorted(os.walk(path)):
@@ -50,7 +51,10 @@ class CustomDataset(Dataset):
         """
         seq_path = self.sequence_paths[index]
 
-        meta = read_csv(self.sequences[seq_path]['meta'])
+        if self.load_meta:
+            meta = read_csv(self.sequences[seq_path]['meta'])
+        else:
+            meta = 0
 
         images = [pil_loader(image_path) for image_path in self.sequences[seq_path]['images']]
 
