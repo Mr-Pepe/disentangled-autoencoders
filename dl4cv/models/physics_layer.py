@@ -13,16 +13,17 @@ class PhysicsPVA(nn.Module):
         d2 = 0.5 * (dt**2)
         self.forwardMatrix = nn.Parameter(
             torch.tensor(
-                [[1., 0., 0., 0., 0., 0.],
-                 [0., 1., 0., 0., 0., 0.],
-                 [dt, 0., 1., 0., 0., 0.],
-                 [0., dt, 0., 1., 0., 0.],
-                 [d2, 0., dt, 0., 1., 0.],
-                 [0., d2, 0., dt, 0., 1.]],
+                [[1., 0.],
+                 [0., 1.],
+                 [dt, 0.],
+                 [0., dt],
+                 [d2, 0.],
+                 [0., d2]],
             )
         )
         self.forwardMatrix.requires_grad = False
-        self.num_latents = 6
+        self.num_latents_in = 6
+        self.num_latents_out = 2
 
     def forward(self, x):
         """

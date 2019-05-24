@@ -9,6 +9,7 @@ import torch
 from dl4cv.models.encoder import VanillaEncoder
 from dl4cv.models.physics_layer import PhysicsPVA
 from dl4cv.models.decoder import VanillaDecoder
+import dl4cv.utils as utils
 
 
 class BaseModel(nn.Module):
@@ -31,9 +32,9 @@ class BaseModel(nn.Module):
         torch.save(self.cpu(), path)
 
 
-class VanillaVAE(BaseModel):
-    def __init__(self, len_in_sequence, bottleneck_channels, greyscale=False):
-        super(VanillaVAE, self).__init__()
+class AutoEncoder(BaseModel):
+    def __init__(self, len_in_sequence, z_dim, greyscale=False):
+        super(AutoEncoder, self).__init__()
         # input frames get concatenated, in_channels depends on the length
         # of the sequences
         # number of output channels depend only on using grayscale or not
@@ -46,22 +47,22 @@ class VanillaVAE(BaseModel):
 
         self.encoder = VanillaEncoder(
             in_channels=in_channels,
-            bottleneck_channels=bottleneck_channels
+            z_dim=z_dim
         )
         self.decoder = VanillaDecoder(
-            bottleneck_channels=bottleneck_channels,
+            z_dim=z_dim,
             out_channels=out_channels
         )
 
     def forward(self, x):
         z = self.encoder(x)
         y = self.decoder(z)
-        return y, z
+        return y, (z,)
 
 
-class PhysicsVAE(BaseModel):
+class PhysicsAutoEncoder(BaseModel):
     def __init__(self, dt, len_in_sequence, greyscale=False):
-        super(PhysicsVAE, self).__init__()
+        super(PhysicsAutoEncoder, self).__init__()
         if greyscale:
             in_channels = len_in_sequence
             out_channels = 1
@@ -73,10 +74,10 @@ class PhysicsVAE(BaseModel):
 
         self.encoder = VanillaEncoder(
             in_channels=in_channels,
-            bottleneck_channels=self.physics_layer.num_latents
+            z_dim=self.physics_layer.num_latents_in
         )
         self.decoder = VanillaDecoder(
-            bottleneck_channels=self.physics_layer.num_latents,
+            z_dim=self.physics_layer.num_latents_out,
             out_channels=out_channels
         )
 
@@ -84,4 +85,33 @@ class PhysicsVAE(BaseModel):
         z_t = self.encoder(x)
         z_t_plus_1 = self.physics_layer(z_t)
         y = self.decoder(z_t_plus_1)
-        return y, z_t
+        return y, tuple(z_t,)
+
+
+class VariationalAutoEncoder(BaseModel):
+    """"This VAE generates means and log-variances of
+    the latent variables and samples from those distributions"""
+    def __init__(self, len_in_sequence, z_dim):
+        super(VariationalAutoEncoder, self).__init__()
+        self.z_dim = z_dim
+
+        self.encoder = VanillaEncoder(
+            in_channels=len_in_sequence,
+            z_dim=z_dim*2
+        )
+        self.decoder = VanillaDecoder(
+            z_dim=z_dim,
+            out_channels=1
+        )
+
+
+    def forward(self, x):
+        # Taken from https://github.com/1Konny/Beta-VAE/blob/master/model.py
+        z_params = self.encoder(x)
+        mu = z_params[:, :self.z_dim]
+        logvar = z_params[:, self.z_dim:]
+
+        z = utils.reparametrize(mu, logvar)
+        y = self.decoder(z)
+
+        return y, (mu, logvar)

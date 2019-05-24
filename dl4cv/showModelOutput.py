@@ -30,14 +30,7 @@ def eval_model(model, samples):
 
         x, y, meta = sample
 
-        y_pred, z = model(torch.unsqueeze(x, 0))
-        print(z.view(z.numel()).data)
-        # print(meta.data)
-
-        if all_z.numel() == 0:
-            all_z = z.view(z.numel(), 1)
-        else:
-            all_z = torch.cat((all_z, z.view(z.numel(), 1)), 1)
+        y_pred, latent_stuff = model(torch.unsqueeze(x, 0))
 
         if config['show_images']:
 
@@ -62,9 +55,6 @@ def eval_model(model, samples):
 
             plt.show(block=True)
 
-    for i_zdim in range(all_z.shape[0]):
-        plt.plot(all_z[i_zdim, :].detach().numpy())
-    plt.show()
 
 sequence_length = 4  # 3 images as input sequence, 1 predicted image
 
