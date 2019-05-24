@@ -31,9 +31,9 @@ class BaseModel(nn.Module):
         torch.save(self.cpu(), path)
 
 
-class VanillaVAE(BaseModel):
-    def __init__(self, len_in_sequence, bottleneck_channels, greyscale=False):
-        super(VanillaVAE, self).__init__()
+class AutoEncoder(BaseModel):
+    def __init__(self, len_in_sequence, z_dim, greyscale=False):
+        super(AutoEncoder, self).__init__()
         # input frames get concatenated, in_channels depends on the length
         # of the sequences
         # number of output channels depend only on using grayscale or not
@@ -46,10 +46,10 @@ class VanillaVAE(BaseModel):
 
         self.encoder = VanillaEncoder(
             in_channels=in_channels,
-            bottleneck_channels=bottleneck_channels
+            z_dim=z_dim
         )
         self.decoder = VanillaDecoder(
-            bottleneck_channels=bottleneck_channels,
+            z_dim=z_dim,
             out_channels=out_channels
         )
 
@@ -73,10 +73,10 @@ class PhysicsVAE(BaseModel):
 
         self.encoder = VanillaEncoder(
             in_channels=in_channels,
-            bottleneck_channels=self.physics_layer.num_latents_in
+            z_dim=self.physics_layer.num_latents_in
         )
         self.decoder = VanillaDecoder(
-            bottleneck_channels=self.physics_layer.num_latents_out,
+            z_dim=self.physics_layer.num_latents_out,
             out_channels=out_channels
         )
 

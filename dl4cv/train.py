@@ -137,9 +137,9 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = PhysicsVAE(
-        dt=config['dt'],
+    model = AutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
+        z_dim=5,
         greyscale=True
     )
     solver = Solver()
