@@ -1,10 +1,7 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torchvision.transforms as transforms
 
-from dl4cv.utils import CustomDataset
-from torch.utils.data.sampler import SequentialSampler
 
 to_pil = transforms.ToPILImage()
 
