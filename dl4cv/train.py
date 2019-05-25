@@ -1,9 +1,8 @@
 import torch
-import pickle
 import torch.nn as nn
 from torchvision import transforms
 
-from dl4cv.utils import CustomDataset
+from dl4cv.dataset_utils import CustomDataset, CustomDatasetRAM
 
 from dl4cv.models.models import AutoEncoder, PhysicsAutoEncoder, VariationalAutoEncoder
 from dl4cv.solver import Solver
@@ -72,13 +71,14 @@ sequence_length = config['len_inp_sequence'] + config['len_out_sequence']
 
 print("Loading dataset with sequence length {}...".format(sequence_length))
 
-dataset = CustomDataset(
+dataset = CustomDatasetRAM(
     config['data_path'],
     transform=transforms.Compose([
         transforms.Grayscale(),
         transforms.ToTensor()
     ]),
-    sequence_length=sequence_length
+    sequence_length=sequence_length,
+    load_meta=False
 )
 
 

@@ -1,8 +1,7 @@
-import os
 import torch
 import torchvision.transforms as transforms
 
-from dl4cv.utils import EvalLatentDataset
+from dl4cv.dataset_utils import CustomDataset
 from torch.utils.data import DataLoader
 
 LATENTS = ['px', 'py', 'vx', 'vy', 'ax', 'ay']
@@ -15,7 +14,8 @@ config = {
 
 
 def eval_latent(encoder, data_loader):
-    x, meta = next(iter(data_loader))
+    x, y, meta = next(iter(data_loader))
+    x = torch.cat([x, y], dim=0)
     z = encoder(x)
     z = torch.flatten(z, start_dim=1)
     for i in range(len(LATENTS)):
@@ -23,13 +23,14 @@ def eval_latent(encoder, data_loader):
               % (LATENTS[i], meta[:, i].item(), z[:, i].item()))
 
 
-dataset = EvalLatentDataset(
+dataset = CustomDataset(
     path=config['data_path'],
     transform=transforms.Compose([
         transforms.Grayscale(),
         transforms.ToTensor()
     ]),
-    sequence_length=config['sequence_length']
+    sequence_length=config['sequence_length'],
+    load_meta=True
 )
 
 data_loader = DataLoader(

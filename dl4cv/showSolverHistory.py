@@ -1,5 +1,3 @@
-import pickle
-import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from dl4cv.solver import Solver
