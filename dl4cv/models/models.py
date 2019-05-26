@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch
 
 from dl4cv.models.encoder import VanillaEncoder
-from dl4cv.models.physics_layer import PhysicsPVA
+from dl4cv.models.physics_layer import PhysicsPVA, PhysicsPV
 from dl4cv.models.decoder import VanillaDecoder
 import dl4cv.utils as utils
 
@@ -104,7 +104,6 @@ class VariationalAutoEncoder(BaseModel):
             out_channels=1
         )
 
-
     def forward(self, x):
         # Taken from https://github.com/1Konny/Beta-VAE/blob/master/model.py
         z_params = self.encoder(x)
@@ -115,3 +114,37 @@ class VariationalAutoEncoder(BaseModel):
         y = self.decoder(z)
 
         return y, (mu, logvar)
+
+
+class AutoEncoderPV(BaseModel):
+    """
+    Auto Encoder which has a physics layer in the bottleneck to learn
+    position and the constant velocity
+    """
+
+    def __init__(self, dt, len_in_sequence, greyscale=False):
+        super(AutoEncoderPV, self).__init__()
+        if greyscale:
+            in_channels = len_in_sequence
+            out_channels = 1
+        else:
+            in_channels = len_in_sequence * 3
+            out_channels = 3
+
+        self.physics_layer = PhysicsPV(dt=dt)
+
+        self.encoder = VanillaEncoder(
+            in_channels=in_channels,
+            z_dim=self.physics_layer.num_latents_in
+        )
+        self.decoder = VanillaDecoder(
+            z_dim=self.physics_layer.num_latents_out,
+            out_channels=out_channels
+        )
+
+    def forward(self, x):
+        z_t = self.encoder(x)
+        z_t_plus_1 = self.physics_layer(z_t)
+        y2 = self.decoder(z_t)
+        y3 = self.decoder(z_t_plus_1)
+        return y2, y3, z_t
