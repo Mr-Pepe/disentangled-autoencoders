@@ -100,7 +100,11 @@ class Solver(object):
                 p3_loss = px3_loss + py3_loss
                 v2_loss = vx2_loss + vy2_loss
 
-                loss = rec_loss_2 + rec_loss_3 + p2_loss + p3_loss + 2 * v2_loss
+                loss = 1 * rec_loss_2 + \
+                       1 * rec_loss_3 + \
+                       10 * p2_loss + \
+                       10 * p3_loss + \
+                       200 * v2_loss
 
                 # Back-propagate and update weights
                 model.zero_grad()
@@ -194,8 +198,6 @@ class Solver(object):
 
         if self.stop_reason is "":
             self.stop_reason = "Reached number of specified epochs."
-
-
 
         # Save model and solver after training
         os.makedirs(save_path, exist_ok=True)
