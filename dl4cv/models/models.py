@@ -145,6 +145,6 @@ class AutoEncoderPV(BaseModel):
     def forward(self, x):
         z_t = self.encoder(x)
         z_t_plus_1 = self.physics_layer(z_t)
-        y2 = self.decoder(z_t)
+        y2 = self.decoder(z_t[:, :2])
         y3 = self.decoder(z_t_plus_1)
-        return y2, y3, z_t
+        return y2, y3, z_t, z_t_plus_1
