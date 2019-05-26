@@ -148,3 +148,60 @@ class AutoEncoderPV(BaseModel):
         y2 = self.decoder(z_t[:, :2])
         y3 = self.decoder(z_t_plus_1)
         return y2, y3, z_t, z_t_plus_1
+
+
+class AutoEncoderIdea2(BaseModel):
+    """
+    Auto Encoder which has a physics layer in the bottleneck to learn
+    position and the constant velocity
+    """
+
+    def __init__(self, dt, len_in_sequence, greyscale=False):
+        super(AutoEncoderIdea2, self).__init__()
+        if greyscale:
+            in_channels = len_in_sequence
+            out_channels = 1
+        else:
+            in_channels = len_in_sequence * 3
+            out_channels = 3
+
+        self.physics_layer = PhysicsPV(dt=dt)
+
+        # Operation to augment a horizontal flip in latent space
+        self.hor_flip_op = nn.Parameter(
+            torch.tensor([-1., 1., -1., 1.])[:, None, None]
+        )
+        self.hor_flip_op.requires_grad = False
+
+        # Operation to augment a vertical flip in latent space
+        self.ver_flip_op = nn.Parameter(
+            torch.tensor([1., -1., 1., -1.])[:, None, None]
+        )
+        self.ver_flip_op.requires_grad = False
+
+        self.encoder = VanillaEncoder(
+            in_channels=in_channels,
+            z_dim=self.physics_layer.num_latents_in
+        )
+        self.decoder = VanillaDecoder(
+            z_dim=self.physics_layer.num_latents_out,
+            out_channels=out_channels
+        )
+
+    def forward(self, x):
+        z_t = self.encoder(x)
+        z_t_plus_1 = self.physics_layer(z_t)
+        y2 = self.decoder(z_t[:, :2])
+        y3 = self.decoder(z_t_plus_1)
+
+        z_t_hor_flip = z_t * self.hor_flip_op
+        z_t_hor_flip_plus_1 = self.physics_layer(z_t_hor_flip)
+        y2_hor_flip = self.decoder(z_t_hor_flip[:, :2])
+        y3_hor_flip = self.decoder(z_t_hor_flip_plus_1)
+
+        z_t_ver_flip = z_t * self.ver_flip_op
+        z_t_ver_flip_plus_1 = self.physics_layer(z_t_ver_flip)
+        y2_ver_flip = self.decoder(z_t_ver_flip[:, :2])
+        y3_ver_flip = self.decoder(z_t_ver_flip_plus_1)
+
+        return y2, y3, y2_hor_flip, y3_hor_flip, y2_ver_flip, y3_ver_flip
