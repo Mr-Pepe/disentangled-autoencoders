@@ -248,10 +248,14 @@ class ForwardDatasetIdea2RAM(Dataset):
 
         imgs = [self.transform_normal(img) for img in seq['images']]
 
-        y_normal = self.transform_normal(seq['images'][-1])
-        y_horizontal_flip = self.transform_horizontal(seq['images'][-1])
-        y_vertical_flip = self.transform_vertical(seq['images'][-1])
+        y3 = self.transform_normal(seq['images'][-1])
+        y3_hor_flip = self.transform_horizontal(seq['images'][-1])
+        y3_ver_flip = self.transform_vertical(seq['images'][-1])
 
-        x = torch.cat(imgs[:, :-1])
+        y2 = self.transform_normal(seq['images'][-2])
+        y2_hor_flip = self.transform_horizontal(seq['images'][-2])
+        y2_ver_flip = self.transform_vertical(seq['images'][-2])
 
-        return x, y_normal, y_horizontal_flip, y_vertical_flip, meta
+        x = torch.cat(imgs[:-1])
+
+        return x, y2, y2_hor_flip, y2_ver_flip, y3, y3_hor_flip, y3_ver_flip, meta

@@ -7,7 +7,7 @@ LATENTS = ['px', 'py', 'vx', 'vy']
 
 config = {
     'data_path': '../../datasets/noAcceleration',
-    'model_path': '../../saves/train20190526135221/model100',
+    'model_path': '../../saves/train20190526222036/model20',
 }
 
 

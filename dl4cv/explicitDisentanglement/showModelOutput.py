@@ -12,7 +12,7 @@ config = {
 
     'data_path': '../../datasets/noAcceleration',  # Path to directory of the image folder
 
-    'model_path': '../../saves/train20190526135221/model100',
+    'model_path': '../../saves/train20190526222036/model20',
 
     'batch_size': 1000,
     'num_show_images': 10,              # Number of images to show
