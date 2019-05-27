@@ -115,3 +115,45 @@ class VariationalAutoEncoder(BaseModel):
         y = self.decoder(z)
 
         return y, (mu, logvar)
+
+
+class VariationalPhysicsAutoEncoder(BaseModel):
+
+    def __init__(self, len_in_sequence=3, z_dim=6):
+        super(VariationalPhysicsAutoEncoder, self).__init__()
+        self.z_dim = z_dim
+
+        self.encoder = VanillaEncoder(
+            in_channels=len_in_sequence,
+            z_dim=z_dim * 2
+        )
+        self.decoder = VanillaDecoder(
+            z_dim=2,
+            out_channels=1
+        )
+
+        self.physics_layer = PhysicsPVA(dt=1/30)
+
+    def forward(self, x):
+        z_t, mu, logvar = self._encode(x)
+
+        z_t_plus_1 = self._physics(z_t)
+
+        y = self._decode(z_t_plus_1)
+
+        return y, (mu, logvar)
+
+    def _encode(self, x):
+        z_params = self.encoder(x)
+        mu = z_params[:, :self.z_dim]
+        logvar = z_params[:, self.z_dim:]
+
+        z_t = utils.reparametrize(mu, logvar)
+
+        return z_t, mu, logvar
+
+    def _physics(self, z_t):
+        return self.physics_layer(z_t)
+
+    def _decode(self, z_t_plus_1):
+        return self.decoder(z_t_plus_1)
