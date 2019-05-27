@@ -135,15 +135,15 @@ class VariationalPhysicsAutoEncoder(BaseModel):
         self.physics_layer = PhysicsPVA(dt=1/30)
 
     def forward(self, x):
-        z_t, mu, logvar = self._encode(x)
+        z_t, mu, logvar = self.encode(x)
 
-        z_t_plus_1 = self._physics(z_t)
+        z_t_plus_1 = self.physics(z_t)
 
-        y = self._decode(z_t_plus_1)
+        y = self.decode(z_t_plus_1)
 
         return y, (mu, logvar)
 
-    def _encode(self, x):
+    def encode(self, x):
         z_params = self.encoder(x)
         mu = z_params[:, :self.z_dim]
         logvar = z_params[:, self.z_dim:]
@@ -152,8 +152,8 @@ class VariationalPhysicsAutoEncoder(BaseModel):
 
         return z_t, mu, logvar
 
-    def _physics(self, z_t):
+    def physics(self, z_t):
         return self.physics_layer(z_t)
 
-    def _decode(self, z_t_plus_1):
+    def decode(self, z_t_plus_1):
         return self.decoder(z_t_plus_1)

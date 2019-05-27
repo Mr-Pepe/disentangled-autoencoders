@@ -10,9 +10,9 @@ to_pil = transforms.ToPILImage()
 
 config = {
     'data_path': '../datasets/ball',
-    'model_path': '../saves/train20190527150243/model200',
-    'sequence_length': 2,
-    'batch_size': 4096
+    'model_path': '../saves/train20190527152043/model70',
+    'sequence_length': 4,
+    'batch_size': 256
 }
 
 dataset = CustomDataset(

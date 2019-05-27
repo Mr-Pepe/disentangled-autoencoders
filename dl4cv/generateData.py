@@ -20,7 +20,7 @@ Otherwise the script will create only black images
 """
 
 USE_NUM_IMAGES = True
-NUM_SEQUENCES = 10
+NUM_SEQUENCES = 4096+256
 SEQUENCE_LENGTH = 4 # including input and output
 
 T_FRAME = 1/30
@@ -76,11 +76,11 @@ y_min = BALL_RADIUS
 x_all = torch.normal(WINDOW_SIZE_X/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_X/4).int()
 y_all = torch.normal(WINDOW_SIZE_Y/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_Y/4).int()
 
-vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
-vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
+vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*150)
+vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*150)
 
-ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
-ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
+ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*100)
+ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*100)
 
 for i_sequence in range(NUM_SEQUENCES):
 

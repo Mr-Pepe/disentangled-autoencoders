@@ -119,7 +119,6 @@ class Solver(object):
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
                           "   Reconstruction loss: " + "{0:.6f}".format(reconstruction_loss.item()),
-                          "   Cov loss: " + "{0:.3f}".format(cov.item()) +
                           "   KL loss: " + "{0:.6f}".format(total_kl_divergence.item()) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +

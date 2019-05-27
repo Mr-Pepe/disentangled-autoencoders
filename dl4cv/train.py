@@ -4,7 +4,7 @@ from torchvision import transforms
 
 from dl4cv.dataset_utils import CustomDataset, CustomDatasetRAM
 
-from dl4cv.models.models import AutoEncoder, PhysicsAutoEncoder, VariationalAutoEncoder
+from dl4cv.models.models import AutoEncoder, PhysicsAutoEncoder, VariationalAutoEncoder, VariationalPhysicsAutoEncoder
 from dl4cv.solver import Solver
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 
@@ -36,7 +36,7 @@ config = {
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
-    'beta': 0,                          # beta-coefficient for disentangling
+    'beta': 1e-3,                          # beta-coefficient for disentangling
 
     ## Logging ##
     'log_interval': 3,           # Number of mini-batches after which to print training loss
@@ -138,9 +138,8 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = VariationalAutoEncoder(
+    model = VariationalPhysicsAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
-        z_dim=5
     )
     solver = Solver()
     loss_criterion = nn.MSELoss()
