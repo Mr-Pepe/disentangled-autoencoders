@@ -23,7 +23,7 @@ WINDOW_SIZE_Y = 32
 BALL_RADIUS = 5
 V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
 
-save_dir_path = "../datasets/ball"
+save_dir_path = "../../datasets/noAcceleration"
 
 os.makedirs(save_dir_path, exist_ok=True)
 
@@ -71,11 +71,11 @@ y_min = BALL_RADIUS
 x_all = torch.normal(WINDOW_SIZE_X/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_X/4).int()
 y_all = torch.normal(WINDOW_SIZE_Y/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_Y/4).int()
 
-vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
-vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
+vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*40)
+vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*40)
 
-ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
-ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
+ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*0)
+ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*0)
 
 for i_sequence in range(NUM_SEQUENCES):
 
