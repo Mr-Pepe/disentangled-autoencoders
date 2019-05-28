@@ -22,7 +22,9 @@ class Solver(object):
               num_epochs=10, max_train_time_s=None,
               train_loader=None, val_loader=None,
               log_after_iters=1, save_after_epochs=None,
-              save_path='../saves/train', device='cpu', cov_penalty=0, beta=1):
+              save_path='../saves/train', device='cpu', cov_penalty=0, beta=1,
+              rec2_weight=1, rec3_weight=1, pos2_weight=1e4, pos3_weight=1e4,
+              vel2_weight=2e4):
 
         model.to(device)
 
@@ -81,11 +83,11 @@ class Solver(object):
 
                 rec_loss_n2 = self.criterion(y2_pred_n, imgs_normal[:, -2].unsqueeze(dim=1))
                 rec_loss_m2 = self.criterion(y2_pred_m, imgs_mirrored[:, -2].unsqueeze(dim=1))
-                rec_loss_2 = rec_loss_n2 + rec_loss_m2
+                rec_loss_2 = rec2_weight * (rec_loss_n2 + rec_loss_m2)
 
                 rec_loss_n3 = self.criterion(y3_pred_n, imgs_normal[:, -1].unsqueeze(dim=1))
                 rec_loss_m3 = self.criterion(y3_pred_m, imgs_mirrored[:, -1].unsqueeze(dim=1))
-                rec_loss_3 = rec_loss_n3 + rec_loss_m3
+                rec_loss_3 = rec3_weight * (rec_loss_n3 + rec_loss_m3)
 
                 px2_loss = self.criterion(z_t_n[:, 0], -z_t_m[:, 0])
                 py2_loss = self.criterion(z_t_n[:, 1], z_t_m[:, 1])
@@ -96,15 +98,15 @@ class Solver(object):
                 vx2_loss = self.criterion(z_t_n[:, 2], -z_t_m[:, 2])
                 vy2_loss = self.criterion(z_t_n[:, 3], z_t_m[:, 3])
 
-                p2_loss = px2_loss + py2_loss
-                p3_loss = px3_loss + py3_loss
-                v2_loss = vx2_loss + vy2_loss
+                p2_loss = pos2_weight * (px2_loss + py2_loss)
+                p3_loss = pos3_weight * (px3_loss + py3_loss)
+                v2_loss = vel2_weight * (vx2_loss + vy2_loss)
 
-                loss = 1 * rec_loss_2 + \
-                       1 * rec_loss_3 + \
-                       10 * p2_loss + \
-                       10 * p3_loss + \
-                       200 * v2_loss
+                loss = rec_loss_2 + \
+                       rec_loss_3 + \
+                       p2_loss + \
+                       p3_loss + \
+                       v2_loss
 
                 # Back-propagate and update weights
                 model.zero_grad()
@@ -151,29 +153,29 @@ class Solver(object):
 
                 rec_loss_n2 = self.criterion(y2_pred_n, imgs_normal[:, -2].unsqueeze(dim=1))
                 rec_loss_m2 = self.criterion(y2_pred_m, imgs_mirrored[:, -2].unsqueeze(dim=1))
-                rec_loss_2 = rec_loss_n2 + rec_loss_m2
+                rec_loss_2 = rec2_weight * (rec_loss_n2 + rec_loss_m2)
 
                 rec_loss_n3 = self.criterion(y3_pred_n, imgs_normal[:, -1].unsqueeze(dim=1))
                 rec_loss_m3 = self.criterion(y3_pred_m, imgs_mirrored[:, -1].unsqueeze(dim=1))
-                rec_loss_3 = rec_loss_n3 + rec_loss_m3
+                rec_loss_3 = rec3_weight * (rec_loss_n3 + rec_loss_m3)
 
                 px2_loss = self.criterion(z_t_n[:, 0], -z_t_m[:, 0])
                 py2_loss = self.criterion(z_t_n[:, 1], z_t_m[:, 1])
-                p2_loss = px2_loss + py2_loss
+                p2_loss = pos2_weight * (px2_loss + py2_loss)
 
                 px3_loss = self.criterion(z_t_plus_1_n[:, 0], -z_t_plus_1_m[:, 0])
                 py3_loss = self.criterion(z_t_plus_1_n[:, 1], z_t_plus_1_m[:, 1])
-                p3_loss = px3_loss + py3_loss
+                p3_loss = pos3_weight * (px3_loss + py3_loss)
 
                 vx2_loss = self.criterion(z_t_n[:, 2], -z_t_m[:, 2])
                 vy2_loss = self.criterion(z_t_n[:, 3], z_t_m[:, 3])
-                v2_loss = vx2_loss + vy2_loss
+                v2_loss = vel2_weight * (vx2_loss + vy2_loss)
 
-                val_loss += 1 * rec_loss_2 + \
-                            1 * rec_loss_3 + \
-                            10 * p2_loss + \
-                            10 * p3_loss + \
-                            200 * v2_loss
+                val_loss += rec_loss_2 + \
+                            rec_loss_3 + \
+                            p2_loss + \
+                            p3_loss + \
+                            v2_loss
 
             val_loss /= num_val_batches
             self.history['val_loss_history'].append(val_loss)
