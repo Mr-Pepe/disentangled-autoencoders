@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch
 
 from dl4cv.models.encoder import VanillaEncoder
-from dl4cv.models.physics_layer import PhysicsPVAtoP, PhysicsPVAtoPVA
+from dl4cv.models.physics_layer import PhysicsPVA
 from dl4cv.models.decoder import VanillaDecoder
 import dl4cv.utils as utils
 
@@ -119,20 +119,20 @@ class VariationalAutoEncoder(BaseModel):
 
 class VariationalPhysicsAutoEncoder(BaseModel):
 
-    def __init__(self, len_in_sequence, len_out_sequence, z_dim=6):
+    def __init__(self, len_in_sequence, len_out_sequence, z0_dim=6, z1_dim=6):
         super(VariationalPhysicsAutoEncoder, self).__init__()
-        self.z_dim = z_dim
+        self.z_dim = z0_dim
 
         self.encoder = VanillaEncoder(
             in_channels=len_in_sequence,
-            z_dim=z_dim * 2
+            z_dim=z0_dim * 2
         )
         self.decoder = VanillaDecoder(
-            z_dim=2,
+            z_dim=z1_dim,
             out_channels=len_out_sequence
         )
 
-        self.physics_layer = PhysicsPVAtoP(dt=1/30)
+        self.physics_layer = PhysicsPVA(dt=1/30, out_dim=z1_dim)
 
     def forward(self, x):
         z_t, mu, logvar = self.encode(x)
@@ -159,44 +159,3 @@ class VariationalPhysicsAutoEncoder(BaseModel):
         return self.decoder(z_t_plus_1)
 
 
-class VariationalPhysicsAutoEncoderPVAtoPVA(BaseModel):
-
-    def __init__(self, len_in_sequence, len_out_sequence, z_dim=6):
-        super(VariationalPhysicsAutoEncoderPVAtoPVA, self).__init__()
-        self.z_dim = z_dim
-
-        self.encoder = VanillaEncoder(
-            in_channels=len_in_sequence,
-            z_dim=z_dim * 2
-        )
-        self.decoder = VanillaDecoder(
-            z_dim=6,
-            out_channels=len_out_sequence
-        )
-
-        self.physics_layer = PhysicsPVAtoPVA(dt=1/30)
-
-    def forward(self, x):
-        z_t, mu, logvar = self.encode(x)
-
-        z_t_plus_1 = self.physics(z_t)
-
-        y = self.decode(z_t_plus_1)
-        print(y.shape)
-
-        return y, (mu, logvar)
-
-    def encode(self, x):
-        z_params = self.encoder(x)
-        mu = z_params[:, :self.z_dim]
-        logvar = z_params[:, self.z_dim:]
-
-        z_t = utils.reparametrize(mu, logvar)
-
-        return z_t, mu, logvar
-
-    def physics(self, z_t):
-        return self.physics_layer(z_t)
-
-    def decode(self, z_t_plus_1):
-        return self.decoder(z_t_plus_1)
