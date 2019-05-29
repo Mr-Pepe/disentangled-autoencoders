@@ -44,26 +44,22 @@ def eval_model(model, samples):
             # Plot input sequence
             for i in range(config['len_inp_sequence']):
                 axes[0, i].imshow(to_pil(x[i]), cmap='gray')
-                # axes[0, i].set_title('frame t{}'.format(-(sequence_length - 1) + i))
-                # plt.show()
 
             for i in range(config['len_out_sequence']):
                 # Plot ground truth
                 axes[1, i].imshow(to_pil(y[i]), cmap='gray')
-                # axes[1, i].set_title('Ground truth t+{}'.format(i + 1 - inp_length))
 
                 # Plot prediction
                 axes[2, i].imshow(to_pil(y_pred[0, i]), cmap='gray')
-                # axes[2, i].set_title('Prediction t+{}'.format(i + 1 - inp_length))
 
                 # Plot Deviation
                 diff = abs(y_pred[0, i] - y[i])
                 axes[3, i].imshow(to_pil(diff), cmap='gray')
-                # axes[3, i].set_title('Deviation t+{}'.format(i + 1 - inp_length))
 
             # Remove axis ticks
             for ax in axes.reshape(-1):
-                ax.axis('off')
+                ax.get_xaxis().set_visible(False)
+                ax.get_yaxis().set_tick_params(which='both', length=0, labelleft=False)
 
             # Label rows
             labels = {0: 'Input sequence',
@@ -73,8 +69,9 @@ def eval_model(model, samples):
 
             for i in range(num_rows):
                 plt.sca(axes[i, 0])
-                plt.tick_params(labelleft=True)
-                axes[i, 0].set_ylabel(labels[i])
+                axes[i, 0].set_ylabel(labels[i], rotation=0, size=14, ha='right', labelpad=20)
+
+            f.tight_layout()
 
             plt.show(block=True)
 
