@@ -2,14 +2,14 @@ import torch
 import torch.nn as nn
 
 
-class PhysicsPVA(nn.Module):
+class PhysicsPVAtoP(nn.Module):
     """
     Equation of motion for a system which has position (P), velocity (V)
     and acceleration (A). Propagates the system one timestep (dt) forward
     assuming constant acceleration.
     """
     def __init__(self, dt: float):
-        super(PhysicsPVA, self).__init__()
+        super(PhysicsPVAtoP, self).__init__()
         d2 = 0.5 * (dt**2)
         self.forwardMatrix = nn.Parameter(
             torch.tensor(
@@ -24,6 +24,40 @@ class PhysicsPVA(nn.Module):
         self.forwardMatrix.requires_grad = False
         self.num_latents_in = 6
         self.num_latents_out = 2
+
+    def forward(self, x):
+        """
+        x.shape: [batch, 6, 1, 1]
+        return shape: [batch, 2, 1, 1]
+        """
+        return torch.mm(
+            x.flatten(start_dim=1),
+            self.forwardMatrix
+        )[:, :, None, None]
+
+
+class PhysicsPVAtoPVA(nn.Module):
+    """
+    Equation of motion for a system which has position (P), velocity (V)
+    and acceleration (A). Propagates the system one timestep (dt) forward
+    assuming constant acceleration.
+    """
+    def __init__(self, dt: float):
+        super(PhysicsPVAtoPVA, self).__init__()
+        d2 = 0.5 * (dt**2)
+        self.forwardMatrix = nn.Parameter(
+            torch.tensor(
+                [[1., 0., 0., 0., 0., 0.],
+                 [0., 1., 0., 0., 0., 0.],
+                 [dt, 0., 1., 0., 0., 0.],
+                 [0., dt, 0., 1., 0., 0.],
+                 [d2, 0., dt, 0., 1., 0.],
+                 [0., d2, 0., dt, 0., 1.]]
+            )
+        )
+        self.forwardMatrix.requires_grad = False
+        self.num_latents_in = 6
+        self.num_latents_out = 6
 
     def forward(self, x):
         """
