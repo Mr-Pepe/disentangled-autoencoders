@@ -62,7 +62,7 @@ class CustomDataset(Dataset):
                 self.sequences[seq_path]['images'] = [self.transform(pil_loader(img))
                                                       for img in self.sequences[seq_path]['images']]
 
-        print('\n', end='')
+            print('\n', end='')
 
     def __getitem__(self, index):
         """
