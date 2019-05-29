@@ -1,10 +1,7 @@
 import pygame
-import numpy as np
-import time
 import os
 import math
 import torch
-from torch import Tensor
 
 from dl4cv.utils import save_csv
 
@@ -21,7 +18,7 @@ Otherwise the script will create only black images
 
 USE_NUM_IMAGES = True
 NUM_SEQUENCES = 4096+256
-SEQUENCE_LENGTH = 4 # including input and output
+SEQUENCE_LENGTH = 6  # including input and output
 
 T_FRAME = 1/30
 WINDOW_SIZE_X = 32
@@ -64,6 +61,7 @@ def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
 
     return x_new, y_new, vx_new, vy_new
 
+
 screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
 
 
@@ -101,7 +99,6 @@ for i_sequence in range(NUM_SEQUENCES):
     )
 
     os.makedirs(save_path_sequence, exist_ok=True)
-
 
     for i_frame in range(SEQUENCE_LENGTH):
 
