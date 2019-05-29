@@ -8,8 +8,7 @@ from dl4cv.models.models import \
     AutoEncoder, \
     PhysicsAutoEncoder, \
     VariationalAutoEncoder, \
-    VariationalPhysicsAutoEncoder, \
-    VariationalPhysicsAutoEncoderPVAtoPVA
+    VariationalPhysicsAutoEncoder
 from dl4cv.solver import Solver
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 
@@ -72,9 +71,8 @@ else:
 
 """ Load dataset """
 
-sequence_length = config['len_inp_sequence'] + config['len_out_sequence']
 
-print("Loading dataset with sequence length {}...".format(sequence_length))
+print("Loading dataset with input sequence length {} and output sequence length {}...".format(config['len_inp_sequence'], config['len_out_sequence']))
 
 dataset = CustomDatasetRAM(
     config['data_path'],
@@ -82,7 +80,6 @@ dataset = CustomDatasetRAM(
         transforms.Grayscale(),
         transforms.ToTensor()
     ]),
-    sequence_length=sequence_length,
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
     load_meta=False
@@ -145,9 +142,11 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = VariationalPhysicsAutoEncoderPVAtoPVA(
+    model = VariationalPhysicsAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
-        len_out_sequence=config['len_out_sequence']
+        len_out_sequence=config['len_out_sequence'],
+        z0_dim=6,
+        z1_dim=6
     )
     solver = Solver()
     loss_criterion = nn.MSELoss()
