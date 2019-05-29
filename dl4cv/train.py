@@ -4,7 +4,12 @@ from torchvision import transforms
 
 from dl4cv.dataset_utils import CustomDataset, CustomDatasetRAM
 
-from dl4cv.models.models import AutoEncoder, PhysicsAutoEncoder, VariationalAutoEncoder, VariationalPhysicsAutoEncoder
+from dl4cv.models.models import \
+    AutoEncoder, \
+    PhysicsAutoEncoder, \
+    VariationalAutoEncoder, \
+    VariationalPhysicsAutoEncoder, \
+    VariationalPhysicsAutoEncoderPVAtoPVA
 from dl4cv.solver import Solver
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 
@@ -20,18 +25,18 @@ config = {
     # Data
     'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
     'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': False,             # Set overfit or regular training
+    'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    4096,       # Number of training samples for regular training
     'num_val_regular':      256,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 3,              # Length of training sequence
-    'len_out_sequence': 1,              # Number of generated images
+    'len_out_sequence': 3,              # Number of generated images
 
     'num_workers': 4,                   # Number of workers for data loading
 
     ## Hyperparameters ##
     'max_train_time_s': None,
-    'num_epochs': 400,                  # Number of epochs to train
+    'num_epochs': 100,                  # Number of epochs to train
     'batch_size': 256,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
@@ -78,6 +83,8 @@ dataset = CustomDatasetRAM(
         transforms.ToTensor()
     ]),
     sequence_length=sequence_length,
+    len_inp_sequence=config['len_inp_sequence'],
+    len_out_sequence=config['len_out_sequence'],
     load_meta=False
 )
 
@@ -138,8 +145,9 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = VariationalPhysicsAutoEncoder(
+    model = VariationalPhysicsAutoEncoderPVAtoPVA(
         len_in_sequence=config['len_inp_sequence'],
+        len_out_sequence=config['len_out_sequence']
     )
     solver = Solver()
     loss_criterion = nn.MSELoss()
