@@ -75,15 +75,12 @@ class CustomDatasetRAM(Dataset):
     Dataset which behaves exactly like the CustomDataset but loads
     the whole data in memory upon init which gives speedup during training
     """
-    def __init__(self, path, transform, sequence_length, len_inp_sequence,
+    def __init__(self, path, transform, len_inp_sequence,
                  len_out_sequence, load_meta=False):
-        self.sequence_length = sequence_length
         self.len_inp_sequence = len_inp_sequence
         self.len_out_sequence = len_out_sequence
         self.load_meta = load_meta
         self.sequences = []
-
-        assert sequence_length == len_inp_sequence + len_out_sequence
 
         for root, dir_names, _ in sorted(os.walk(path)):
             for dir_name in sorted(dir_names, key=lambda s: int(s.split("seq")[1])):
@@ -99,7 +96,7 @@ class CustomDatasetRAM(Dataset):
                     fnames = [fname for fname in fnames if fname != 'meta.csv']
 
                     for fname in sorted(fnames, key=lambda s: int(s.split("frame")[1].split(".")[0])):
-                        if has_file_allowed_extension(fname, IMG_EXTENSIONS) and len(sequence['images']) <= sequence_length:
+                        if has_file_allowed_extension(fname, IMG_EXTENSIONS):
                             img_path = os.path.join(seq_path, fname)
                             img = pil_loader(img_path)
                             img = transform(img)
@@ -119,6 +116,6 @@ class CustomDatasetRAM(Dataset):
             meta = 0
 
         x = torch.cat(seq['images'][:self.len_inp_sequence])
-        y = seq['images'][-self.len_out_sequence]
+        y = torch.cat(seq['images'][-self.len_out_sequence:])
 
         return x, y, meta
