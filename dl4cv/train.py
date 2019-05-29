@@ -2,13 +2,9 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 
-from dl4cv.dataset_utils import CustomDataset, CustomDatasetRAM
+from dl4cv.dataset_utils import CustomDataset
 
-from dl4cv.models.models import \
-    AutoEncoder, \
-    PhysicsAutoEncoder, \
-    VariationalAutoEncoder, \
-    VariationalPhysicsAutoEncoder
+from dl4cv.models.models import VariationalPhysicsAutoEncoder
 from dl4cv.solver import Solver
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 
@@ -23,6 +19,7 @@ config = {
 
     # Data
     'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
+    'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    4096,       # Number of training samples for regular training
@@ -61,20 +58,21 @@ if config['use_cuda'] and torch.cuda.is_available():
     device = torch.device("cuda")
     torch.cuda.manual_seed(seed)
     kwargs = {'pin_memory': True}
-    print("GPU available. Training on {}".format(device))
+    print("GPU available. Training on {}.".format(device))
 else:
     device = torch.device("cpu")
     torch.set_default_tensor_type('torch.FloatTensor')
     kwargs = {}
-    print("No GPU. Training on {}".format(device))
+    print("No GPU. Training on {}.".format(device))
 
 
 """ Load dataset """
 
 
-print("Loading dataset with input sequence length {} and output sequence length {}...".format(config['len_inp_sequence'], config['len_out_sequence']))
+print("Loading dataset with input sequence length {} and output sequence length {}...".format(
+        config['len_inp_sequence'], config['len_out_sequence']))
 
-dataset = CustomDatasetRAM(
+dataset = CustomDataset(
     config['data_path'],
     transform=transforms.Compose([
         transforms.Grayscale(),
@@ -82,7 +80,8 @@ dataset = CustomDatasetRAM(
     ]),
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
-    load_meta=False
+    load_meta=False,
+    load_to_ram=config['load_data_to_ram']
 )
 
 

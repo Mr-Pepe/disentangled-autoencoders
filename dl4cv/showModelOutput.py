@@ -83,14 +83,16 @@ inp_length = config['len_inp_sequence']
 out_length = config['len_out_sequence']
 sequence_length = inp_length + out_length
 
-dataset = CustomDatasetRAM(
+dataset = CustomDataset(
     config['data_path'],
     transform=transforms.Compose([
         transforms.Grayscale(),
         transforms.ToTensor()
     ]),
     len_inp_sequence=config['len_inp_sequence'],
-    len_out_sequence=config['len_out_sequence']
+    len_out_sequence=config['len_out_sequence'],
+    load_meta=False,
+    load_to_ram=False
 )
 
 data_loader = torch.utils.data.DataLoader(
