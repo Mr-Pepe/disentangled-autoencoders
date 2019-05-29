@@ -9,13 +9,18 @@ from dl4cv.utils import read_csv
 
 
 class CustomDataset(Dataset):
-    def __init__(self, path, transform, sequence_length, load_meta=False):
+    def __init__(self, path, transform, sequence_length, len_inp_sequence,
+                 len_out_sequence, load_meta=False):
         self.path = path
         self.transform = transform
         self.sequences = {}
         self.sequence_paths = []
         self.sequence_length = sequence_length
+        self.len_inp_sequence = len_inp_sequence
+        self.len_out_sequence = len_out_sequence
         self.load_meta = load_meta
+
+        assert sequence_length == len_inp_sequence + len_out_sequence
 
         # Find all sequences. Taken form torchvision.dataset.folder.make_dataset()
         for root, dir_names, _ in sorted(os.walk(path)):
@@ -32,7 +37,7 @@ class CustomDataset(Dataset):
 
                     fnames = [fname for fname in fnames if fname != 'meta.csv']
                     for fname in sorted(fnames, key=lambda s: int(s.split("frame")[1].split(".")[0])):
-                        if has_file_allowed_extension(fname, IMG_EXTENSIONS):
+                        if has_file_allowed_extension(fname, IMG_EXTENSIONS) and len(self.sequences[seq_path]['images']) <= sequence_length:
                             item_path = os.path.join(seq_path, fname)
                             self.sequences[seq_path]['images'].append(item_path)
 
@@ -56,8 +61,8 @@ class CustomDataset(Dataset):
 
         images = [self.transform(image) for image in images]
 
-        x = torch.cat(images[:-1], 0)
-        y = images[-1]
+        x = torch.cat(images[:self.len_inp_sequence], dim=0)
+        y = images[-self.len_out_sequence]
 
         return x, y, meta
 
@@ -70,10 +75,15 @@ class CustomDatasetRAM(Dataset):
     Dataset which behaves exactly like the CustomDataset but loads
     the whole data in memory upon init which gives speedup during training
     """
-    def __init__(self, path, transform, sequence_length, load_meta=False):
+    def __init__(self, path, transform, sequence_length, len_inp_sequence,
+                 len_out_sequence, load_meta=False):
         self.sequence_length = sequence_length
+        self.len_inp_sequence = len_inp_sequence
+        self.len_out_sequence = len_out_sequence
         self.load_meta = load_meta
         self.sequences = []
+
+        assert sequence_length == len_inp_sequence + len_out_sequence
 
         for root, dir_names, _ in sorted(os.walk(path)):
             for dir_name in sorted(dir_names, key=lambda s: int(s.split("seq")[1])):
@@ -89,7 +99,7 @@ class CustomDatasetRAM(Dataset):
                     fnames = [fname for fname in fnames if fname != 'meta.csv']
 
                     for fname in sorted(fnames, key=lambda s: int(s.split("frame")[1].split(".")[0])):
-                        if has_file_allowed_extension(fname, IMG_EXTENSIONS):
+                        if has_file_allowed_extension(fname, IMG_EXTENSIONS) and len(sequence['images']) <= sequence_length:
                             img_path = os.path.join(seq_path, fname)
                             img = pil_loader(img_path)
                             img = transform(img)
@@ -108,7 +118,7 @@ class CustomDatasetRAM(Dataset):
         else:
             meta = 0
 
-        x = torch.cat(seq['images'][:-1])
-        y = seq['images'][-1]
+        x = torch.cat(seq['images'][:self.len_inp_sequence])
+        y = seq['images'][-self.len_out_sequence]
 
         return x, y, meta
