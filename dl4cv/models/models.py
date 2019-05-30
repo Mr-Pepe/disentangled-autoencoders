@@ -104,7 +104,6 @@ class VariationalAutoEncoder(BaseModel):
             out_channels=1
         )
 
-
     def forward(self, x):
         # Taken from https://github.com/1Konny/Beta-VAE/blob/master/model.py
         z_params = self.encoder(x)
@@ -157,5 +156,3 @@ class VariationalPhysicsAutoEncoder(BaseModel):
 
     def decode(self, z_t_plus_1):
         return self.decoder(z_t_plus_1)
-
-

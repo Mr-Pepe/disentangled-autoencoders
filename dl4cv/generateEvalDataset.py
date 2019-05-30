@@ -4,6 +4,7 @@ import os
 import pygame
 import time
 import torch
+from dl4cv.utils import save_csv
 
 pygame.init()
 
@@ -117,9 +118,12 @@ y_min = BALL_RADIUS
 
 
 for key in variables:
-    path = os.path.join(dataset_path, "var_%s" % key)
+    path = os.path.join(dataset_path, key)
     num_sequences = len(variables[key])
     print("Generating %d sequences for %s" % (num_sequences, key))
+
+    # Save varying variable
+    save_csv(variables[key], os.path.join(path, 'linspace.csv'))
 
     inner_vars = {}
     for inner_key in variables:
