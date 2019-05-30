@@ -9,6 +9,8 @@ from dl4cv.utils import save_csv
 pygame.init()
 
 
+dataset_path = "../../datasets/evalDataset"
+
 SEQUENCE_LENGTH = 3
 
 T_FRAME = 1/30
@@ -73,9 +75,6 @@ std = {
     'acc_x': std_acc,
     'acc_y': std_acc
 }
-
-dataset_path = "../datasets/evalDataset"
-
 
 class Ball(pygame.sprite.Sprite):
     def __init__(self, radius=50, color=(255,255,255)):

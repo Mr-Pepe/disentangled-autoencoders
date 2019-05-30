@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dl4cv.solver import Solver
 
-path = '../saves/train20190529153044/solver10'
+path = '../../saves/train20190529153044/solver10'
 
 
 solver = Solver()
@@ -16,7 +16,7 @@ val_loss = np.array(solver.history['val_loss'])
 kl_divergence  = np.array(solver.history['kl_divergence'])
 reconstruction_loss = np.array(solver.history['reconstruction_loss'])
 
-f, (ax1, ax2, ax3) = plt.subplots(3,1)
+f, (ax1, ax2, ax3) = plt.subplots(3, 1)
 
 ax1.plot(train_loss)
 ax1.plot(np.linspace(1, len(train_loss), len(val_loss)), val_loss)

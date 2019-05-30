@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 
-from dl4cv.dataset_utils import CustomDataset
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 
 from dl4cv.models.models import VariationalPhysicsAutoEncoder
 from dl4cv.solver import Solver

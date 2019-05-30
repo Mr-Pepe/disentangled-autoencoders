@@ -3,14 +3,13 @@ import torch
 import torchvision.transforms as transforms
 import numpy as np
 
-from dl4cv.dataset_utils import CustomDataset
-import dl4cv.utils as utils
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 
 to_pil = transforms.ToPILImage()
 
 config = {
-    'data_path': '../datasets/ball',
-    'model_path': '../saves/train20190527152043/model70',
+    'data_path': '../../datasets/ball',
+    'model_path': '../../saves/train20190527152043/model70',
     'sequence_length': 4,
     'batch_size': 256
 }

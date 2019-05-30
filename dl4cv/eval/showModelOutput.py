@@ -3,18 +3,18 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 
-from dl4cv.dataset_utils import CustomDataset
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from torch.utils.data.sampler import SequentialSampler
 
 
 config = {
     'show_images': True,
 
-    'data_path': '../datasets/ball',  # Path to directory of the image folder
+    'data_path': '../../datasets/ball',  # Path to directory of the image folder
     'len_inp_sequence': 3,
     'len_out_sequence': 3,
 
-    'model_path': '../saves/train20190529141500/model10',
+    'model_path': '../../saves/train20190529141500/model10',
 
     'batch_size': 1000,
     'num_show_images': 10,              # Number of images to show

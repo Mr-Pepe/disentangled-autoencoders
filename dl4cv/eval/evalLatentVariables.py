@@ -1,14 +1,14 @@
 import torch
 import torchvision.transforms as transforms
 
-from dl4cv.dataset_utils import CustomDataset
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from torch.utils.data import DataLoader
 
 LATENTS = ['px', 'py', 'vx', 'vy', 'ax', 'ay']
 
 config = {
-    'data_path': '../datasets/ball',
-    'model_path': '../saves/train20190519171353/model10',
+    'data_path': '../../datasets/ball',
+    'model_path': '../../saves/train20190519171353/model10',
     'sequence_length': 3,
 }
 

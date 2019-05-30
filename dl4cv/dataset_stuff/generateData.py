@@ -26,7 +26,7 @@ WINDOW_SIZE_Y = 32
 BALL_RADIUS = 5
 V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
 
-save_dir_path = "../datasets/ball"
+save_dir_path = "../../datasets/ball"
 
 os.makedirs(save_dir_path, exist_ok=True)
 

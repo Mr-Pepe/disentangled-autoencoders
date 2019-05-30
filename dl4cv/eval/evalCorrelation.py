@@ -5,15 +5,15 @@ import torch
 
 from torchvision.transforms import transforms
 
-from dl4cv.dataset_utils import CustomDataset
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from dl4cv.utils import reparametrize, read_csv
 
 config = {
-    'data_path': '../datasets/evalDataset',  # Path to directory of the image folder
+    'data_path': '../../datasets/evalDataset',  # Path to directory of the image folder
     'len_inp_sequence': 3,
     'len_out_sequence': 0,
 
-    'model_path': '../saves/train20190530134521/model10',
+    'model_path': '../../saves/train20190530134521/model10',
 }
 
 transform = transforms.Compose([
