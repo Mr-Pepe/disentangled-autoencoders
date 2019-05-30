@@ -118,6 +118,8 @@ y_min = BALL_RADIUS
 
 for key in variables:
     path = os.path.join(dataset_path, key)
+    os.makedirs(path, exist_ok=True)
+
     num_sequences = len(variables[key])
     print("Generating %d sequences for %s" % (num_sequences, key))
 
