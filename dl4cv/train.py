@@ -4,7 +4,7 @@ from torchvision import transforms
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 
-from dl4cv.models.models import VariationalPhysicsAutoEncoder
+from dl4cv.models.models import VariationalAutoEncoder
 from dl4cv.solver import Solver
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 
@@ -141,11 +141,12 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = VariationalPhysicsAutoEncoder(
+    model = VariationalAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
-        z0_dim=6,
-        z1_dim=6
+        z_dim_encoder=6,
+        z_dim_decoder=6,
+        use_physics=True
     )
     solver = Solver()
     loss_criterion = nn.MSELoss()
