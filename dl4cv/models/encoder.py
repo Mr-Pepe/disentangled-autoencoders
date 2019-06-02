@@ -12,15 +12,15 @@ class VanillaEncoder(nn.Module):
 
         self.conv1 = Conv2dReflectionPadding(
             in_channels=in_channels,
-            out_channels=32,
+            out_channels=128,
             kernel_size=4,
             stride=2,
             padding=1
         )
 
         self.conv2 = Conv2dReflectionPadding(
-            in_channels=32,
-            out_channels=64,
+            in_channels=128,
+            out_channels=256,
             kernel_size=4,
             stride=2,
             padding=1
@@ -31,7 +31,7 @@ class VanillaEncoder(nn.Module):
 
         # Bottleneck
         self.conv3 = nn.Conv2d(
-            in_channels=64,
+            in_channels=256,
             out_channels=z_dim,
             kernel_size=(8, 8),
             stride=1,
