@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 
-from dl4cv.dataset_utils import CustomDataset, CustomDatasetRAM
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 
-from dl4cv.models.models import AutoEncoder, PhysicsAutoEncoder, VariationalAutoEncoder
+from dl4cv.models.models import VariationalAutoEncoder
 from dl4cv.solver import Solver
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 
@@ -19,24 +19,25 @@ config = {
 
     # Data
     'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
+    'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': False,             # Set overfit or regular training
+    'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    4096,       # Number of training samples for regular training
     'num_val_regular':      256,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 3,              # Length of training sequence
-    'len_out_sequence': 1,              # Number of generated images
+    'len_out_sequence': 3,              # Number of generated images
 
     'num_workers': 4,                   # Number of workers for data loading
 
     ## Hyperparameters ##
     'max_train_time_s': None,
-    'num_epochs': 400,                  # Number of epochs to train
+    'num_epochs': 100,                  # Number of epochs to train
     'batch_size': 256,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
-    'beta': 0,                          # beta-coefficient for disentangling
+    'beta': 1e-3,                          # beta-coefficient for disentangling
 
     ## Logging ##
     'log_interval': 3,           # Number of mini-batches after which to print training loss
@@ -57,28 +58,30 @@ if config['use_cuda'] and torch.cuda.is_available():
     device = torch.device("cuda")
     torch.cuda.manual_seed(seed)
     kwargs = {'pin_memory': True}
-    print("GPU available. Training on {}".format(device))
+    print("GPU available. Training on {}.".format(device))
 else:
     device = torch.device("cpu")
     torch.set_default_tensor_type('torch.FloatTensor')
     kwargs = {}
-    print("No GPU. Training on {}".format(device))
+    print("No GPU. Training on {}.".format(device))
 
 
 """ Load dataset """
 
-sequence_length = config['len_inp_sequence'] + config['len_out_sequence']
 
-print("Loading dataset with sequence length {}...".format(sequence_length))
+print("Loading dataset with input sequence length {} and output sequence length {}...".format(
+        config['len_inp_sequence'], config['len_out_sequence']))
 
-dataset = CustomDatasetRAM(
+dataset = CustomDataset(
     config['data_path'],
     transform=transforms.Compose([
         transforms.Grayscale(),
         transforms.ToTensor()
     ]),
-    sequence_length=sequence_length,
-    load_meta=False
+    len_inp_sequence=config['len_inp_sequence'],
+    len_out_sequence=config['len_out_sequence'],
+    load_meta=False,
+    load_to_ram=config['load_data_to_ram']
 )
 
 
@@ -140,7 +143,10 @@ else:
     print("Initializing model...")
     model = VariationalAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
-        z_dim=5
+        len_out_sequence=config['len_out_sequence'],
+        z_dim_encoder=6,
+        z_dim_decoder=6,
+        use_physics=True
     )
     solver = Solver()
     loss_criterion = nn.MSELoss()

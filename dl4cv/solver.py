@@ -10,10 +10,10 @@ from dl4cv.utils import kl_divergence
 class Solver(object):
 
     def __init__(self):
-        self.history = {'train_loss_history': [],
-                        'val_loss_history'  : [],
-                        'kl_divergence_history': [],
-                        'cov_history': []
+        self.history = {'train_loss': [],
+                        'val_loss'  : [],
+                        'kl_divergence': [],
+                        'reconstruction_loss': []
                         }
 
         self.optim = []
@@ -29,7 +29,7 @@ class Solver(object):
 
         model.to(device)
 
-        start_epoch = len(self.history['val_loss_history'])
+        start_epoch = len(self.history['val_loss'])
 
         if start_epoch == 0:
             self.optim = optim
@@ -110,16 +110,15 @@ class Solver(object):
                 # Save loss to history
                 smooth_window_train = 10
 
-                self.history['train_loss_history'].append(loss.item())
+                self.history['train_loss'].append(loss.item())
                 train_loss_avg = (smooth_window_train-1)/smooth_window_train*train_loss_avg + 1/smooth_window_train*loss.item()
 
-                self.history['kl_divergence_history'].append(total_kl_divergence.item())
-                self.history['cov_history'].append(cov.item())
+                self.history['kl_divergence'].append(total_kl_divergence.item())
+                self.history['reconstruction_loss'].append(reconstruction_loss.item())
 
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
                           "   Reconstruction loss: " + "{0:.6f}".format(reconstruction_loss.item()),
-                          "   Cov loss: " + "{0:.3f}".format(cov.item()) +
                           "   KL loss: " + "{0:.6f}".format(total_kl_divergence.item()) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
@@ -147,7 +146,7 @@ class Solver(object):
                 val_loss += self.criterion(y, y_pred).item()
 
             val_loss /= num_val_batches
-            self.history['val_loss_history'].append(val_loss)
+            self.history['val_loss'].append(val_loss)
 
             print('Avg Train Loss: ' + "{0:.6f}".format(train_loss_avg) +
                   '   Val loss: ' + "{0:.6f}".format(val_loss) +
@@ -187,6 +186,7 @@ class Solver(object):
             'stop_reason': self.stop_reason,
             'training_time_s': self.training_time_s,
             'criterion': self.criterion,
+            'beta': self.beta,
             'optim_state_dict': self.optim.state_dict()
         }, path)
 

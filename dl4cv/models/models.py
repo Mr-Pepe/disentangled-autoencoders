@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch
 
 from dl4cv.models.encoder import VanillaEncoder
-from dl4cv.models.physics_layer import PhysicsPVA, PhysicsPV
+from dl4cv.models.physics_layer import PhysicsPVA
 from dl4cv.models.decoder import VanillaDecoder
 import dl4cv.utils as utils
 
@@ -60,148 +60,95 @@ class AutoEncoder(BaseModel):
         return y, (z,)
 
 
-class PhysicsAutoEncoder(BaseModel):
-    def __init__(self, dt, len_in_sequence, greyscale=False):
-        super(PhysicsAutoEncoder, self).__init__()
-        if greyscale:
-            in_channels = len_in_sequence
-            out_channels = 1
-        else:
-            in_channels = len_in_sequence * 3
-            out_channels = 3
-
-        self.physics_layer = PhysicsPVA(dt=dt)
-
-        self.encoder = VanillaEncoder(
-            in_channels=in_channels,
-            z_dim=self.physics_layer.num_latents_in
-        )
-        self.decoder = VanillaDecoder(
-            z_dim=self.physics_layer.num_latents_out,
-            out_channels=out_channels
-        )
-
-    def forward(self, x):
-        z_t = self.encoder(x)
-        z_t_plus_1 = self.physics_layer(z_t)
-        y = self.decoder(z_t_plus_1)
-        return y, tuple(z_t,)
-
-
 class VariationalAutoEncoder(BaseModel):
     """"This VAE generates means and log-variances of
     the latent variables and samples from those distributions"""
-    def __init__(self, len_in_sequence, z_dim):
+    def __init__(self, len_in_sequence, len_out_sequence, z_dim_encoder=6, z_dim_decoder=6, use_physics=False):
         super(VariationalAutoEncoder, self).__init__()
-        self.z_dim = z_dim
+        self.z_dim_encoder = z_dim_encoder
+        self.z_dim_decoder = z_dim_decoder
+        self.use_physics = use_physics
 
         self.encoder = VanillaEncoder(
             in_channels=len_in_sequence,
-            z_dim=z_dim*2
+            z_dim=z_dim_encoder*2
         )
         self.decoder = VanillaDecoder(
-            z_dim=z_dim,
-            out_channels=1
+            z_dim=z_dim_decoder,
+            out_channels=len_out_sequence
         )
 
+        self.physics_layer = PhysicsPVA(dt=1 / 30, out_dim=z_dim_decoder)
+
     def forward(self, x):
-        # Taken from https://github.com/1Konny/Beta-VAE/blob/master/model.py
+        z_encoder, mu, logvar = self.encode(x)
+
+        if self.use_physics:
+            z_decoder = self.physics(z_encoder)
+        else:
+            z_decoder = z_encoder
+
+        y = self.decode(z_decoder)
+
+        return y, (mu, logvar)
+
+    def encode(self, x):
+        z_params = self.encoder(x)
+        mu = z_params[:, :self.z_dim_encoder]
+        logvar = z_params[:, self.z_dim_encoder:]
+
+        z_encoder = utils.reparametrize(mu, logvar)
+
+        return z_encoder, mu, logvar
+
+    def decode(self, z_decoder):
+        return self.decoder(z_decoder)
+
+    def physics(self, x):
+        return self.physics_layer(x)
+
+
+class VariationalQuestionAutoEncoder(BaseModel):
+
+    def __init__(self, len_in_sequence, len_out_sequence, z0_dim=6, z1_dim=6):
+        super(VariationalQuestionAutoEncoder, self).__init__()
+        self.z_dim = z0_dim
+
+        self.encoder = VanillaEncoder(
+            in_channels=len_in_sequence,
+            z_dim=z0_dim * 2
+        )
+        self.decoder = VanillaDecoder(
+            z_dim=z1_dim + 1,
+            out_channels=len_out_sequence
+        )
+
+        self.physics_layer = PhysicsPVA(dt=1/30, out_dim=z1_dim)
+
+    def forward(self, inp):
+        """
+        inp: tuple (x, question)
+        x: sequence of input frames. torch.tensor, shape: [batch, len_inp_seq, width, heigth]
+        question: index of target frame to predict, int
+        """
+        (x, question) = inp
+        z_t, mu, logvar = self.encode(x)
+
+        question = question[:, None, None, None]
+
+        z_t = torch.cat((z_t, question), dim=1)
+        y = self.decode(z_t)
+
+        return y, (mu, logvar)
+
+    def encode(self, x):
         z_params = self.encoder(x)
         mu = z_params[:, :self.z_dim]
         logvar = z_params[:, self.z_dim:]
 
-        z = utils.reparametrize(mu, logvar)
-        y = self.decoder(z)
+        z_t = utils.reparametrize(mu, logvar)
 
-        return y, (mu, logvar)
+        return z_t, mu, logvar
 
-
-class AutoEncoderPV(BaseModel):
-    """
-    Auto Encoder which has a physics layer in the bottleneck to learn
-    position and the constant velocity
-    """
-
-    def __init__(self, dt, len_in_sequence, greyscale=False):
-        super(AutoEncoderPV, self).__init__()
-        if greyscale:
-            in_channels = len_in_sequence
-            out_channels = 1
-        else:
-            in_channels = len_in_sequence * 3
-            out_channels = 3
-
-        self.physics_layer = PhysicsPV(dt=dt)
-
-        self.encoder = VanillaEncoder(
-            in_channels=in_channels,
-            z_dim=self.physics_layer.num_latents_in
-        )
-        self.decoder = VanillaDecoder(
-            z_dim=self.physics_layer.num_latents_out,
-            out_channels=out_channels
-        )
-
-    def forward(self, x):
-        z_t = self.encoder(x)
-        z_t_plus_1 = self.physics_layer(z_t)
-        y2 = self.decoder(z_t[:, :2])
-        y3 = self.decoder(z_t_plus_1)
-        return y2, y3, z_t, z_t_plus_1
-
-
-class AutoEncoderIdea2(BaseModel):
-    """
-    Auto Encoder which has a physics layer in the bottleneck to learn
-    position and the constant velocity
-    """
-
-    def __init__(self, dt, len_in_sequence, greyscale=False):
-        super(AutoEncoderIdea2, self).__init__()
-        if greyscale:
-            in_channels = len_in_sequence
-            out_channels = 1
-        else:
-            in_channels = len_in_sequence * 3
-            out_channels = 3
-
-        self.physics_layer = PhysicsPV(dt=dt)
-
-        # Operation to augment a horizontal flip in latent space
-        self.hor_flip_op = nn.Parameter(
-            torch.tensor([-1., 1., -1., 1.])[:, None, None]
-        )
-        self.hor_flip_op.requires_grad = False
-
-        # Operation to augment a vertical flip in latent space
-        self.ver_flip_op = nn.Parameter(
-            torch.tensor([1., -1., 1., -1.])[:, None, None]
-        )
-        self.ver_flip_op.requires_grad = False
-
-        self.encoder = VanillaEncoder(
-            in_channels=in_channels,
-            z_dim=self.physics_layer.num_latents_in
-        )
-        self.decoder = VanillaDecoder(
-            z_dim=self.physics_layer.num_latents_out,
-            out_channels=out_channels
-        )
-
-    def forward(self, x):
-        z_t = self.encoder(x)
-        z_t_plus_1 = self.physics_layer(z_t)
-        y2 = self.decoder(z_t[:, :2])
-        y3 = self.decoder(z_t_plus_1)
-
-        z_t_hor_flip = z_t * self.hor_flip_op
-        z_t_hor_flip_plus_1 = self.physics_layer(z_t_hor_flip)
-        y2_hor_flip = self.decoder(z_t_hor_flip[:, :2])
-        y3_hor_flip = self.decoder(z_t_hor_flip_plus_1)
-
-        z_t_ver_flip = z_t * self.ver_flip_op
-        z_t_ver_flip_plus_1 = self.physics_layer(z_t_ver_flip)
-        y2_ver_flip = self.decoder(z_t_ver_flip[:, :2])
-        y3_ver_flip = self.decoder(z_t_ver_flip_plus_1)
-
-        return y2, y3, y2_hor_flip, y3_hor_flip, y2_ver_flip, y3_ver_flip
+    def decode(self, z_t_plus_1):
+        return self.decoder(z_t_plus_1)
