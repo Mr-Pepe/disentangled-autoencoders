@@ -38,3 +38,7 @@ def save_csv(data, path):
 
 def read_csv(path):
     return np.genfromtxt(path, dtype=np.float, delimiter='|', skip_header=0)
+
+
+def abs_diff_loss(y1, y2):
+    return torch.abs(y1 - y2)
