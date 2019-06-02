@@ -57,14 +57,15 @@ acc_y_start = - 3 * std_acc
 acc_y_end = 3 * std_acc
 acc_y_num_samples = (acc_y_end - acc_y_start) // 2 + 1
 
-
+# Velocity and acceleration must be inverted because the frames are saved
+# in the reverse order so the velocity at frame[-1] is actually -vel[0]
 variables = {
     'pos_x': np.linspace(pos_x_start, pos_x_end, pos_x_num_samples),
     'pos_y': np.linspace(pos_y_start, pos_y_end, pos_y_num_samples),
-    'vel_x': np.linspace(vel_x_start, vel_x_end, vel_x_num_samples),
-    'vel_y': np.linspace(vel_y_start, vel_y_end, vel_y_num_samples),
-    'acc_x': np.linspace(acc_x_start, acc_x_end, acc_x_num_samples),
-    'acc_y': np.linspace(acc_y_start, acc_y_end, acc_y_num_samples)
+    'vel_x': -np.linspace(vel_x_start, vel_x_end, vel_x_num_samples),
+    'vel_y': -np.linspace(vel_y_start, vel_y_end, vel_y_num_samples),
+    'acc_x': -np.linspace(acc_x_start, acc_x_end, acc_x_num_samples),
+    'acc_y': -np.linspace(acc_y_start, acc_y_end, acc_y_num_samples)
 }
 
 std = {
@@ -75,6 +76,7 @@ std = {
     'acc_x': std_acc,
     'acc_y': std_acc
 }
+
 
 class Ball(pygame.sprite.Sprite):
     def __init__(self, radius=50, color=(255,255,255)):
@@ -123,8 +125,11 @@ for key in variables:
     num_sequences = len(variables[key])
     print("Generating %d sequences for %s" % (num_sequences, key))
 
-    # Save varying variable
-    save_csv(variables[key], os.path.join(path, 'linspace.csv'))
+    # Save varying variable. Vel and acc must again be inverted to save the actual linspace
+    if key == 'pos_x' or key == 'pos_y':
+        save_csv(variables[key], os.path.join(path, 'linspace.csv'))
+    else:
+        save_csv(-variables[key], os.path.join(path, 'linspace.csv'))
 
     inner_vars = {}
     for inner_key in variables:

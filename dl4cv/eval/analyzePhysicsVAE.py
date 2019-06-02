@@ -9,8 +9,9 @@ to_pil = transforms.ToPILImage()
 
 config = {
     'data_path': '../../datasets/ball',
-    'model_path': '../../saves/train20190527152043/model70',
-    'sequence_length': 4,
+    'model_path': '../../saves/train20190531073151/model100',
+    'len_inp_sequence': 3,
+    'len_out_sequence': 3,
     'batch_size': 256
 }
 
@@ -20,7 +21,8 @@ dataset = CustomDataset(
         transforms.Grayscale(),
         transforms.ToTensor()
     ]),
-    sequence_length=config['sequence_length']
+    len_inp_sequence=config['len_inp_sequence'],
+    len_out_sequence=config['len_out_sequence']
 )
 
 data_loader = torch.utils.data.DataLoader(
