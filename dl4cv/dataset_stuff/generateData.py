@@ -17,8 +17,8 @@ Otherwise the script will create only black images
 """
 
 USE_NUM_IMAGES = True
-NUM_SEQUENCES = 4096+256
-SEQUENCE_LENGTH = 6  # including input and output
+NUM_SEQUENCES = 2048+128
+SEQUENCE_LENGTH = 100  # including input and output
 
 T_FRAME = 1/30
 WINDOW_SIZE_X = 32
@@ -74,11 +74,11 @@ y_min = BALL_RADIUS
 x_all = torch.normal(WINDOW_SIZE_X/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_X/4).int()
 y_all = torch.normal(WINDOW_SIZE_Y/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_Y/4).int()
 
-vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*150)
-vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*150)
+vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
+vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
 
-ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*100)
-ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*100)
+ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*10)
+ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*10)
 
 for i_sequence in range(NUM_SEQUENCES):
 
@@ -97,6 +97,7 @@ for i_sequence in range(NUM_SEQUENCES):
             save_dir_path,
             'seq' + str(i_sequence)
     )
+    print("Generating sequence: %d with length %d ..." %(i_sequence, SEQUENCE_LENGTH))
 
     os.makedirs(save_path_sequence, exist_ok=True)
 

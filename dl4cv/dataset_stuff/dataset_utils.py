@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import torch
 
@@ -7,8 +8,8 @@ from torchvision.datasets.folder import \
 
 
 class CustomDataset(Dataset):
-    def __init__(self, path, transform, len_inp_sequence,
-                 len_out_sequence, load_meta=False, load_to_ram=False):
+    def __init__(self, path, transform, len_inp_sequence, len_out_sequence,
+                 question=False, load_meta=False, load_to_ram=False):
         self.path = path
         self.transform = transform
         self.sequences = {}
@@ -16,6 +17,7 @@ class CustomDataset(Dataset):
         self.len_inp_sequence = len_inp_sequence
         self.len_out_sequence = len_out_sequence
         self.sequence_length = len_inp_sequence + len_out_sequence
+        self.question = question
         self.load_meta = load_meta
         self.load_to_ram = load_to_ram
 
@@ -81,14 +83,22 @@ class CustomDataset(Dataset):
             sequence['images'] = [self.transform(pil_loader(img)) for img in self.sequences[seq_path]['images']]
 
         x = torch.cat(sequence['images'][:self.len_inp_sequence])
-        y = torch.cat(sequence['images'][-self.len_out_sequence:])
+
+        if self.question:
+            target_idx = np.random.randint(low=0, high=2 * self.len_inp_sequence, size=1)
+            y = torch.cat(sequence['images'][target_idx:target_idx + self.len_out_sequence - 1])
+        else:
+            target_idx = None
+            start_y = self.len_inp_sequence
+            end_y = self.len_inp_sequence + self.len_out_sequence
+            y = torch.cat(sequence['images'][start_y:end_y])
 
         if self.load_meta:
             meta = sequence['meta']
         else:
             meta = 0
 
-        return x, y, meta
+        return x, y, target_idx, meta
 
     def __len__(self):
         return len(self.sequence_paths)
