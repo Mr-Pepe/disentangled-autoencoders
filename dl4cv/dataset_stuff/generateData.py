@@ -1,20 +1,11 @@
-import pygame
 import os
 import math
 import torch
 
 from dl4cv.utils import save_csv
 
-pygame.init()
+from PIL import Image, ImageDraw
 
-# Dummy video driver to handle machines without video device (e.g. server)
-# os.environ["SDL_VIDEODRIVER"] = "dummy"
-"""
-When using this script from a server, make sure to add the -X flag to your
-ssh command. This will open all windows from the remote system on your
-local machine using XQuartz.
-Otherwise the script will create only black images
-"""
 
 USE_NUM_IMAGES = True
 NUM_SEQUENCES = 2048+128
@@ -29,13 +20,6 @@ V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
 save_dir_path = "../../datasets/ball"
 
 os.makedirs(save_dir_path, exist_ok=True)
-
-
-class Ball(pygame.sprite.Sprite):
-    def __init__(self, radius=50, color=(255,255,255)):
-        super(Ball, self).__init__()
-        self.surf = pygame.Surface((radius*2,radius*2))
-        pygame.draw.circle(self.surf, color, (radius,radius), radius, 0)
 
 
 def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
@@ -62,10 +46,25 @@ def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
     return x_new, y_new, vx_new, vy_new
 
 
-screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
+def draw_ball(screen, x, y):
+    screen.rectangle(
+        xy=[(0, 0), (WINDOW_SIZE_X, WINDOW_SIZE_Y)],
+        fill='black',
+        outline=None
+    )
+    screen.ellipse(
+        xy=[(x - BALL_RADIUS, y - BALL_RADIUS), (x + BALL_RADIUS, y + BALL_RADIUS)],
+        width=0,
+        fill='white'
+    )
+    return img
 
 
-ball = Ball(BALL_RADIUS)
+# create image to draw on
+img = Image.new(mode="L", size=(WINDOW_SIZE_X, WINDOW_SIZE_Y))
+# create screen
+screen = ImageDraw.Draw(img)
+
 x_max = WINDOW_SIZE_X - BALL_RADIUS
 x_min = BALL_RADIUS
 y_max = WINDOW_SIZE_Y - BALL_RADIUS
@@ -103,16 +102,13 @@ for i_sequence in range(NUM_SEQUENCES):
 
     for i_frame in range(SEQUENCE_LENGTH):
 
-        screen.fill((0, 0, 0))
-        screen.blit(ball.surf, (x - BALL_RADIUS, y - BALL_RADIUS))
-        pygame.display.flip()
-
         save_path_frame = os.path.join(
             save_path_sequence,
             'frame' + str(i_frame) + '.jpeg'
         )
 
-        pygame.image.save(screen, save_path_frame)
+        img = draw_ball(screen, x, y)
+        img.save(save_path_frame)
 
         save_path_meta = os.path.join(
             save_path_sequence,
@@ -125,5 +121,3 @@ for i_sequence in range(NUM_SEQUENCES):
         vy = math.copysign(V_MAX, vy) if abs(vy) > V_MAX else vy
 
         x, y, vx, vy = get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, T_FRAME)
-
-        # time.sleep(T_FRAME)
