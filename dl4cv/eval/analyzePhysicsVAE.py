@@ -9,10 +9,11 @@ to_pil = transforms.ToPILImage()
 
 config = {
     'data_path': '../../datasets/ball',
-    'model_path': '../../saves/train20190531073151/model100',
-    'len_inp_sequence': 3,
-    'len_out_sequence': 3,
-    'batch_size': 256
+    'model_path': '../../saves/train20190603130451/model10',
+    'len_inp_sequence': 10,
+    'len_out_sequence': 5,
+    'total_number_of_samples': 10000,
+    'batch_size': 32
 }
 
 dataset = CustomDataset(
@@ -22,7 +23,7 @@ dataset = CustomDataset(
         transforms.ToTensor()
     ]),
     len_inp_sequence=config['len_inp_sequence'],
-    len_out_sequence=config['len_out_sequence']
+    len_out_sequence=config['len_out_sequence'],
 )
 
 data_loader = torch.utils.data.DataLoader(
@@ -33,22 +34,38 @@ data_loader = torch.utils.data.DataLoader(
 model = torch.load(config['model_path'])
 model.eval()
 
-x, _, _ = next(iter(data_loader))
+n_batches_total = int(config['total_number_of_samples'] / config['batch_size'])
+n_batches = 0
+mu_mean = 0
 
-z_t, mu, logvar = model.encode(x)
+iter_data_loader = iter(data_loader)
+mu = 0
+std = 0
 
-z_t_plus_1 = model.physics(z_t)
+while n_batches < n_batches_total:
+    n_batches += 1
+    print("Batch {} of {}.".format(n_batches, n_batches_total))
 
-y = model.decode(z_t_plus_1)
+    x, _, _ = next(iter_data_loader)
 
+    z_t, mu_tmp, logvar = model.encode(x)
+
+    std_tmp = logvar.div(2).exp()
+
+    if not torch.is_tensor(mu):
+        mu = mu_tmp.clone().detach()
+        std = std_tmp.clone().detach()
+
+    else:
+        mu = torch.cat((mu, mu_tmp.detach()))
+        std = torch.cat((std, std_tmp.detach()))
 
 # Get the mean mu for every latent variable
-mu_mean = mu.mean(dim=0)
+mu_mean = mu.mean(dim=0)/n_batches_total
 mu_mean = mu_mean.view(mu_mean.numel())
 
 # Get the mean standard deviation for all
-std = logvar.div(2).exp()
-std_mean = logvar.div(2).exp().mean(dim=0)
+std_mean = logvar.div(2).exp().mean(dim=0)/n_batches_total
 std_mean = std_mean.view(std_mean.numel())
 
 z_t_dim = 6
@@ -78,9 +95,14 @@ for i_variable in range(z_t_dim):
 
         z[i_variable] = value_variable
 
-        plt.imshow(to_pil(model.decode(model.physics(z.view(1, z_t_dim, 1, 1))).detach()[0]), cmap='gray')
-        plt.title("Variable " + str(i_variable+1) + " = " + str(value_variable.item()))
+        output = model.decode(model.physics(z.view(1, z_t_dim, 1, 1))).detach()[0]
+
+        for i_img, img in enumerate(output):
+            plt.subplot(1, len(output), i_img+1)
+
+            plt.imshow(to_pil(img), cmap='gray')
+
+        # plt.title("Variable " + str(i_variable+1) + " = " + str(value_variable.item()))
+
         plt.show()
 
-
-z_t_plus_1_mean = z_t_plus_1.mean(dim=0)
