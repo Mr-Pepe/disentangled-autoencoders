@@ -9,17 +9,17 @@ from torchvision.datasets.folder import \
 
 class CustomDataset(Dataset):
     def __init__(self, path, transform, len_inp_sequence, len_out_sequence,
-                 question=False, load_meta=False, load_to_ram=False):
+                 question=False, load_meta=False, load_to_ram=False, only_input=False):
         self.path = path
         self.transform = transform
         self.sequences = {}
         self.sequence_paths = []
         self.len_inp_sequence = len_inp_sequence
         self.len_out_sequence = len_out_sequence
-        self.sequence_length = len_inp_sequence + len_out_sequence
         self.question = question
         self.load_meta = load_meta
         self.load_to_ram = load_to_ram
+        self.only_input = only_input
 
         num_sequences = 0
 
@@ -84,14 +84,15 @@ class CustomDataset(Dataset):
 
         x = torch.cat(sequence['images'][:self.len_inp_sequence])
 
-        if self.question:
-            target_idx = np.random.randint(low=0, high=2 * self.len_inp_sequence - self.len_out_sequence)
-            y = torch.cat(sequence['images'][target_idx:target_idx + self.len_out_sequence])
-            x = (x, torch.tensor(target_idx, dtype=torch.float32))
+        if not self.only_input:
+            if self.question:
+                target_idx = np.random.randint(low=0, high=2 * self.len_inp_sequence - self.len_out_sequence)
+                y = torch.cat(sequence['images'][target_idx:target_idx + self.len_out_sequence])
+                x = (x, torch.tensor(target_idx, dtype=torch.float32))
+            else:
+                y = torch.cat(sequence['images'][self.len_inp_sequence:(self.len_inp_sequence + self.len_out_sequence+1)])
         else:
-            start_y = self.len_inp_sequence
-            end_y = self.len_inp_sequence + self.len_out_sequence
-            y = torch.cat(sequence['images'][start_y:end_y])
+            y = 0
 
         if self.load_meta:
             meta = sequence['meta']
