@@ -1,15 +1,12 @@
 import os
 import math
-import torch
-
-from dl4cv.utils import save_csv
-
+import numpy as np
 from PIL import Image, ImageDraw
 
 
 USE_NUM_IMAGES = True
-NUM_SEQUENCES = 2048+128
-SEQUENCE_LENGTH = 100  # including input and output
+NUM_SEQUENCES = 1000
+SEQUENCE_LENGTH = 3  # including input and output
 
 T_FRAME = 1/30
 WINDOW_SIZE_X = 32
@@ -57,67 +54,77 @@ def draw_ball(screen, x, y):
         width=0,
         fill='white'
     )
-    return img
 
 
-# create image to draw on
-img = Image.new(mode="L", size=(WINDOW_SIZE_X, WINDOW_SIZE_Y))
-# create screen
-screen = ImageDraw.Draw(img)
+def main():
 
-x_max = WINDOW_SIZE_X - BALL_RADIUS
-x_min = BALL_RADIUS
-y_max = WINDOW_SIZE_Y - BALL_RADIUS
-y_min = BALL_RADIUS
+    # create image to draw on
+    img = Image.new(mode="L", size=(WINDOW_SIZE_X, WINDOW_SIZE_Y))
+    # create screen
+    screen = ImageDraw.Draw(img)
 
-x_all = torch.normal(WINDOW_SIZE_X/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_X/4).int()
-y_all = torch.normal(WINDOW_SIZE_Y/2, std=torch.ones([NUM_SEQUENCES])*WINDOW_SIZE_Y/4).int()
+    x_max = WINDOW_SIZE_X - BALL_RADIUS
+    x_min = BALL_RADIUS
+    y_max = WINDOW_SIZE_Y - BALL_RADIUS
+    y_min = BALL_RADIUS
 
-vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
-vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*15)
+    x_all = np.random.normal(WINDOW_SIZE_X/2, WINDOW_SIZE_X/4, NUM_SEQUENCES).astype('int')
+    y_all = np.random.normal(WINDOW_SIZE_Y/2, WINDOW_SIZE_Y/4, NUM_SEQUENCES).astype('int')
 
-ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*10)
-ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES])*10)
+    vx_all = np.random.normal(0, 150, NUM_SEQUENCES)
+    vy_all = np.random.normal(0, 150, NUM_SEQUENCES)
 
-for i_sequence in range(NUM_SEQUENCES):
+    ax_all = np.random.normal(0, 100, NUM_SEQUENCES)
+    ay_all = np.random.normal(0, 100, NUM_SEQUENCES)
 
-    sequence = torch.Tensor()
+    ground_truth = np.zeros((NUM_SEQUENCES, SEQUENCE_LENGTH, 6))
 
-    x = min(x_max, max(x_min, x_all[i_sequence]))
-    y = min(y_max, max(y_min, y_all[i_sequence]))
+    for i_sequence in range(NUM_SEQUENCES):
 
-    vx = vx_all[i_sequence]
-    vy = vy_all[i_sequence]
+        x = min(x_max, max(x_min, x_all[i_sequence]))
+        y = min(y_max, max(y_min, y_all[i_sequence]))
 
-    ax = ax_all[i_sequence]
-    ay = ay_all[i_sequence]
+        vx = vx_all[i_sequence]
+        vy = vy_all[i_sequence]
 
-    save_path_sequence = os.path.join(
-            save_dir_path,
-            'seq' + str(i_sequence)
-    )
-    print("Generating sequence: %d with length %d ..." %(i_sequence, SEQUENCE_LENGTH))
+        ax = ax_all[i_sequence]
+        ay = ay_all[i_sequence]
 
-    os.makedirs(save_path_sequence, exist_ok=True)
-
-    for i_frame in range(SEQUENCE_LENGTH):
-
-        save_path_frame = os.path.join(
-            save_path_sequence,
-            'frame' + str(i_frame) + '.jpeg'
+        save_path_sequence = os.path.join(
+                save_dir_path,
+                'seq' + str(i_sequence)
         )
 
-        img = draw_ball(screen, x, y)
-        img.save(save_path_frame)
+        if i_sequence % 100 == 0:
+            print("Generating sequence: %d with length %d ..." % (i_sequence, SEQUENCE_LENGTH))
 
-        save_path_meta = os.path.join(
+        os.makedirs(save_path_sequence, exist_ok=True)
+
+        for i_frame in range(SEQUENCE_LENGTH):
+
+            ground_truth[i_sequence, i_frame] = np.array([x, y, vx, vy, ax, ay])
+
+            save_path_frame = os.path.join(
+                save_path_sequence,
+                'frame' + str(i_frame) + '.jpeg'
+            )
+
+            draw_ball(screen, x, y)
+            img.save(save_path_frame)
+
+            # Limit velocities to V_MAX
+            vx = math.copysign(V_MAX, vx) if abs(vx) > V_MAX else vx
+            vy = math.copysign(V_MAX, vy) if abs(vy) > V_MAX else vy
+
+            x, y, vx, vy = get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, T_FRAME)
+
+        # Save the values at the last
+        save_path_ground_truth = os.path.join(
             save_path_sequence,
-            'meta.csv'
+            'ground_truth'
         )
-        save_csv([float(x) for x in [x, y, vx, vy, ax, ay]], save_path_meta)
+        np.save(save_path_ground_truth, ground_truth)
 
-        # Limit velocities to V_MAX
-        vx = math.copysign(V_MAX, vx) if abs(vx) > V_MAX else vx
-        vy = math.copysign(V_MAX, vy) if abs(vy) > V_MAX else vy
 
-        x, y, vx, vy = get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, T_FRAME)
+if __name__ == '__main__':
+    main()

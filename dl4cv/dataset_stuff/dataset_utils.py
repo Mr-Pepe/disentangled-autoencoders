@@ -3,13 +3,14 @@ import os
 import torch
 
 from torch.utils.data.dataset import Dataset
+from dl4cv.utils import read_csv
 from torchvision.datasets.folder import \
     pil_loader, has_file_allowed_extension, IMG_EXTENSIONS
 
 
 class CustomDataset(Dataset):
     def __init__(self, path, transform, len_inp_sequence, len_out_sequence,
-                 question=False, load_meta=False, load_to_ram=False, only_input=False):
+                 question=False, load_ground_truth=False, load_to_ram=False, only_input=False):
         self.path = path
         self.transform = transform
         self.sequences = {}
@@ -17,7 +18,7 @@ class CustomDataset(Dataset):
         self.len_inp_sequence = len_inp_sequence
         self.len_out_sequence = len_out_sequence
         self.question = question
-        self.load_meta = load_meta
+        self.load_ground_truth = load_ground_truth
         self.load_to_ram = load_to_ram
         self.only_input = only_input
 
@@ -35,7 +36,7 @@ class CustomDataset(Dataset):
 
                 for _, _, fnames in os.walk(seq_path):
 
-                    self.sequences[seq_path]['meta'] = os.path.join(seq_path, 'meta.csv')
+                    self.sequences[seq_path]['ground_truth'] = os.path.join(seq_path, 'ground_truth.npy')
                     self.sequences[seq_path]['images'] = []
 
                     num_sequences += 1
@@ -43,7 +44,7 @@ class CustomDataset(Dataset):
                     if (num_sequences % 100) == 0:
                         print("\rFound {} sequences.".format(num_sequences), end='')
 
-                    fnames = [fname for fname in fnames if fname != 'meta.csv']
+                    fnames = [fname for fname in fnames if fname != 'ground_truth.npy']
 
                     for fname in sorted(fnames, key=lambda s: int(s.split("frame")[1].split(".")[0])):
 
@@ -90,16 +91,21 @@ class CustomDataset(Dataset):
                 y = torch.cat(sequence['images'][target_idx:target_idx + self.len_out_sequence])
                 x = (x, torch.tensor(target_idx, dtype=torch.float32))
             else:
-                y = torch.cat(sequence['images'][self.len_inp_sequence:(self.len_inp_sequence + self.len_out_sequence+1)])
+                y = torch.cat(sequence['images'][self.len_inp_sequence:(self.len_inp_sequence +
+                                                                        self.len_out_sequence +
+                                                                        1)])
         else:
             y = 0
 
-        if self.load_meta:
-            meta = sequence['meta']
+        if self.load_ground_truth:
+            ground_truth = np.load(sequence['ground_truth'])
         else:
-            meta = 0
+            ground_truth = 0
 
-        return x, y, meta
+        return x, y, ground_truth
+
+    def get_ground_truth(self, index):
+        return read_csv(self.sequences[self.sequence_paths[index]]['ground_truth'])
 
     def __len__(self):
         return len(self.sequence_paths)
