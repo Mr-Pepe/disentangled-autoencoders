@@ -77,8 +77,6 @@ def main():
     ax_all = np.random.normal(0, 100, NUM_SEQUENCES)
     ay_all = np.random.normal(0, 100, NUM_SEQUENCES)
 
-    ground_truth = np.zeros((NUM_SEQUENCES, SEQUENCE_LENGTH, 6))
-
     for i_sequence in range(NUM_SEQUENCES):
 
         x = min(x_max, max(x_min, x_all[i_sequence]))
@@ -100,9 +98,11 @@ def main():
 
         os.makedirs(save_path_sequence, exist_ok=True)
 
+        ground_truth = np.zeros((SEQUENCE_LENGTH, 6))
+
         for i_frame in range(SEQUENCE_LENGTH):
 
-            ground_truth[i_sequence, i_frame] = np.array([x, y, vx, vy, ax, ay])
+            ground_truth[i_frame] = np.array([x, y, vx, vy, ax, ay])
 
             save_path_frame = os.path.join(
                 save_path_sequence,
