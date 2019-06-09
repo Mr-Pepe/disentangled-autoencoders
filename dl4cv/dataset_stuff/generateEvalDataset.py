@@ -1,15 +1,15 @@
 import math
 import numpy as np
 import os
-import pygame
-import time
 import torch
-from dl4cv.utils import save_csv
 
-pygame.init()
+from PIL import Image, ImageDraw
+
+from dl4cv.utils import save_csv
 
 
 dataset_path = "../../datasets/evalDataset"
+os.makedirs(dataset_path, exist_ok=True)
 
 SEQUENCE_LENGTH = 3
 
@@ -78,13 +78,6 @@ std = {
 }
 
 
-class Ball(pygame.sprite.Sprite):
-    def __init__(self, radius=50, color=(255,255,255)):
-        super(Ball, self).__init__()
-        self.surf = pygame.Surface((radius*2,radius*2))
-        pygame.draw.circle(self.surf, color, (radius,radius), radius, 0)
-
-
 def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
     vx_new = vx + ax * t_frame
     vy_new = vy + ay * t_frame
@@ -109,9 +102,25 @@ def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
     return x_new, y_new, vx_new, vy_new
 
 
-screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
+def draw_ball(screen, x, y):
+    screen.rectangle(
+        xy=[(0, 0), (WINDOW_SIZE_X, WINDOW_SIZE_Y)],
+        fill='black',
+        outline=None
+    )
+    screen.ellipse(
+        xy=[(x - BALL_RADIUS, y - BALL_RADIUS), (x + BALL_RADIUS, y + BALL_RADIUS)],
+        width=0,
+        fill='white'
+    )
 
-ball = Ball(BALL_RADIUS)
+
+# create image to draw on
+img = Image.new(mode="L", size=(WINDOW_SIZE_X, WINDOW_SIZE_Y))
+# create screen
+screen = ImageDraw.Draw(img)
+
+
 x_max = WINDOW_SIZE_X - BALL_RADIUS
 x_min = BALL_RADIUS
 y_max = WINDOW_SIZE_Y - BALL_RADIUS
@@ -165,15 +174,12 @@ for key in variables:
 
         for i_frame in range(SEQUENCE_LENGTH):
 
-            screen.fill((0, 0, 0))
-            screen.blit(ball.surf, (x - BALL_RADIUS, y - BALL_RADIUS))
-            pygame.display.flip()
-
             frame_path = os.path.join(
                 sequence_path, 'frame%d.jpeg' % (SEQUENCE_LENGTH - i_frame - 1)
             )
 
-            pygame.image.save(screen, frame_path)
+            draw_ball(screen, x, y)
+            img.save(frame_path)
 
             # Limit velocities to V_MAX
             vx = math.copysign(V_MAX, vx) if abs(vx) > V_MAX else vx
