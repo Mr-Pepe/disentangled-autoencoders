@@ -125,13 +125,12 @@ class VariationalQuestionAutoEncoder(BaseModel):
 
         self.physics_layer = PhysicsPVA(dt=1/30, out_dim=z1_dim)
 
-    def forward(self, inp):
+    def forward(self, x, question):
         """
         inp: tuple (x, question)
         x: sequence of input frames. torch.tensor, shape: [batch, len_inp_seq, width, heigth]
         question: index of target frame to predict, int
         """
-        (x, question) = inp
         z_t, mu, logvar = self.encode(x)
 
         question = question[:, None, None, None]

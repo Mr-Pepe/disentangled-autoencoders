@@ -56,6 +56,7 @@ class Solver(object):
 
         # Do the training here
         for i_epoch in range(num_epochs):
+            print("Starting epoch {}".format(start_epoch + i_epoch + 1))
             t_start_epoch = time.time()
 
             i_epoch += start_epoch
@@ -68,18 +69,21 @@ class Solver(object):
 
                 i_iter += 1
 
-                x, y, _ = batch
+                x, y, question, _ = batch
 
                 # If the current minibatch does not have the full number of samples, skip it
                 if len(x) < train_loader.batch_size:
-                    print("Skipped batch")
+                    print("Skipped batch, len(x): {}, batch_size: {}".format(
+                        len(x), train_loader.batch_size
+                    ))
                     continue
 
                 x = x.to(device)
                 y = y.to(device)
+                question = question.to(device)
 
                 # Forward pass
-                y_pred, latent_stuff = model(x)
+                y_pred, latent_stuff = model(x, question)
 
                 cov = torch.zeros(1, device=device)
                 total_kl_divergence = torch.zeros(1, device=device)
@@ -136,12 +140,13 @@ class Solver(object):
             for i, batch in enumerate(val_loader):
                 num_val_batches += 1
 
-                x, y, _ = batch
+                x, y, question, _ = batch
 
                 x = x.to(device)
                 y = y.to(device)
+                question = question.to(device)
 
-                y_pred, latent_stuff = model(x)
+                y_pred, latent_stuff = model(x, question)
 
                 val_loss += self.criterion(y, y_pred).item()
 

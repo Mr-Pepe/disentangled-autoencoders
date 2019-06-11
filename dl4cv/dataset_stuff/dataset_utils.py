@@ -87,18 +87,19 @@ class CustomDataset(Dataset):
         if self.question:
             target_idx = np.random.randint(low=0, high=2 * self.len_inp_sequence - self.len_out_sequence)
             y = torch.cat(sequence['images'][target_idx:target_idx + self.len_out_sequence])
-            x = (x, torch.tensor(target_idx, dtype=torch.float32))
+            question = torch.tensor(target_idx, dtype=torch.float32)
         else:
             start_y = self.len_inp_sequence
             end_y = self.len_inp_sequence + self.len_out_sequence
             y = torch.cat(sequence['images'][start_y:end_y])
+            question = None
 
         if self.load_meta:
             meta = sequence['meta']
         else:
             meta = 0
 
-        return x, y, meta
+        return x, y, question, meta
 
     def __len__(self):
         return len(self.sequence_paths)

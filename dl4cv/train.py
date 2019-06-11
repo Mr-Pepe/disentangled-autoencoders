@@ -4,7 +4,7 @@ from torchvision import transforms
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 
-from dl4cv.models.models import VariationalAutoEncoder
+from dl4cv.models.models import VariationalAutoEncoder, VariationalQuestionAutoEncoder
 from dl4cv.solver import Solver
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 
@@ -25,15 +25,15 @@ config = {
     'num_train_regular':    4096,       # Number of training samples for regular training
     'num_val_regular':      256,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
-    'len_inp_sequence': 3,              # Length of training sequence
-    'len_out_sequence': 3,              # Number of generated images
+    'len_inp_sequence': 25,              # Length of training sequence
+    'len_out_sequence': 1,              # Number of generated images
 
     'num_workers': 4,                   # Number of workers for data loading
 
     ## Hyperparameters ##
     'max_train_time_s': None,
     'num_epochs': 100,                  # Number of epochs to train
-    'batch_size': 256,
+    'batch_size': 32,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
@@ -81,7 +81,8 @@ dataset = CustomDataset(
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
     load_meta=False,
-    load_to_ram=config['load_data_to_ram']
+    load_to_ram=config['load_data_to_ram'],
+    question=True
 )
 
 
@@ -141,12 +142,11 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = VariationalAutoEncoder(
+    model = VariationalQuestionAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
-        z_dim_encoder=6,
-        z_dim_decoder=6,
-        use_physics=True
+        z0_dim=6,
+        z1_dim=6,
     )
     solver = Solver()
     loss_criterion = nn.MSELoss()
