@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 
 USE_NUM_IMAGES = True
 NUM_SEQUENCES = 2048+128
-SEQUENCE_LENGTH = 100  # including input and output
+SEQUENCE_LENGTH = 50  # including input and output
 
 T_FRAME = 1/30
 WINDOW_SIZE_X = 32

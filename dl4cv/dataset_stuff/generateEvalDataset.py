@@ -11,7 +11,7 @@ from dl4cv.utils import save_csv
 dataset_path = "../../datasets/evalDataset"
 os.makedirs(dataset_path, exist_ok=True)
 
-SEQUENCE_LENGTH = 3
+SEQUENCE_LENGTH = 50
 
 T_FRAME = 1/30
 WINDOW_SIZE_X = 32
@@ -32,7 +32,7 @@ pos_y_end = WINDOW_SIZE_Y - BALL_RADIUS
 pos_y_num_samples = WINDOW_SIZE_Y - 2 * BALL_RADIUS + 1
 
 
-std_vel = 150
+std_vel = 15
 
 # Variation in vel_x
 vel_x_start = - 3 * std_vel
@@ -45,7 +45,7 @@ vel_y_end = 3 * std_vel
 vel_y_num_samples = (vel_y_end - vel_y_start) // 3 + 1
 
 
-std_acc = 100
+std_acc = 10
 
 # Variation in acc_x
 acc_x_start = - 3 * std_acc
