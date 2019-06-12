@@ -10,7 +10,8 @@ from torchvision.datasets.folder import \
 
 class CustomDataset(Dataset):
     def __init__(self, path, transform, len_inp_sequence, len_out_sequence,
-                 question=False, load_ground_truth=False, load_to_ram=False, only_input=False):
+                 question=False, load_ground_truth=False, load_to_ram=False,
+                 only_input=False):
         self.path = path
         self.transform = transform
         self.sequences = {}
@@ -100,7 +101,7 @@ class CustomDataset(Dataset):
         else:
             ground_truth = 0
 
-        return x, y, question, meta
+        return x, y, question, ground_truth
 
     def get_ground_truth(self, index):
         return read_csv(self.sequences[self.sequence_paths[index]]['ground_truth'])

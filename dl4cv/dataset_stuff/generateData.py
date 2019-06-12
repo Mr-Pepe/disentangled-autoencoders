@@ -1,6 +1,8 @@
 import os
 import math
 import numpy as np
+import torch
+
 from PIL import Image, ImageDraw
 
 
@@ -68,14 +70,14 @@ def main():
     y_max = WINDOW_SIZE_Y - BALL_RADIUS
     y_min = BALL_RADIUS
 
-    x_all = np.random.normal(WINDOW_SIZE_X/2, WINDOW_SIZE_X/4, NUM_SEQUENCES).astype('int')
-    y_all = np.random.normal(WINDOW_SIZE_Y/2, WINDOW_SIZE_Y/4, NUM_SEQUENCES).astype('int')
+    x_all = torch.normal(WINDOW_SIZE_X / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_X / 4).int()
+    y_all = torch.normal(WINDOW_SIZE_Y / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_Y / 4).int()
 
-    vx_all = np.random.normal(0, 150, NUM_SEQUENCES)
-    vy_all = np.random.normal(0, 150, NUM_SEQUENCES)
+    vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 15)
+    vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 15)
 
-    ax_all = np.random.normal(0, 100, NUM_SEQUENCES)
-    ay_all = np.random.normal(0, 100, NUM_SEQUENCES)
+    ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 10)
+    ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 10)
 
     for i_sequence in range(NUM_SEQUENCES):
 
