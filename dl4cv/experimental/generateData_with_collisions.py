@@ -15,7 +15,6 @@ WINDOW_SIZE_X = 32
 WINDOW_SIZE_Y = 32
 BALL_RADIUS = 3
 V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
-DT = SEQUENCE_LENGTH * T_FRAME  # TODO: Test this
 
 save_dir_path = "../../datasets/ball"
 
@@ -66,13 +65,6 @@ def draw_ball(screen, x, y):
     )
 
 
-# TODO: Test this function
-def get_y(x_start, x_end, y_start, y_end, ax, ay):
-    vx = ((x_end - x_start) / DT) - (0.5 * ax * DT)
-    vy = ((y_end - y_start) / DT) - (0.5 * ay * DT)
-    return vx, vy
-
-
 def main():
     # Count collisions
     num_collisions = 0
@@ -87,29 +79,25 @@ def main():
     y_max = WINDOW_SIZE_Y - BALL_RADIUS
     y_min = BALL_RADIUS
 
-    dt = SEQUENCE_LENGTH * T_FRAME
+    x_all = torch.normal(WINDOW_SIZE_X / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_X / 4).int()
+    y_all = torch.normal(WINDOW_SIZE_Y / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_Y / 4).int()
 
-    x_start_all = torch.normal(WINDOW_SIZE_X / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_X / 4).int()
-    y_start_all = torch.normal(WINDOW_SIZE_Y / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_Y / 4).int()
-
-    x_end_all = torch.normal(WINDOW_SIZE_X / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_X / 4).int()
-    y_end_all = torch.normal(WINDOW_SIZE_Y / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_Y / 4).int()
+    vx_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 15)
+    vy_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 15)
 
     ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 10)
     ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 10)
 
     for i_sequence in range(NUM_SEQUENCES):
 
-        x = min(x_max, max(x_min, x_start_all[i_sequence].item()))
-        y = min(y_max, max(y_min, y_start_all[i_sequence].item()))
+        x = min(x_max, max(x_min, x_all[i_sequence].item()))
+        y = min(y_max, max(y_min, y_all[i_sequence].item()))
 
-        x_end = min(x_max, max(x_min, x_end_all[i_sequence].item()))
-        y_end = min(y_max, max(y_min, y_end_all[i_sequence].item()))
+        vx = vx_all[i_sequence]
+        vy = vy_all[i_sequence]
 
-        ax = ax_all[i_sequence].item()
-        ay = ay_all[i_sequence].item()
-
-        vx, vy = get_y(x, x_end, y, y_end, ax, ay)
+        ax = ax_all[i_sequence]
+        ay = ay_all[i_sequence]
 
         save_path_sequence = os.path.join(
                 save_dir_path,
