@@ -46,11 +46,13 @@ def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
 
 
 def draw_ball(screen, x, y):
+    # Reset to a black image
     screen.rectangle(
         xy=[(0, 0), (WINDOW_SIZE_X, WINDOW_SIZE_Y)],
         fill='black',
         outline=None
     )
+    # Draw the ball on the clean image
     screen.ellipse(
         xy=[(x - BALL_RADIUS, y - BALL_RADIUS), (x + BALL_RADIUS, y + BALL_RADIUS)],
         width=0,
@@ -96,7 +98,8 @@ def main():
         )
 
         if i_sequence % 100 == 0:
-            print("Generating sequence: %d with length %d ..." % (i_sequence, SEQUENCE_LENGTH))
+            print("Generating sequence: %d of %d with length %d ..." % (
+                i_sequence, NUM_SEQUENCES, SEQUENCE_LENGTH))
 
         os.makedirs(save_path_sequence, exist_ok=True)
 

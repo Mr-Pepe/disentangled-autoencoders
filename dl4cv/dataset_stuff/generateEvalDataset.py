@@ -62,10 +62,10 @@ acc_y_num_samples = (acc_y_end - acc_y_start) // 2 + 1
 variables = {
     'pos_x': np.linspace(pos_x_start, pos_x_end, pos_x_num_samples),
     'pos_y': np.linspace(pos_y_start, pos_y_end, pos_y_num_samples),
-    'vel_x': -np.linspace(vel_x_start, vel_x_end, vel_x_num_samples),
-    'vel_y': -np.linspace(vel_y_start, vel_y_end, vel_y_num_samples),
-    'acc_x': -np.linspace(acc_x_start, acc_x_end, acc_x_num_samples),
-    'acc_y': -np.linspace(acc_y_start, acc_y_end, acc_y_num_samples)
+    'vel_x': np.linspace(vel_x_start, vel_x_end, vel_x_num_samples),
+    'vel_y': np.linspace(vel_y_start, vel_y_end, vel_y_num_samples),
+    'acc_x': np.linspace(acc_x_start, acc_x_end, acc_x_num_samples),
+    'acc_y': np.linspace(acc_y_start, acc_y_end, acc_y_num_samples)
 }
 
 std = {
@@ -128,18 +128,17 @@ y_min = BALL_RADIUS
 
 
 for key in variables:
+    # Create a mini dataset for each varying variable
     path = os.path.join(dataset_path, key)
     os.makedirs(path, exist_ok=True)
 
     num_sequences = len(variables[key])
     print("Generating %d sequences for %s" % (num_sequences, key))
 
-    # Save varying variable. Vel and acc must again be inverted to save the actual linspace
-    if key == 'pos_x' or key == 'pos_y':
-        save_csv(variables[key], os.path.join(path, 'linspace.csv'))
-    else:
-        save_csv(-variables[key], os.path.join(path, 'linspace.csv'))
+    # Save varying variable
+    save_csv(variables[key], os.path.join(path, 'linspace.csv'))
 
+    # Set values for the params of the current mini dataset
     inner_vars = {}
     for inner_key in variables:
         if key == inner_key:
@@ -147,7 +146,7 @@ for key in variables:
         else:
             if inner_key == 'pos_x':
                 inner_vars[inner_key] = [torch.normal(
-                    mean=WINDOW_SIZE_X/2,
+                    mean=WINDOW_SIZE_X / 2,
                     std=torch.ones(1) * std[inner_key]
                 ).item()] * num_sequences
             elif inner_key == 'pos_y':
@@ -161,6 +160,7 @@ for key in variables:
                     std=torch.ones(1) * std[inner_key]
                 ).item()] * num_sequences
 
+    # Create all n sequences of a mini dataset
     for i_seq in range(num_sequences):
         sequence_path = os.path.join(path, "seq%d" % i_seq)
         os.makedirs(sequence_path, exist_ok=True)
@@ -172,10 +172,11 @@ for key in variables:
         ax = inner_vars['acc_x'][i_seq]
         ay = inner_vars['acc_y'][i_seq]
 
+        # Create all frames of a sequence
         for i_frame in range(SEQUENCE_LENGTH):
 
             frame_path = os.path.join(
-                sequence_path, 'frame%d.jpeg' % (SEQUENCE_LENGTH - i_frame - 1)
+                sequence_path, 'frame%d.jpeg' % (i_frame + 1)
             )
 
             draw_ball(screen, x, y)
@@ -186,5 +187,3 @@ for key in variables:
             vy = math.copysign(V_MAX, vy) if abs(vy) > V_MAX else vy
 
             x, y, vx, vy = get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, T_FRAME)
-
-            # time.sleep(T_FRAME)
