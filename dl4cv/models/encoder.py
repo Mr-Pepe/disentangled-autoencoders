@@ -3,7 +3,7 @@ File to store all encoder architectures
 """
 import torch.nn as nn
 
-from dl4cv.models.model_utils import Conv2dReflectionPadding, ResidualBlock
+from models.model_utils import Conv2dReflectionPadding
 
 
 class VanillaEncoder(nn.Module):

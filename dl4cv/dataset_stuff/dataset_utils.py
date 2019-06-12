@@ -3,7 +3,7 @@ import os
 import torch
 
 from torch.utils.data.dataset import Dataset
-from dl4cv.utils import read_csv
+from utils import read_csv
 from torchvision.datasets.folder import \
     pil_loader, has_file_allowed_extension, IMG_EXTENSIONS
 

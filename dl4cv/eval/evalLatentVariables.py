@@ -1,7 +1,7 @@
 import torch
 import torchvision.transforms as transforms
 
-from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+from dataset_stuff.dataset_utils import CustomDataset
 from torch.utils.data import DataLoader
 
 LATENTS = ['px', 'py', 'vx', 'vy', 'ax', 'ay']

@@ -3,7 +3,7 @@ import torch
 import torchvision.transforms as transforms
 import numpy as np
 
-from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+from dataset_stuff.dataset_utils import CustomDataset
 
 to_pil = transforms.ToPILImage()
 

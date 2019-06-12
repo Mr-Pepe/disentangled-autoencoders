@@ -1,10 +1,9 @@
 import datetime
 import torch
 import os
-import pickle
 import time
 
-from dl4cv.utils import kl_divergence, time_left
+from utils import kl_divergence, time_left
 
 
 class Solver(object):
