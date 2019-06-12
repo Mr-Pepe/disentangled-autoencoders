@@ -49,4 +49,4 @@ def time_left(t_start, n_iters, i_iter):
     time_per_iter = (time.time() - t_start) / i_iter
     time_left = time_per_iter * iters_left
     time_left = datetime.datetime.fromtimestamp(time_left)
-    return time_left.strftime("%H%M%S")
+    return time_left.strftime("%H:%M:%S")

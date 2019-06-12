@@ -82,7 +82,7 @@ dataset = CustomDataset(
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
     load_to_ram=config['load_data_to_ram'],
-    question=config['use_question']
+    question=config['use_question'],
     load_ground_truth=False,
 )
 
@@ -150,7 +150,7 @@ else:
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
         z_dim_encoder=6,
-        z_dim_decoder=6,
+        z_dim_decoder=7,  # latent variables get concatenated with question
         use_physics=False
     )
     solver = Solver()
