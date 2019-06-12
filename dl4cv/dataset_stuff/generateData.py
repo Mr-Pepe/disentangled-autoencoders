@@ -7,13 +7,13 @@ from PIL import Image, ImageDraw
 
 
 USE_NUM_IMAGES = True
-NUM_SEQUENCES = 4096+256
+NUM_SEQUENCES = 1  # 4096+256
 SEQUENCE_LENGTH = 50  # including input and output
 
 T_FRAME = 1/30
 WINDOW_SIZE_X = 32
 WINDOW_SIZE_Y = 32
-BALL_RADIUS = 5
+BALL_RADIUS = 3
 V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
 
 save_dir_path = "../../datasets/ball"

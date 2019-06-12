@@ -16,7 +16,7 @@ SEQUENCE_LENGTH = 50
 T_FRAME = 1/30
 WINDOW_SIZE_X = 32
 WINDOW_SIZE_Y = 32
-BALL_RADIUS = 5
+BALL_RADIUS = 3
 V_MAX = 300
 
 """Generate the variations in every dimension"""
