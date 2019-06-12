@@ -48,9 +48,9 @@ def evaluate(model, variables):
             transform=transform,
             len_inp_sequence=config['len_inp_sequence'],
             len_out_sequence=config['len_out_sequence'],
-            load_meta=False,
+            load_ground_truth=False,
             load_to_ram=False,
-            question=True
+            only_input=True
         )
 
         data_loader = torch.utils.data.DataLoader(

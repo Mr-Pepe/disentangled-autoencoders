@@ -30,7 +30,7 @@ dataset = CustomDataset(
         transforms.ToTensor()
     ]),
     sequence_length=config['sequence_length'],
-    load_meta=True
+    load_ground_truth=True
 )
 
 data_loader = DataLoader(

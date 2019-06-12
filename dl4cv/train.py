@@ -81,9 +81,9 @@ dataset = CustomDataset(
     ]),
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
-    load_meta=False,
     load_to_ram=config['load_data_to_ram'],
     question=config['use_question']
+    load_ground_truth=False,
 )
 
 
