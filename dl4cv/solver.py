@@ -4,7 +4,7 @@ import os
 import pickle
 import time
 
-from dl4cv.utils import kl_divergence
+from dl4cv.utils import kl_divergence, time_left
 
 
 class Solver(object):
@@ -53,6 +53,7 @@ class Solver(object):
         t_start_training = time.time()
 
         print('Start training at epoch ' + str(start_epoch+1))
+        t_start = time.time()
 
         # Do the training here
         for i_epoch in range(num_epochs):
@@ -98,7 +99,7 @@ class Solver(object):
                     z = latent_stuff[0]
 
                     # Calculate covariance
-                    z = z[:,:,0,0]
+                    z = z[:, :, 0, 0]
                     z_mean = torch.mean(z, dim=0)
                     cov = 1/len(batch) * torch.mm((z - z_mean).transpose(0, 1), (z-z_mean))
                     cov = cov - torch.diag(torch.diag(cov)).to(device)
@@ -126,7 +127,8 @@ class Solver(object):
                           "   KL loss: " + "{0:.6f}".format(total_kl_divergence.item()) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
-                          " - Time/iter " + str(int((time.time()-t_start_iter)*1000)) + "ms")
+                          " - Time/iter: " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
+                          "   time left: {}".format(time_left(t_start, n_iters, i_iter)))
 
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))

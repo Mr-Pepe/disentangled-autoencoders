@@ -1,9 +1,9 @@
 import csv
+import datetime
+import time
 
 import numpy as np
-import torchvision.transforms as transforms
 import torch
-from PIL import Image
 
 
 def kl_divergence(mu, logvar):
@@ -42,3 +42,11 @@ def read_csv(path):
 
 def abs_diff_loss(y1, y2):
     return torch.abs(y1 - y2)
+
+
+def time_left(t_start, n_iters, i_iter):
+    iters_left = n_iters - i_iter
+    time_per_iter = (time.time() - t_start) / i_iter
+    time_left = time_per_iter * iters_left
+    time_left = datetime.datetime.fromtimestamp(time_left)
+    return time_left.strftime("%H%M%S")
