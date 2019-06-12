@@ -80,13 +80,17 @@ class VariationalAutoEncoder(BaseModel):
 
         self.physics_layer = PhysicsPVA(dt=1 / 30, out_dim=z_dim_decoder)
 
-    def forward(self, x):
+    def forward(self, x, q=None):
         z_encoder, mu, logvar = self.encode(x)
 
         if self.use_physics:
             z_decoder = self.physics(z_encoder)
         else:
             z_decoder = z_encoder
+
+        if q is not None:
+            q = q[:, None, None, None]
+            z_decoder = torch.cat((z_decoder, q), dim=1)
 
         y = self.decode(z_decoder)
 
@@ -106,48 +110,3 @@ class VariationalAutoEncoder(BaseModel):
 
     def physics(self, x):
         return self.physics_layer(x)
-
-
-class VariationalQuestionAutoEncoder(BaseModel):
-
-    def __init__(self, len_in_sequence, len_out_sequence, z0_dim=6, z1_dim=6):
-        super(VariationalQuestionAutoEncoder, self).__init__()
-        self.z_dim = z0_dim
-
-        self.encoder = VanillaEncoder(
-            in_channels=len_in_sequence,
-            z_dim=z0_dim * 2
-        )
-        self.decoder = VanillaDecoder(
-            z_dim=z1_dim + 1,
-            out_channels=len_out_sequence
-        )
-
-        self.physics_layer = PhysicsPVA(dt=1/30, out_dim=z1_dim)
-
-    def forward(self, x, question):
-        """
-        inp: tuple (x, question)
-        x: sequence of input frames. torch.tensor, shape: [batch, len_inp_seq, width, heigth]
-        question: index of target frame to predict, int
-        """
-        z_t, mu, logvar = self.encode(x)
-
-        question = question[:, None, None, None]
-
-        z_t = torch.cat((z_t, question), dim=1)
-        y = self.decode(z_t)
-
-        return y, (mu, logvar)
-
-    def encode(self, x):
-        z_params = self.encoder(x)
-        mu = z_params[:, :self.z_dim]
-        logvar = z_params[:, self.z_dim:]
-
-        z_t = utils.reparametrize(mu, logvar)
-
-        return z_t, mu, logvar
-
-    def decode(self, z_t_plus_1):
-        return self.decoder(z_t_plus_1)

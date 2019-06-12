@@ -4,7 +4,7 @@ from torchvision import transforms
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 
-from dl4cv.models.models import VariationalAutoEncoder, VariationalQuestionAutoEncoder
+from dl4cv.models.models import VariationalAutoEncoder
 from dl4cv.solver import Solver
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 
@@ -21,7 +21,7 @@ config = {
     'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': True,             # Set overfit or regular training
+    'do_overfitting': False,             # Set overfit or regular training
     'num_train_regular':    4096,       # Number of training samples for regular training
     'num_val_regular':      256,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
@@ -33,14 +33,15 @@ config = {
     ## Hyperparameters ##
     'max_train_time_s': None,
     'num_epochs': 100,                  # Number of epochs to train
-    'batch_size': 32,
+    'batch_size': 128,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
     'beta': 1e-3,                          # beta-coefficient for disentangling
+    'use_question': True,
 
     ## Logging ##
-    'log_interval': 3,           # Number of mini-batches after which to print training loss
+    'log_interval': 7,           # Number of mini-batches after which to print training loss
     'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': '../saves'
 }
@@ -82,7 +83,7 @@ dataset = CustomDataset(
     len_out_sequence=config['len_out_sequence'],
     load_meta=False,
     load_to_ram=config['load_data_to_ram'],
-    question=True
+    question=config['use_question']
 )
 
 
@@ -100,7 +101,10 @@ if config['do_overfitting']:
 else:
     print("Training on {} samples".format(config['num_train_regular']))
     if config['num_train_regular']+config['num_val_regular'] > len(dataset):
-        raise Exception('Trying to use more samples for training and validation than are available.')
+        raise Exception(
+            'Trying to use more samples for training and validation than len(dataset), {} > {}.'.format(
+                config['num_train_regular'] + config['num_val_regular'], len(dataset)
+            ))
     else:
         train_data_sampler = SubsetRandomSampler(range(config['num_train_regular']))
         val_data_sampler = SubsetRandomSampler(range(
@@ -142,11 +146,12 @@ if config['continue_training']:
 
 else:
     print("Initializing model...")
-    model = VariationalQuestionAutoEncoder(
+    model = VariationalAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
-        z0_dim=6,
-        z1_dim=6,
+        z_dim_encoder=6,
+        z_dim_decoder=6,
+        use_physics=False
     )
     solver = Solver()
     loss_criterion = nn.MSELoss()

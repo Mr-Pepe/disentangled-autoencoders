@@ -10,10 +10,10 @@ from dl4cv.utils import reparametrize, read_csv
 
 config = {
     'data_path': '../../datasets/evalDataset',  # Path to directory of the image folder
-    'len_inp_sequence': 3,
+    'len_inp_sequence': 25,
     'len_out_sequence': 0,
 
-    'model_path': '../../saves/train20190530134521/model10',
+    'model_path': '../../saves/train20190611073202/model100',
 }
 
 transform = transforms.Compose([
@@ -49,7 +49,8 @@ def evaluate(model, variables):
             len_inp_sequence=config['len_inp_sequence'],
             len_out_sequence=config['len_out_sequence'],
             load_meta=False,
-            load_to_ram=False
+            load_to_ram=False,
+            question=True
         )
 
         data_loader = torch.utils.data.DataLoader(
@@ -59,7 +60,7 @@ def evaluate(model, variables):
 
         linspace = np.array(read_csv(os.path.join(path, 'linspace.csv')))
 
-        x, _, _ = next(iter(data_loader))
+        x, _, _, _ = next(iter(data_loader))
         z_t = get_z(encoder, x, z_dim=model.z_dim)
 
         f, axes = plt.subplots(len(variables), 1, figsize=(10, 10))

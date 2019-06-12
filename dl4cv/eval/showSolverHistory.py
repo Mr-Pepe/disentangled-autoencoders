@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dl4cv.solver import Solver
 
-path = '../../saves/train20190529153044/solver10'
+path = '../../saves/train20190611073202/solver100'
 
 
 solver = Solver()
@@ -13,7 +13,7 @@ print("Stop time: %fs" % solver.training_time_s)
 
 train_loss = np.array(solver.history['train_loss'])
 val_loss = np.array(solver.history['val_loss'])
-kl_divergence  = np.array(solver.history['kl_divergence'])
+kl_divergence = np.array(solver.history['kl_divergence'])
 reconstruction_loss = np.array(solver.history['reconstruction_loss'])
 
 f, (ax1, ax2, ax3) = plt.subplots(3, 1)

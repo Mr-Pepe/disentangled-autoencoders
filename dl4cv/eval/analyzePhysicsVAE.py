@@ -9,9 +9,9 @@ to_pil = transforms.ToPILImage()
 
 config = {
     'data_path': '../../datasets/ball',
-    'model_path': '../../saves/train20190531073151/model100',
-    'len_inp_sequence': 3,
-    'len_out_sequence': 3,
+    'model_path': '../../saves/train20190611073202/model100',
+    'len_inp_sequence': 25,
+    'len_out_sequence': 1,
     'batch_size': 256
 }
 
@@ -22,7 +22,10 @@ dataset = CustomDataset(
         transforms.ToTensor()
     ]),
     len_inp_sequence=config['len_inp_sequence'],
-    len_out_sequence=config['len_out_sequence']
+    len_out_sequence=config['len_out_sequence'],
+    question=True,
+    load_meta=False,
+    load_to_ram=False
 )
 
 data_loader = torch.utils.data.DataLoader(
@@ -33,13 +36,16 @@ data_loader = torch.utils.data.DataLoader(
 model = torch.load(config['model_path'])
 model.eval()
 
-x, _, _ = next(iter(data_loader))
+x, _, question, _ = next(iter(data_loader))
+question = question[:, None, None, None]
 
 z_t, mu, logvar = model.encode(x)
+z_t = torch.cat((z_t, question), dim=1)
 
-z_t_plus_1 = model.physics(z_t)
+# z_t_plus_1 = model.physics(z_t)
 
-y = model.decode(z_t_plus_1)
+# y = model.decode(z_t_plus_1)
+y = model.decode(z_t)
 
 
 # Get the mean mu for every latent variable
@@ -81,6 +87,3 @@ for i_variable in range(z_t_dim):
         plt.imshow(to_pil(model.decode(model.physics(z.view(1, z_t_dim, 1, 1))).detach()[0]), cmap='gray')
         plt.title("Variable " + str(i_variable+1) + " = " + str(value_variable.item()))
         plt.show()
-
-
-z_t_plus_1_mean = z_t_plus_1.mean(dim=0)

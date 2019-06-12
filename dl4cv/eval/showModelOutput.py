@@ -14,9 +14,9 @@ config = {
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
 
-    'model_path': '../../saves/train20190609131104/model100',
+    'model_path': '../../saves/train20190611073202/model100',
 
-    'batch_size': 256,
+    'batch_size': 1000,
     'num_show_images': 5,              # Number of images to show
 }
 
@@ -30,9 +30,8 @@ def eval_model(model, samples):
     plt.rcParams.update({'font.size': 8})
 
     for i_sample, sample in enumerate(samples):
-        print("Sample {}".format(i_sample))
-
         x, y, question, meta = sample
+        print("Sample {}, question: {}".format(i_sample, question))
 
         print("Making predictions...")
         y_pred, latent_stuff = model(

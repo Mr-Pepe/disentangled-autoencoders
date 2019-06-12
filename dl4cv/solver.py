@@ -81,7 +81,8 @@ class Solver(object):
 
                 x = x.to(device)
                 y = y.to(device)
-                question = question.to(device)
+                if question is not None:
+                    question = question.to(device)
 
                 # Forward pass
                 y_pred, latent_stuff = model(x, question)
@@ -146,7 +147,8 @@ class Solver(object):
 
                 x = x.to(device)
                 y = y.to(device)
-                question = question.to(device)
+                if question is not None:
+                    question = question.to(device)
 
                 y_pred, latent_stuff = model(x, question)
 

@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw
 
 
 USE_NUM_IMAGES = True
-NUM_SEQUENCES = 2048+128
+NUM_SEQUENCES = 4096+256
 SEQUENCE_LENGTH = 50  # including input and output
 
 T_FRAME = 1/30
