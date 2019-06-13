@@ -1,7 +1,8 @@
 import datetime
-import torch
 import os
 import time
+
+import torch
 
 from dl4cv.utils import kl_divergence, time_left
 

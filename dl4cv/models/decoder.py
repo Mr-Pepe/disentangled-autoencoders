@@ -1,8 +1,8 @@
 """
 File to store all decoder architectures
 """
-import torch.nn as nn
 import torch
+import torch.nn as nn
 
 from dl4cv.models.model_utils import ResizeConvLayer
 

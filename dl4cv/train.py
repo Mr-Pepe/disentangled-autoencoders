@@ -1,12 +1,11 @@
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 from torchvision import transforms
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from dl4cv.models.models import VariationalAutoEncoder
 from dl4cv.solver import Solver
-
-from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 
 config = {
 

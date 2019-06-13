@@ -1,6 +1,7 @@
-import pygame
 import os
+
 import math
+import pygame
 import torch
 
 from dl4cv.utils import save_csv

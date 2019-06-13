@@ -1,11 +1,11 @@
-import numpy as np
 import os
-import torch
 
+import numpy as np
+import torch
 from torch.utils.data.dataset import Dataset
+from torchvision.datasets.folder import IMG_EXTENSIONS, has_file_allowed_extension, pil_loader
+
 from dl4cv.utils import read_csv
-from torchvision.datasets.folder import \
-    pil_loader, has_file_allowed_extension, IMG_EXTENSIONS
 
 
 class CustomDataset(Dataset):

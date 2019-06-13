@@ -3,13 +3,14 @@ File to store all model architectures
 """
 
 import abc
-import torch.nn as nn
-import torch
 
+import torch
+import torch.nn as nn
+
+import dl4cv.utils as utils
+from dl4cv.models.decoder import VanillaDecoder
 from dl4cv.models.encoder import VanillaEncoder
 from dl4cv.models.physics_layer import PhysicsPVA
-from dl4cv.models.decoder import VanillaDecoder
-import dl4cv.utils
 
 
 class BaseModel(nn.Module):

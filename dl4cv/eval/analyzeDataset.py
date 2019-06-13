@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
-import torchvision.transforms as transforms
 import numpy as np
+import torchvision.transforms as transforms
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
-
 
 config = {
     'data_path': '../../datasets/ball',

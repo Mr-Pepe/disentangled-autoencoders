@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
-
 from dl4cv.dataset_utils import ForwardAndMirroredDatasetRAM
-
-from dl4cv.models.models import AutoEncoderPV
 from dl4cv.experimental.solver import Solver
 from torch.utils.data import DataLoader, SequentialSampler
+
+from dl4cv.models.models import AutoEncoderPV
 
 config = {
 

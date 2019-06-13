@@ -2,10 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms as transforms
-
-from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from torch.utils.data.sampler import SequentialSampler
 
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 
 config = {
     'show_images': True,
@@ -14,7 +13,7 @@ config = {
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
 
-    'model_path': '../../saves/train20190611073202/model100',
+    'model_path': '../../saves/train20190613143218/model10',
 
     'batch_size': 1000,
     'num_show_images': 5,              # Number of images to show

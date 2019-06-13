@@ -1,7 +1,8 @@
 import datetime
-import torch
 import os
 import time
+
+import torch
 
 
 class Solver(object):

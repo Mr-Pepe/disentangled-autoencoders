@@ -1,12 +1,12 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import torch
-
 from torchvision.transforms import transforms
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
-from dl4cv.utils import reparametrize, read_csv
+from dl4cv.utils import read_csv, reparametrize
 
 config = {
     'data_path': '../../datasets/evalDataset',  # Path to directory of the image folder

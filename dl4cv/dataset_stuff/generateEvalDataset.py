@@ -1,12 +1,11 @@
+import os
+
 import math
 import numpy as np
-import os
 import torch
-
 from PIL import Image, ImageDraw
 
 from dl4cv.utils import save_csv
-
 
 dataset_path = "../../datasets/evalDataset"
 os.makedirs(dataset_path, exist_ok=True)

@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
-
 from dl4cv.dataset_utils import ForwardDatasetIdea2RAM
-
-from dl4cv.models.models import AutoEncoderIdea2
-from dl4cv.experimental.solver_idea2 import Solver
 from torch.utils.data import DataLoader, SequentialSampler
+
+from dl4cv.experimental.solver_idea2 import Solver
+from dl4cv.models.models import AutoEncoderIdea2
 
 config = {
 

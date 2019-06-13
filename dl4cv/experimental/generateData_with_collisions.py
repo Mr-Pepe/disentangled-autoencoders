@@ -1,10 +1,9 @@
 import os
+
 import math
 import numpy as np
 import torch
-
 from PIL import Image, ImageDraw
-
 
 USE_NUM_IMAGES = True
 NUM_SEQUENCES = 1000  # 4096+256
