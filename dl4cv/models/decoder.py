@@ -4,7 +4,7 @@ File to store all decoder architectures
 import torch.nn as nn
 import torch
 
-from models.model_utils import ResizeConvLayer
+from dl4cv.models.model_utils import ResizeConvLayer
 
 
 class VanillaDecoder(nn.Module):

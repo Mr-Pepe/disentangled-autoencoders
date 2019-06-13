@@ -3,7 +3,7 @@ import torch
 import os
 import time
 
-from utils import kl_divergence, time_left
+from dl4cv.utils import kl_divergence, time_left
 
 
 class Solver(object):

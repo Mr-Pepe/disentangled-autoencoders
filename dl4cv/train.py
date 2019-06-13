@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 
-from dataset_stuff.dataset_utils import CustomDataset
-from models.models import VariationalAutoEncoder
-from solver import Solver
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+from dl4cv.models.models import VariationalAutoEncoder
+from dl4cv.solver import Solver
 
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 

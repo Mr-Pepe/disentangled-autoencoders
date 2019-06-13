@@ -6,10 +6,10 @@ import abc
 import torch.nn as nn
 import torch
 
-from models.encoder import VanillaEncoder
-from models.physics_layer import PhysicsPVA
-from models.decoder import VanillaDecoder
-import utils
+from dl4cv.models.encoder import VanillaEncoder
+from dl4cv.models.physics_layer import PhysicsPVA
+from dl4cv.models.decoder import VanillaDecoder
+import dl4cv.utils
 
 
 class BaseModel(nn.Module):

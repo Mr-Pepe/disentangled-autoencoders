@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 
-from dataset_stuff.dataset_utils import CustomDataset
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from torch.utils.data.sampler import SequentialSampler
 
 

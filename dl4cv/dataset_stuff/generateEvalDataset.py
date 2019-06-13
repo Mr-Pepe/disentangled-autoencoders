@@ -5,7 +5,7 @@ import torch
 
 from PIL import Image, ImageDraw
 
-from utils import save_csv
+from dl4cv.utils import save_csv
 
 
 dataset_path = "../../datasets/evalDataset"

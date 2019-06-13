@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from solver import Solver
+from dl4cv.solver import Solver
 
 path = '../../saves/train20190611073202/solver100'
 
