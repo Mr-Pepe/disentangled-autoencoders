@@ -104,7 +104,7 @@ class CustomDataset(Dataset):
         return x, y, question, ground_truth
 
     def get_ground_truth(self, index):
-        return read_csv(self.sequences[self.sequence_paths[index]]['ground_truth'])
+        return np.load(self.sequences[self.sequence_paths[index]]['ground_truth'])
 
     def __len__(self):
         return len(self.sequence_paths)

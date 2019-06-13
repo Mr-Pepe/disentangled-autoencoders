@@ -104,12 +104,12 @@ def generate_data(**kwargs):
     y_min = ball_radius
 
     x_mean = window_size_x / 2
-    x_std = window_size_x / 4
+    x_std = window_size_x / 5
     y_mean = window_size_y / 2
-    y_std = window_size_y / 2
+    y_std = window_size_y / 5
 
-    ax_std = 10
-    ay_std = 10
+    ax_std = 100
+    ay_std = 100
 
     x_start = clamped_random(num_sequences, x_mean, x_std, x_min, x_max)
     y_start = clamped_random(num_sequences, y_mean, y_std, y_min, y_max)
@@ -175,9 +175,9 @@ def generate_data(**kwargs):
         )
         np.save(save_path_ground_truth, ground_truth)
 
-        if i_sequence+1 % 100 == 0:
+        if (i_sequence+1) % 100 == 0:
             print("Generated sequence: %d of %d with length %d ..." % (
-                i_sequence, num_sequences, sequence_length))
+                i_sequence+1, num_sequences, sequence_length))
 
 
 if __name__ == '__main__':

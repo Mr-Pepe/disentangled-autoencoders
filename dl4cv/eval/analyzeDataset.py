@@ -25,8 +25,7 @@ dataset = CustomDataset(
 
 meta = np.array([dataset.get_ground_truth(i) for i in range(len(dataset))])
 
-# Plot start positions
-plt.scatter(meta[:, -1, 0], meta[:, -1, 1], s=0.2)
+plt.scatter(meta[:, :, 0].reshape(-1), meta[:, :, 1].reshape(-1), s=0.2)
 plt.title("Position")
 plt.xlabel("Position x")
 plt.ylabel("Position y")
