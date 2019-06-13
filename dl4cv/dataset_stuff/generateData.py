@@ -71,7 +71,7 @@ def get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame, sequ
 
 
 def clamped_random(num_values, mean, std, min_value, max_value):
-    return torch.normal(mean=mean, std=torch.ones([num_values]) * std).clamp(min=min_value, max=max_value)
+    return torch.normal(mean=mean, std=torch.ones([num_values]) * std).int()
 
 
 def generate_data(**kwargs):
@@ -104,35 +104,30 @@ def generate_data(**kwargs):
     y_min = ball_radius
 
     x_mean = window_size_x / 2
-    x_std = window_size_x / 5
+    x_std = window_size_x / 4
     y_mean = window_size_y / 2
-    y_std = window_size_y / 5
+    y_std = window_size_y / 4
 
-    ax_std = 100
-    ay_std = 100
+    ax_std = 1
+    ay_std = 1
 
-    x_start = clamped_random(num_sequences, x_mean, x_std, x_min, x_max)
-    y_start = clamped_random(num_sequences, y_mean, y_std, y_min, y_max)
+    # Initialize x,y,vx,vy,ax,ay
+    x_start, y_start, x_end, y_end, ax, ay = [torch.zeros((num_sequences,)) for i in range(6)]
 
-    x_end = clamped_random(num_sequences, x_mean, x_std, x_min, x_max)
-    y_end = clamped_random(num_sequences, y_mean, y_std, y_min, y_max)
-
-    ax = torch.normal(0, std=torch.ones([num_sequences])*ax_std)
-    ay = torch.normal(0, std=torch.ones([num_sequences])*ay_std)
-
-    vx_start, vy_start = get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end)
-
-    x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame,
-                                    sequence_length)
-
-    collisions = get_collisions(x, y, x_min, x_max, y_min, y_max)
+    collisions = np.ones((num_sequences))
 
     # Generate new accelerations where the sequence has collisions
     while collisions.any():
         idx = collisions.nonzero()[0]
 
-        ax[idx] = torch.normal(0, std=torch.ones([idx.shape[0]])*ax_std)
-        ay[idx] = torch.normal(0, std=torch.ones([idx.shape[0]])*ay_std)
+        x_start[idx] = torch.normal(x_mean, torch.ones([idx.shape[0]]) * x_std)
+        y_start[idx] = torch.normal(y_mean, torch.ones([idx.shape[0]]) * y_std)
+
+        x_end[idx] = torch.normal(x_mean, torch.ones([idx.shape[0]]) * x_std)
+        y_end[idx] = torch.normal(y_mean, torch.ones([idx.shape[0]]) * y_std)
+
+        ax[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ax_std)
+        ay[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ay_std)
 
         vx_start, vy_start = get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end)
 
