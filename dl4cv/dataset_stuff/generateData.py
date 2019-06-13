@@ -5,147 +5,169 @@ import torch
 
 from PIL import Image, ImageDraw
 
-
-USE_NUM_IMAGES = True
-NUM_SEQUENCES = 1000  # 4096+256
-SEQUENCE_LENGTH = 50  # including input and output
-
-T_FRAME = 1/30
-WINDOW_SIZE_X = 32
-WINDOW_SIZE_Y = 32
-BALL_RADIUS = 3
-V_MAX = 300     # Limit speed to pixels per second (separate for x and y)
-DT = SEQUENCE_LENGTH * T_FRAME  # TODO: Test this
-
-save_dir_path = "../../datasets/ball"
-
-os.makedirs(save_dir_path, exist_ok=True)
+config = {
+    'save_dir_path': '../../datasets/ball',
+    'num_sequences': 1000,
+    'sequence_length': 50,
+    'window_size_x': 32,
+    'window_size_y': 32,
+    'ball_radius': 3,
+    't_frame': 1 / 30,
+    'avoid_collisions': True
+}
 
 
-def get_new_state(x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, t_frame):
-    collision = False
-    vx_new = vx + ax * t_frame
-    vy_new = vy + ay * t_frame
+def equation_of_motion(x_0, y_0, vx_0, vy_0, ax, ay, t):
+    x_t = x_0.view(-1, 1) + vx_0.view(-1, 1) * t + 0.5 * ax.view(-1, 1) * t * t
+    y_t = y_0.view(-1, 1) + vy_0.view(-1, 1) * t + 0.5 * ay.view(-1, 1) * t * t
 
-    x_new = x + vx * t_frame + 0.5 * ax * t_frame * t_frame
-    y_new = y + vy * t_frame + 0.5 * ay * t_frame * t_frame
+    vx_t = vx_0.view(-1, 1) + ax.view(-1, 1) * t
+    vy_t = vy_0.view(-1, 1) + ay.view(-1, 1) * t
 
-    if x_new < x_min:
-        x_new = x_min + (x_min - x_new)
-        vx_new = -vx_new
-        collision = True
-    if x_new > x_max:
-        x_new = x_max - (x_new - x_max)
-        vx_new = -vx_new
-        collision = True
-
-    if y_new < y_min:
-        y_new = y_min + (y_min - y_new)
-        vy_new = -vy_new
-        collision = True
-    if y_new > y_max:
-        y_new = y_max - (y_new - y_max)
-        vy_new = -vy_new
-        collision = True
-
-    return x_new, y_new, vx_new, vy_new, collision
+    return x_t, y_t, vx_t, vy_t
 
 
-def draw_ball(screen, x, y):
+def get_collisions(x, y, x_min, x_max, y_min, y_max):
+    collisions = np.zeros((x.shape[0]))
+
+    eps = 1e-8
+
+    collisions[(x_min - x.min(dim=1).values > eps).nonzero()] = 1
+    collisions[(x.max(dim=1).values - x_max > eps).nonzero()] = 1
+    collisions[(y_min - y.min(dim=1).values > eps).nonzero()] = 1
+    collisions[(y.max(dim=1).values - y_max > eps).nonzero()] = 1
+
+    return collisions
+
+
+def draw_ball(screen, window_size_x, window_size_y, ball_radius, x, y):
     # Reset to a black image
     screen.rectangle(
-        xy=[(0, 0), (WINDOW_SIZE_X, WINDOW_SIZE_Y)],
+        xy=[(0, 0), (window_size_x, window_size_y)],
         fill='black',
         outline=None
     )
     # Draw the ball on the clean image
     screen.ellipse(
-        xy=[(x - BALL_RADIUS, y - BALL_RADIUS), (x + BALL_RADIUS, y + BALL_RADIUS)],
+        xy=[(x - ball_radius, y - ball_radius), (x + ball_radius, y + ball_radius)],
         width=0,
         fill='white'
     )
 
 
-# TODO: Test this function
-def get_y(x_start, x_end, y_start, y_end, ax, ay):
-    vx = ((x_end - x_start) / DT) - (0.5 * ax * DT)
-    vy = ((y_end - y_start) / DT) - (0.5 * ay * DT)
-    return vx, vy
+def get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end):
+    vx_0 = (x_end - x_start - 0.5 * ax * t_end * t_end) / t_end
+    vy_0 = (y_end - y_start - 0.5 * ay * t_end * t_end) / t_end
+
+    # print(str(vx_0))
+
+    return vx_0, vy_0
 
 
-def main():
-    # Count collisions
-    num_collisions = 0
+def get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame, sequence_length):
+    t = torch.arange(sequence_length).float()*t_frame
+    t = torch.ones(x_start.shape[0],1)*t.view(1, -1)
+
+    return equation_of_motion(x_start, y_start, vx_start, vy_start, ax, ay, t)
+
+
+def clamped_random(num_values, mean, std, min_value, max_value):
+    return torch.normal(mean=mean, std=torch.ones([num_values]) * std).clamp(min=min_value, max=max_value)
+
+
+def generate_data(**kwargs):
+
+    try:
+        save_dir_path = kwargs['save_dir_path']
+        num_sequences = kwargs['num_sequences']
+        sequence_length = kwargs['sequence_length']
+        window_size_x = kwargs['window_size_x']
+        window_size_y = kwargs['window_size_y']
+        ball_radius = kwargs['ball_radius']
+        t_frame = kwargs['t_frame']
+        avoid_collisions = kwargs['avoid_collisions']
+
+    except KeyError:
+        print('Incomplete configuration for data generation.')
+
+    os.makedirs(save_dir_path, exist_ok=True)
+
+    t_end = (sequence_length - 1) * t_frame
 
     # create image to draw on
-    img = Image.new(mode="L", size=(WINDOW_SIZE_X, WINDOW_SIZE_Y))
+    img = Image.new(mode="L", size=(window_size_x, window_size_y))
     # create screen
     screen = ImageDraw.Draw(img)
 
-    x_max = WINDOW_SIZE_X - BALL_RADIUS
-    x_min = BALL_RADIUS
-    y_max = WINDOW_SIZE_Y - BALL_RADIUS
-    y_min = BALL_RADIUS
+    x_max = window_size_x - ball_radius
+    x_min = ball_radius
+    y_max = window_size_y - ball_radius
+    y_min = ball_radius
 
-    dt = SEQUENCE_LENGTH * T_FRAME
+    x_mean = window_size_x / 2
+    x_std = window_size_x / 4
+    y_mean = window_size_y / 2
+    y_std = window_size_y / 2
 
-    x_start_all = torch.normal(WINDOW_SIZE_X / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_X / 4).int()
-    y_start_all = torch.normal(WINDOW_SIZE_Y / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_Y / 4).int()
+    ax_std = 10
+    ay_std = 10
 
-    x_end_all = torch.normal(WINDOW_SIZE_X / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_X / 4).int()
-    y_end_all = torch.normal(WINDOW_SIZE_Y / 2, std=torch.ones([NUM_SEQUENCES]) * WINDOW_SIZE_Y / 4).int()
+    x_start = clamped_random(num_sequences, x_mean, x_std, x_min, x_max)
+    y_start = clamped_random(num_sequences, y_mean, y_std, y_min, y_max)
 
-    ax_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 10)
-    ay_all = torch.normal(0, std=torch.ones([NUM_SEQUENCES]) * 10)
+    x_end = clamped_random(num_sequences, x_mean, x_std, x_min, x_max)
+    y_end = clamped_random(num_sequences, y_mean, y_std, y_min, y_max)
 
-    for i_sequence in range(NUM_SEQUENCES):
+    ax = torch.normal(0, std=torch.ones([num_sequences])*ax_std)
+    ay = torch.normal(0, std=torch.ones([num_sequences])*ay_std)
 
-        x = min(x_max, max(x_min, x_start_all[i_sequence].item()))
-        y = min(y_max, max(y_min, y_start_all[i_sequence].item()))
+    vx_start, vy_start = get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end)
 
-        x_end = min(x_max, max(x_min, x_end_all[i_sequence].item()))
-        y_end = min(y_max, max(y_min, y_end_all[i_sequence].item()))
+    x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame,
+                                    sequence_length)
 
-        ax = ax_all[i_sequence].item()
-        ay = ay_all[i_sequence].item()
+    collisions = get_collisions(x, y, x_min, x_max, y_min, y_max)
 
-        vx, vy = get_y(x, x_end, y, y_end, ax, ay)
+    # Generate new accelerations where the sequence has collisions
+    while collisions.any():
+        idx = collisions.nonzero()[0]
+
+        ax[idx] = torch.normal(0, std=torch.ones([idx.shape[0]])*ax_std)
+        ay[idx] = torch.normal(0, std=torch.ones([idx.shape[0]])*ay_std)
+
+        vx_start, vy_start = get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end)
+
+        x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame,
+                                        sequence_length)
+
+        collisions = get_collisions(x, y, x_min, x_max, y_min, y_max)
+
+    # Generate frames for the sequences
+    for i_sequence in range(num_sequences):
 
         save_path_sequence = os.path.join(
-                save_dir_path,
-                'seq' + str(i_sequence)
+            save_dir_path,
+            'seq' + str(i_sequence)
         )
-
-        if i_sequence % 100 == 0:
-            print("Generating sequence: %d of %d with length %d ..." % (
-                i_sequence, NUM_SEQUENCES, SEQUENCE_LENGTH))
 
         os.makedirs(save_path_sequence, exist_ok=True)
 
-        ground_truth = np.zeros((SEQUENCE_LENGTH, 6))
+        ground_truth = np.zeros((sequence_length, 6))
 
-        for i_frame in range(SEQUENCE_LENGTH):
-
-            ground_truth[i_frame] = np.array([x, y, vx, vy, ax, ay])
+        for i_frame in range(sequence_length):
 
             save_path_frame = os.path.join(
                 save_path_sequence,
                 'frame' + str(i_frame) + '.jpeg'
             )
 
-            draw_ball(screen, x, y)
+            ground_truth[i_frame] = np.array([x[i_sequence, i_frame], y[i_sequence, i_frame],
+                                              vx[i_sequence, i_frame], vy[i_sequence, i_frame],
+                                              ax[i_sequence], ay[i_sequence]])
+
+            draw_ball(screen, window_size_x, window_size_y, ball_radius, x[i_sequence, i_frame], y[i_sequence, i_frame])
             img.save(save_path_frame)
 
-            # Limit velocities to V_MAX
-            vx = math.copysign(V_MAX, vx) if abs(vx) > V_MAX else vx
-            vy = math.copysign(V_MAX, vy) if abs(vy) > V_MAX else vy
-
-            x, y, vx, vy, collision = get_new_state(
-                x, y, vx, vy, ax, ay, x_min, x_max, y_min, y_max, T_FRAME
-            )
-
-            if collision:
-                num_collisions += 1
 
         # Save the values at the last
         save_path_ground_truth = os.path.join(
@@ -154,8 +176,10 @@ def main():
         )
         np.save(save_path_ground_truth, ground_truth)
 
-    print("Collisions for %d sequences: %d" % (NUM_SEQUENCES, num_collisions))
+        if i_sequence+1 % 100 == 0:
+            print("Generated sequence: %d of %d with length %d ..." % (
+                i_sequence, num_sequences, sequence_length))
 
 
 if __name__ == '__main__':
-    main()
+    generate_data(**config)
