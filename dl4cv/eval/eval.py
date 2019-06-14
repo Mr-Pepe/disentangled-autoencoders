@@ -4,26 +4,27 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SequentialSampler
-from dl4cv.eval.analyzeDataset import analyze_dataset
 from dl4cv.solver import Solver
-from dl4cv.eval.showSolverHistory import show_solver_history
+from dl4cv.eval.eval_functions import analyze_dataset, show_solver_history, show_latent_variables
 
 import os
 
 config = {
-    'analyze_dataset': True,
-    'show_solver_history': True,
+    'analyze_dataset': False,            # Plot positions of the desired datapoints
+    'show_solver_history': False,        # Plot losses of the training
+    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
+    'show_model_output': True,          # Show the model output for the desired datapoints
 
-    'data_path': '../../datasets/ball',  # Path to directory of the image folder
+    'data_path': '../../datasets/ball', # Path to directory of the image folder
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
+    'num_samples': None,                # Use the whole dataset if none for latent variables
+    'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
-    'save_path': '../../saves/train20190613143218',
-    'epoch': None,                 # use last model and solver if epoch is none
+    'save_path': '../../saves/train20190613143218', # Path to the directory where the model and solver are saved
+    'epoch': None,                                  # Use last model and solver if epoch is none
 
-    'batch_size': 1000,
-    'num_show_images': 5,              # Number of images to show
 }
 
 
@@ -47,6 +48,7 @@ def get_model_solver_paths(save_path, epoch):
 
     return model_path, solver_path
 
+
 dataset = CustomDataset(
     config['data_path'],
     transform=transforms.Compose([
@@ -63,11 +65,23 @@ dataset = CustomDataset(
 if config['analyze_dataset']:
     analyze_dataset(dataset)
 
-if config['show_solver_history']:
+if config['show_solver_history'] or \
+   config['show_latent_variables'] or \
+   config['show_model_output']:
+
     model_path, solver_path = get_model_solver_paths(config['save_path'], config['epoch'])
+
     solver = Solver()
     solver.load(solver_path, only_history=True)
+    model = torch.load(model_path)
+
+
+if config['show_solver_history']:
     show_solver_history(solver)
+
+if config['show_latent_variables']:
+    show_latent_variables(model, dataset)
+
 
 
 pass
