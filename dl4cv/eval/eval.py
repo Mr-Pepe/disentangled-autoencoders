@@ -5,14 +5,14 @@ import torch
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SequentialSampler
 from dl4cv.solver import Solver
-from dl4cv.eval.eval_functions import analyze_dataset, show_solver_history, show_latent_variables
+from dl4cv.eval.eval_functions import analyze_dataset, show_solver_history, show_latent_variables, show_model_output
 
 import os
 
 config = {
     'analyze_dataset': False,            # Plot positions of the desired datapoints
     'show_solver_history': False,        # Plot losses of the training
-    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
+    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
     'show_model_output': True,          # Show the model output for the desired datapoints
 
     'data_path': '../../datasets/ball', # Path to directory of the image folder
@@ -63,6 +63,7 @@ dataset = CustomDataset(
 )
 
 if config['num_samples'] is not None:
+    # Sample equidistantly from dataset
     indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
 
     dataset = [dataset[i] for i in indices]
@@ -86,6 +87,17 @@ if config['show_solver_history']:
 
 if config['show_latent_variables']:
     show_latent_variables(model, dataset)
+
+if config['show_model_output']:
+    # Sample equidistantly from dataset
+    if config['num_show_images'] > len(dataset):
+        raise Exception('Dataset does not contain {} images to show'.format(config['num_show_images']))
+
+    indices = np.linspace(0, len(dataset) - 1, config['num_show_images'], dtype=int).tolist()
+
+    dataset = [dataset[i] for i in indices]
+
+    show_model_output(model, dataset)
 
 
 

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torchvision.transforms as transforms
 
 def analyze_dataset(dataset):
     meta = np.array([dataset.get_ground_truth(i) for i in range(len(dataset))])
@@ -81,3 +82,53 @@ def show_latent_variables(model, dataset):
         plt.scatter(np.ones((std.shape[0])) * (i + 1), std.view(std.shape[0], std.shape[1]).detach().numpy()[:, i])
 
     plt.show()
+
+
+def show_model_output(model, dataset):
+    plt.interactive(False)
+
+    num_cols = 3
+    num_rows = 1
+
+    plt.rcParams.update({'font.size': 8})
+
+    for i_sample, sample in enumerate(dataset):
+        x, y, question, meta = sample
+        y_pred, latent_stuff = model(
+            torch.unsqueeze(x, 0), torch.unsqueeze(question, 0)
+        )
+
+        print("Showing images")
+
+        to_pil = transforms.ToPILImage()
+
+        f, axes = plt.subplots(num_rows, num_cols)
+        f.suptitle("\nSample {}, question: {}".format(i_sample, question), fontsize=16)
+
+        # Plot ground truth
+        axes[0].imshow(to_pil(y), cmap='gray')
+
+        # Plot prediction
+        axes[1].imshow(to_pil(y_pred[0]), cmap='gray')
+
+        # Plot Deviation
+        diff = abs(y_pred[0] - y)
+        axes[2].imshow(to_pil(diff), cmap='gray')
+
+        # Remove axis ticks
+        for ax in axes.reshape(-1):
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_tick_params(which='both', length=0, labelleft=False)
+
+        # Label rows
+        labels = {0: 'Ground truth',
+                  1: 'Prediction',
+                  2: 'Deviation'}
+
+        for i in range(num_cols):
+            plt.sca(axes[i])
+            axes[i].set_title(labels[i], rotation=0, size=14)
+
+        f.tight_layout()
+
+        plt.show(block=True)
