@@ -5,18 +5,22 @@ import torch
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SequentialSampler
 from dl4cv.eval.analyzeDataset import analyze_dataset
+from dl4cv.solver import Solver
+from dl4cv.eval.showSolverHistory import show_solver_history
 
 import os
 
 config = {
-    'analyze_dataset': False,
+    'analyze_dataset': True,
+    'show_solver_history': True,
+
     'data_path': '../../datasets/ball',  # Path to directory of the image folder
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
 
-    'show_solver_history': True,
-    'save_path': '../../saves/VanillaVAE',
-    'epoch': 30,                 # use last model and solver if epoch is zero
+
+    'save_path': '../../saves/train20190613143218',
+    'epoch': None,                 # use last model and solver if epoch is none
 
     'batch_size': 1000,
     'num_show_images': 5,              # Number of images to show
@@ -24,6 +28,9 @@ config = {
 
 
 def get_model_solver_paths(save_path, epoch):
+    model_paths = []
+    solver_paths = []
+
     for _, _, fnames in os.walk(save_path):
         model_paths = [fname for fname in fnames if 'model' in fname]
         solver_paths = [fname for fname in fnames if 'solver' in fname]
@@ -31,7 +38,7 @@ def get_model_solver_paths(save_path, epoch):
     if not model_paths or not solver_paths:
         raise Exception('Model or solver not found.')
 
-    if epoch == 0:
+    if not epoch:
         model_path = os.path.join(save_path, sorted(model_paths, key=lambda s: int(s.split("model")[1]))[-1])
         solver_path = os.path.join(save_path, sorted(solver_paths, key=lambda s: int(s.split("solver")[1]))[-1])
     else:
@@ -58,7 +65,9 @@ if config['analyze_dataset']:
 
 if config['show_solver_history']:
     model_path, solver_path = get_model_solver_paths(config['save_path'], config['epoch'])
-
+    solver = Solver()
+    solver.load(solver_path, only_history=True)
+    show_solver_history(solver)
 
 
 pass

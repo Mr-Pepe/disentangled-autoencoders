@@ -3,33 +3,38 @@ import numpy as np
 
 from dl4cv.solver import Solver
 
-path = '../../saves/train20190611073202/solver100'
+config = {
+    'solver_path': ''
+}
 
 
-solver = Solver()
-solver.load(path, only_history=True)
+def show_solver_history(solver):
+    print("Stop reason: %s" % solver.stop_reason)
+    print("Stop time: %fs" % solver.training_time_s)
 
-print("Stop reason: %s" % solver.stop_reason)
-print("Stop time: %fs" % solver.training_time_s)
+    train_loss = np.array(solver.history['train_loss'])
+    val_loss = np.array(solver.history['val_loss'])
+    kl_divergence = np.array(solver.history['kl_divergence'])
+    reconstruction_loss = np.array(solver.history['reconstruction_loss'])
 
-train_loss = np.array(solver.history['train_loss'])
-val_loss = np.array(solver.history['val_loss'])
-kl_divergence = np.array(solver.history['kl_divergence'])
-reconstruction_loss = np.array(solver.history['reconstruction_loss'])
+    f, (ax1, ax2, ax3) = plt.subplots(3, 1)
 
-f, (ax1, ax2, ax3) = plt.subplots(3, 1)
+    ax1.plot(train_loss)
+    ax1.plot(np.linspace(1, len(train_loss), len(val_loss)), val_loss)
+    ax1.set_xlabel("Iterations")
+    ax1.set_ylabel("Train/Val loss")
 
-ax1.plot(train_loss)
-ax1.plot(np.linspace(1, len(train_loss), len(val_loss)), val_loss)
-ax1.set_xlabel("Iterations")
-ax1.set_ylabel("Train/Val loss")
+    ax2.plot(kl_divergence)
+    ax2.set_xlabel("Iterations")
+    ax2.set_ylabel("KL Divergence")
 
-ax2.plot(kl_divergence)
-ax2.set_xlabel("Iterations")
-ax2.set_ylabel("KL Divergence")
+    ax3.plot(reconstruction_loss)
+    ax3.set_xlabel("Iterations")
+    ax3.set_ylabel("Reconstruction Loss")
 
-ax3.plot(reconstruction_loss)
-ax3.set_xlabel("Iterations")
-ax3.set_ylabel("Reconstruction Loss")
+    plt.show()
 
-plt.show()
+
+if __name__ == '__main__':
+    solver = Solver()
+    solver.load(config['solver_path'], only_history=True)
