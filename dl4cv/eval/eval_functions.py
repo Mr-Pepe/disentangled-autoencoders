@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 
+
 def analyze_dataset(dataset):
     meta = np.array([dataset.get_ground_truth(i) for i in range(len(dataset))])
 
@@ -97,8 +98,6 @@ def show_model_output(model, dataset):
         y_pred, latent_stuff = model(
             torch.unsqueeze(x, 0), torch.unsqueeze(question, 0)
         )
-
-        print("Showing images")
 
         to_pil = transforms.ToPILImage()
 
