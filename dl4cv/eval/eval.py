@@ -62,6 +62,11 @@ dataset = CustomDataset(
     load_to_ram=False
 )
 
+if config['num_samples'] is not None:
+    indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
+
+    dataset = [dataset[i] for i in indices]
+
 if config['analyze_dataset']:
     analyze_dataset(dataset)
 

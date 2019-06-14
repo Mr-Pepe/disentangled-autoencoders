@@ -44,12 +44,14 @@ def show_latent_variables(model, dataset):
     std = 0
 
     len_dataset = len(dataset)
+    log_interval = len_dataset/20
+
 
     print('\n', end='')
 
     for i_sample, sample in enumerate(dataset):
 
-        if (i_sample + 1) % 100 == 0:
+        if (i_sample + 1) % log_interval == 0:
             print("\rGetting latent variables for the dataset: {}/{}".format(i_sample+1, len_dataset), end='')
 
         x, _, _, _ = sample
