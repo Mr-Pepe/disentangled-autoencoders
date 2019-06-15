@@ -145,9 +145,9 @@ def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence)
     encoder = model.encoder
 
     for i_var, var in enumerate(variables):
-        path = os.path.join(path, var)
+        eval_path = os.path.join(path, var)
         dataset = CustomDataset(
-            path=path,
+            path=eval_path,
             transform=transform,
             len_inp_sequence=len_inp_sequence,
             len_out_sequence=len_out_sequence,
@@ -161,7 +161,7 @@ def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence)
             batch_size=len(dataset)
         )
 
-        linspace = np.array(read_csv(os.path.join(path, 'linspace.csv')))
+        linspace = np.array(read_csv(os.path.join(eval_path, 'linspace.csv')))
 
         x, _, _, _ = next(iter(data_loader))
         z_t = _get_z(encoder, x, z_dim=model.z_dim_encoder)
