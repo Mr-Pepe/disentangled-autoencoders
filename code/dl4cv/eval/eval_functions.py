@@ -61,7 +61,7 @@ def show_latent_variables(model, dataset):
 
         x, _, _, _ = sample
 
-        z_t, mu_tmp, logvar = model.encode(torch.unsqueeze(x,0))
+        z_t, mu_tmp, logvar = model.encode(torch.unsqueeze(x, 0))
 
         std_tmp = logvar.div(2).exp()
 
