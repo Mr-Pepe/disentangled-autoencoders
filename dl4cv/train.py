@@ -23,8 +23,8 @@ config = {
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': False,             # Set overfit or regular training
-    'num_train_regular':    2048,       # Number of training samples for regular training
-    'num_val_regular':      256,        # Number of validation samples for regular training
+    'num_train_regular':    900,       # Number of training samples for regular training
+    'num_val_regular':      100,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 25,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
@@ -163,6 +163,13 @@ else:
 """ Initialize tensorboard summary writer """
 
 tensorboard_writer = SummaryWriter(config['tensorboard_log_dir'])
+
+# Add graph to tensorboard
+# example_input, _, _, _ = next(iter(train_data_loader))
+# tensorboard_writer.add_graph(
+#     model=model,
+#     input_to_model=example_input
+# )
 
 
 """ Perform training """

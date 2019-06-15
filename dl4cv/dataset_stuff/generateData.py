@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 
 config = {
     'save_dir_path': '../../datasets/ball',
-    'num_sequences': 2048 + 256,
+    'num_sequences': 1000,
     'sequence_length': 50,
     'window_size_x': 32,
     'window_size_y': 32,
@@ -14,6 +14,10 @@ config = {
     't_frame': 1 / 30,
     'avoid_collisions': True
 }
+
+# make save_dir_path absolute
+file_dir = os.path.dirname(os.path.realpath(__file__))
+config['save_dir_path'] = os.path.join(file_dir, config['save_dir_path'])
 
 
 def equation_of_motion(x_0, y_0, vx_0, vy_0, ax, ay, t):
