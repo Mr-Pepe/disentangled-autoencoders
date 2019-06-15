@@ -1,7 +1,11 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms as transforms
+
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+from dl4cv.utils import read_csv, reparametrize
 
 
 def analyze_dataset(dataset):
@@ -47,7 +51,6 @@ def show_latent_variables(model, dataset):
 
     len_dataset = len(dataset)
     log_interval = len_dataset/20
-
 
     print('\n', end='')
 

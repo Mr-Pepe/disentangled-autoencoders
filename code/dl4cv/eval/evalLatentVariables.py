@@ -1,6 +1,8 @@
+import os
+
 import torch
 import torchvision.transforms as transforms
-from dl4cv.torch.utils.data import DataLoader
+from torch.utils.data import DataLoader
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 
@@ -9,8 +11,15 @@ LATENTS = ['px', 'py', 'vx', 'vy', 'ax', 'ay']
 config = {
     'data_path': '../../../datasets/ball',
     'model_path': '../../saves/train20190519171353/model10',
-    'sequence_length': 3,
+    'len_inp_sequence': 25,
+    'len_out_sequence': 1
 }
+
+# make all paths absolute
+file_dir = os.path.dirname(os.path.realpath(__file__))
+
+config['data_path'] = os.path.join(file_dir, config['data_path'])
+config['model_path'] = os.path.join(file_dir, config['model_path'])
 
 
 def eval_latent(encoder, data_loader):
@@ -29,7 +38,8 @@ dataset = CustomDataset(
         transforms.Grayscale(),
         transforms.ToTensor()
     ]),
-    sequence_length=config['sequence_length'],
+    len_inp_sequence=config['sequence_length'],
+    len_out_sequence=config['len_out_sequence'],
     load_ground_truth=True
 )
 

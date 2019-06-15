@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -16,6 +18,14 @@ config = {
     'batch_size': 32
 }
 
+# make all paths absolute
+file_dir = os.path.dirname(os.path.realpath(__file__))
+
+config['data_path'] = os.path.join(file_dir, config['data_path'])
+config['model_path'] = os.path.join(file_dir, config['model_path'])
+
+
+# Load dataset
 dataset = CustomDataset(
     config['data_path'],
     transform=transforms.Compose([
@@ -25,7 +35,7 @@ dataset = CustomDataset(
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
     question=True,
-    load_meta=False,
+    load_ground_truth=False,
     load_to_ram=False
 )
 
@@ -34,6 +44,7 @@ data_loader = torch.utils.data.DataLoader(
     batch_size=config['batch_size']
 )
 
+# Load model
 model = torch.load(config['model_path'])
 model.eval()
 

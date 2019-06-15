@@ -1,11 +1,14 @@
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms as transforms
-from torch.utils.data.sampler import SequentialSampler
 from dl4cv.solver import Solver
-from dl4cv.eval.eval_functions import analyze_dataset, show_solver_history, show_latent_variables, show_model_output
+from dl4cv.eval.eval_functions import \
+    analyze_dataset, \
+    show_solver_history, \
+    show_latent_variables, \
+    show_model_output, \
+    eval_correlation
 
 import os
 
@@ -13,19 +16,28 @@ config = {
     'analyze_dataset': False,            # Plot positions of the desired datapoints
     'show_solver_history': False,        # Plot losses of the training
     'show_latent_variables': False,      # Show the latent variables for the desired datapoints
-    'show_model_output': True,          # Show the model output for the desired datapoints
+    'show_model_output': False,          # Show the model output for the desired datapoints
+    'eval_correlation': True,            # Plot the correlation between the latent variables and ground truth
 
-    'data_path': '../../../datasets/ball', # Path to directory of the image folder
+    'data_path': '../../../datasets/ball',  # Path to directory of the image folder
+    'eval_data_path': '../../../datasets/evalDataset',
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
     'num_samples': None,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
-    'save_path': '../../saves/train20190613143218', # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/train20190613143218',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
 }
+
+# make all paths absolute
+file_dir = os.path.dirname(os.path.realpath(__file__))
+
+config['data_path'] = os.path.join(file_dir, config['data_path'])
+config['eval_data_path'] = os.path.join(file_dir, config['eval_data_path'])
+config['save_path'] = os.path.join(file_dir, config['save_path'])
 
 
 def get_model_solver_paths(save_path, epoch):

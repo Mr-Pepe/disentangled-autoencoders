@@ -5,8 +5,6 @@ import torch
 from torch.utils.data.dataset import Dataset
 from torchvision.datasets.folder import IMG_EXTENSIONS, has_file_allowed_extension, pil_loader
 
-from dl4cv.utils import read_csv
-
 
 class CustomDataset(Dataset):
     def __init__(self, path, transform, len_inp_sequence, len_out_sequence,
