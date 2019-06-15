@@ -7,3 +7,6 @@
 *.directory
 
 !*.gitkeep
+
+# ignore tensorboard log file
+/tensorboard_log/**

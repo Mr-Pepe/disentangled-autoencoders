@@ -11,7 +11,7 @@ class Solver(object):
 
     def __init__(self):
         self.history = {'train_loss': [],
-                        'val_loss'  : [],
+                        'val_loss': [],
                         'kl_divergence': [],
                         'reconstruction_loss': []
                         }
@@ -21,7 +21,8 @@ class Solver(object):
         self.training_time_s = 0
         self.stop_reason = ''
 
-    def train(self, model, optim=None, loss_criterion=torch.nn.MSELoss(),
+    def train(self, model, tensorboard_writer, optim=None,
+              loss_criterion=torch.nn.MSELoss(),
               num_epochs=10, max_train_time_s=None,
               train_loader=None, val_loader=None,
               log_after_iters=1, save_after_epochs=None,
@@ -121,6 +122,11 @@ class Solver(object):
 
                 self.history['kl_divergence'].append(total_kl_divergence.item())
                 self.history['reconstruction_loss'].append(reconstruction_loss.item())
+
+                # Add losses to tensorboard
+                tensorboard_writer.add_scalar('kl_loss', total_kl_divergence.item(), i_iter)
+                tensorboard_writer.add_scalar('reconstruction_loss', reconstruction_loss.item(), i_iter)
+                tensorboard_writer.add_scalar('train_loss', loss.item(), i_iter)
 
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +

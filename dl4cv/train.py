@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+
+from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 from torchvision import transforms
 
@@ -42,7 +44,8 @@ config = {
     # Logging
     'log_interval': 7,           # Number of mini-batches after which to print training loss
     'save_interval': 10,         # Number of epochs after which to save model and solver
-    'save_path': '../saves'
+    'save_path': '../saves',
+    'tensorboard_log_dir': '../tensorboard_log/exp_1'
 }
 
 
@@ -157,10 +160,16 @@ else:
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
 
 
+""" Initialize tensorboard summary writer """
+
+tensorboard_writer = SummaryWriter(config['tensorboard_log_dir'])
+
+
 """ Perform training """
 
 if __name__ == "__main__":
     solver.train(model=model,
+                 tensorboard_writer=tensorboard_writer,
                  optim=optimizer,
                  loss_criterion=loss_criterion,
                  num_epochs=config['num_epochs'],
