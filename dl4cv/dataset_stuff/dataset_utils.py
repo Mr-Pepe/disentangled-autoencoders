@@ -94,7 +94,7 @@ class CustomDataset(Dataset):
             start_y = self.len_inp_sequence
             end_y = self.len_inp_sequence + self.len_out_sequence
             y = torch.cat(sequence['images'][start_y:end_y]) if self.len_out_sequence > 0 else 0
-            question = None
+            question = -1
 
         if self.load_ground_truth:
             ground_truth = np.load(sequence['ground_truth'])

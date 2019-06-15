@@ -13,7 +13,7 @@ config = {
     'len_inp_sequence': 25,
     'len_out_sequence': 0,
 
-    'model_path': '../../saves/train20190611073202/model100',
+    'model_path': '../../saves/train20190615080116/model100',
 }
 
 transform = transforms.Compose([
@@ -61,7 +61,7 @@ def evaluate(model, variables):
         linspace = np.array(read_csv(os.path.join(path, 'linspace.csv')))
 
         x, _, _, _ = next(iter(data_loader))
-        z_t = get_z(encoder, x, z_dim=model.z_dim)
+        z_t = get_z(encoder, x, z_dim=model.z_dim_encoder)
 
         f, axes = plt.subplots(len(variables), 1, figsize=(10, 10))
         for i_z, z in enumerate(z_t):
