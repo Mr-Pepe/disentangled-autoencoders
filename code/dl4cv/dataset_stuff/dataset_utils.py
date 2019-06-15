@@ -1,3 +1,4 @@
+import copy
 import os
 
 import numpy as np
@@ -80,7 +81,7 @@ class CustomDataset(Dataset):
         """
         seq_path = self.sequence_paths[index]
 
-        sequence = self.sequences[seq_path]
+        sequence = copy.deepcopy(self.sequences[seq_path])
 
         if not self.load_to_ram:
             sequence['images'] = [self.transform(pil_loader(img)) for img in self.sequences[seq_path]['images']]

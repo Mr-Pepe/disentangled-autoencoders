@@ -15,15 +15,15 @@ import os
 config = {
     'analyze_dataset': False,            # Plot positions of the desired datapoints
     'show_solver_history': False,        # Plot losses of the training
-    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
+    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
     'show_model_output': False,          # Show the model output for the desired datapoints
-    'eval_correlation': True,            # Plot the correlation between the latent variables and ground truth
+    'eval_correlation': False,            # Plot the correlation between the latent variables and ground truth
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
-    'num_samples': None,                # Use the whole dataset if none for latent variables
+    'num_samples': 5,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
@@ -41,6 +41,7 @@ config['save_path'] = os.path.join(file_dir, config['save_path'])
 
 
 def get_model_solver_paths(save_path, epoch):
+    print("Getting model and solver paths")
     model_paths = []
     solver_paths = []
 
@@ -61,6 +62,8 @@ def get_model_solver_paths(save_path, epoch):
     return model_path, solver_path
 
 
+print("Loading dataset")
+
 dataset = CustomDataset(
     config['data_path'],
     transform=transforms.Compose([
@@ -74,13 +77,9 @@ dataset = CustomDataset(
     load_to_ram=False
 )
 
-if config['num_samples'] is not None:
-    # Sample equidistantly from dataset
-    indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
-
-    dataset = [dataset[i] for i in indices]
 
 if config['analyze_dataset']:
+    print("Analysing dataset")
     analyze_dataset(dataset)
 
 if config['show_solver_history'] or \
@@ -90,29 +89,35 @@ if config['show_solver_history'] or \
 
     model_path, solver_path = get_model_solver_paths(config['save_path'], config['epoch'])
 
+    print("Loading model and solver")
     solver = Solver()
     solver.load(solver_path, only_history=True)
     model = torch.load(model_path)
 
 
 if config['show_solver_history']:
+    print("Showing solver history")
     show_solver_history(solver)
 
 if config['show_latent_variables']:
+    print("Showing latent variables")
     show_latent_variables(model, dataset)
 
 if config['show_model_output']:
+    print("Showing model output")
     # Sample equidistantly from dataset
     if config['num_show_images'] > len(dataset):
         raise Exception('Dataset does not contain {} images to show'.format(config['num_show_images']))
 
     indices = np.linspace(0, len(dataset) - 1, config['num_show_images'], dtype=int).tolist()
 
-    dataset = [dataset[i] for i in indices]
+    dataset_list = [dataset[i] for i in indices]
 
-    show_model_output(model, dataset)
+    show_model_output(model, dataset_list)
 
 if config['eval_correlation']:
+    print("Evaluating correlation")
+    # variables to be evaluated, corresponds to the names of the eval mini-datasets
     variables = ['pos_x', 'pos_y', 'vel_x', 'vel_y', 'acc_x', 'acc_y']
     eval_correlation(
         model=model,
