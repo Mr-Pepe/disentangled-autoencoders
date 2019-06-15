@@ -27,7 +27,7 @@ config = {
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
-    'save_path': '../../saves/train20190613143218',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/train20190615142355',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
 }
@@ -85,7 +85,8 @@ if config['analyze_dataset']:
 
 if config['show_solver_history'] or \
    config['show_latent_variables'] or \
-   config['show_model_output']:
+   config['show_model_output'] or \
+   config['eval_correlation']:
 
     model_path, solver_path = get_model_solver_paths(config['save_path'], config['epoch'])
 
@@ -111,6 +112,12 @@ if config['show_model_output']:
 
     show_model_output(model, dataset)
 
-
-
-pass
+if config['eval_correlation']:
+    variables = ['pos_x', 'pos_y', 'vel_x', 'vel_y', 'acc_x', 'acc_y']
+    eval_correlation(
+        model=model,
+        variables=variables,
+        path=config['eval_data_path'],
+        len_inp_sequence=config['len_inp_sequence'],
+        len_out_sequence=config['len_out_sequence']
+    )

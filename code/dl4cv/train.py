@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 
@@ -22,7 +24,7 @@ config = {
     'data_path': '../../datasets/ball/',   # Path to the parent directory of the image folder
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': False,             # Set overfit or regular training
+    'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    900,       # Number of training samples for regular training
     'num_val_regular':      100,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
@@ -47,6 +49,15 @@ config = {
     'save_path': '../saves',
     'tensorboard_log_dir': '../tensorboard_log/exp_1'
 }
+
+
+""" Make paths absolute """
+
+file_dir = os.path.dirname(os.path.realpath(__file__))
+
+config['model_path'] = os.path.join(file_dir, config['model_path'])
+config['solver_path'] = os.path.join(file_dir, config['solver_path'])
+config['data_path'] = os.path.join(file_dir, config['data_path'])
 
 
 """ Add a seed to have reproducible results """

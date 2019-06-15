@@ -66,6 +66,9 @@ class CustomDataset(Dataset):
 
             print('\n', end='')
 
+        if len(self.sequence_paths) == 0:
+            raise Exception('Length of the dataset is 0. Make sure the dataset exists and path is correct')
+
     def __getitem__(self, index):
         """
         Gets a sequence of image frames starting from index

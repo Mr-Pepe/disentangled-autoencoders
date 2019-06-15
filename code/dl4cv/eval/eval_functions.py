@@ -134,3 +134,63 @@ def show_model_output(model, dataset):
         f.tight_layout()
 
         plt.show(block=True)
+
+
+def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence):
+    transform = transforms.Compose([
+        transforms.Grayscale(),
+        transforms.ToTensor()
+    ])
+
+    encoder = model.encoder
+
+    for i_var, var in enumerate(variables):
+        path = os.path.join(path, var)
+        dataset = CustomDataset(
+            path=path,
+            transform=transform,
+            len_inp_sequence=len_inp_sequence,
+            len_out_sequence=len_out_sequence,
+            load_ground_truth=False,
+            load_to_ram=False,
+            only_input=True
+        )
+
+        data_loader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            batch_size=len(dataset)
+        )
+
+        linspace = np.array(read_csv(os.path.join(path, 'linspace.csv')))
+
+        x, _, _, _ = next(iter(data_loader))
+        z_t = _get_z(encoder, x, z_dim=model.z_dim_encoder)
+
+        f, axes = plt.subplots(len(variables), 1, figsize=(10, 10))
+        for i_z, z in enumerate(z_t):
+            m, c = _regression_line(linspace, z)
+            axes[i_z].plot(linspace, z)
+            axes[i_z].plot(linspace, m*linspace + c, label='Regression line')
+            axes[i_z].set_ylabel("latent %d" % i_z)
+
+        axes[0].legend(loc='upper left')
+        axes[-1].set_xlabel(var)
+
+        plt.show()
+
+
+def _regression_line(x, y):
+    A = np.vstack([x, np.ones(len(x))]).T
+    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    return m, c
+
+
+def _get_z(encoder, x, z_dim):
+    z_params = encoder(x)
+    mu = z_params[:, :z_dim]
+    logvar = z_params[:, z_dim:]
+
+    z_t = reparametrize(mu, logvar)
+    z_t = z_t.reshape([z_t.shape[0], -1]).transpose(1, 0)
+
+    return z_t.detach().numpy()
