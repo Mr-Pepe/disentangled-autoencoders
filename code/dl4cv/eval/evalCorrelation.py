@@ -9,7 +9,7 @@ from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from dl4cv.utils import read_csv, reparametrize
 
 config = {
-    'data_path': '../../datasets/evalDataset',  # Path to directory of the image folder
+    'data_path': '../../../datasets/evalDataset',  # Path to directory of the image folder
     'len_inp_sequence': 25,
     'len_out_sequence': 0,
 

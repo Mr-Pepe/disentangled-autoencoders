@@ -8,7 +8,7 @@ from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 to_pil = transforms.ToPILImage()
 
 config = {
-    'data_path': '../../datasets/ball',
+    'data_path': '../../../datasets/ball',
     'model_path': '../../saves/train20190603130451/model10',
     'len_inp_sequence': 25,
     'len_out_sequence': 1,

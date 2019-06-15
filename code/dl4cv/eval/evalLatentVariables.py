@@ -7,7 +7,7 @@ from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 LATENTS = ['px', 'py', 'vx', 'vy', 'ax', 'ay']
 
 config = {
-    'data_path': '../../datasets/ball',
+    'data_path': '../../../datasets/ball',
     'model_path': '../../saves/train20190519171353/model10',
     'sequence_length': 3,
 }

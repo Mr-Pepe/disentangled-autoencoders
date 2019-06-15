@@ -15,7 +15,7 @@ config = {
     'show_latent_variables': False,      # Show the latent variables for the desired datapoints
     'show_model_output': True,          # Show the model output for the desired datapoints
 
-    'data_path': '../../datasets/ball', # Path to directory of the image folder
+    'data_path': '../../../datasets/ball', # Path to directory of the image folder
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
     'num_samples': None,                # Use the whole dataset if none for latent variables

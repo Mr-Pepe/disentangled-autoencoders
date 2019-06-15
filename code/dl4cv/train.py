@@ -19,7 +19,7 @@ config = {
     'solver_path': '../saves/train20190523144416/solver20',
 
     # Data
-    'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
+    'data_path': '../../datasets/ball/',   # Path to the parent directory of the image folder
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': False,             # Set overfit or regular training
