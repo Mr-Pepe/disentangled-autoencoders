@@ -21,26 +21,30 @@ def analyze_dataset(dataset):
 def show_solver_history(solver):
     print("Stop reason: %s" % solver.stop_reason)
     print("Stop time: %fs" % solver.training_time_s)
+    print("Epoch: {}".format(solver.epoch))
+    print("Beta: {}".format(solver.beta))
 
     train_loss = np.array(solver.history['train_loss'])
     val_loss = np.array(solver.history['val_loss'])
-    kl_divergence = np.array(solver.history['kl_divergence'])
+    total_kl_divergence = np.array(solver.history['total_kl_divergence'])
+    kl_divergence_dim_wise = np.array(solver.history['kl_divergence_dim_wise'])
     reconstruction_loss = np.array(solver.history['reconstruction_loss'])
+    beta = np.array(solver.history['beta'])
 
-    f, (ax1, ax2, ax3) = plt.subplots(3, 1)
+    plt.plot(train_loss, label='Train loss')
+    plt.plot(total_kl_divergence*beta, label='Overall KL divergence scaled with beta')
+    plt.plot(reconstruction_loss, label='Reconstruction loss')
+    plt.plot(np.linspace(1, len(train_loss), len(val_loss)), val_loss, label='Validation loss')
+    plt.xlabel("Iterations")
+    plt.ylabel("Train/Val loss")
+    plt.legend()
 
-    ax1.plot(train_loss)
-    ax1.plot(np.linspace(1, len(train_loss), len(val_loss)), val_loss)
-    ax1.set_xlabel("Iterations")
-    ax1.set_ylabel("Train/Val loss")
+    plt.show()
 
-    ax2.plot(kl_divergence)
-    ax2.set_xlabel("Iterations")
-    ax2.set_ylabel("KL Divergence")
-
-    ax3.plot(reconstruction_loss)
-    ax3.set_xlabel("Iterations")
-    ax3.set_ylabel("Reconstruction Loss")
+    for i in range(kl_divergence_dim_wise.shape[1]):
+        plt.plot(kl_divergence_dim_wise[:, i], label='z{}'.format(i))
+    plt.xlabel("Iterations")
+    plt.ylabel("KL Divergences")
 
     plt.show()
 

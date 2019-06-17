@@ -14,7 +14,8 @@ class Solver(object):
                         'val_loss': [],
                         'total_kl_divergence': [],
                         'kl_divergence_dim_wise': [],
-                        'reconstruction_loss': []
+                        'reconstruction_loss': [],
+                        'beta': []
                         }
 
         self.optim = []
@@ -37,8 +38,7 @@ class Solver(object):
         if self.epoch == 0:
             self.optim = optim
             self.criterion = loss_criterion
-
-        self.beta = beta
+            self.beta = beta
 
         iter_per_epoch = len(train_loader)
         print("Iterations per epoch: {}".format(iter_per_epoch))
@@ -61,7 +61,7 @@ class Solver(object):
         # Do the training here
         for i_epoch in range(num_epochs):
             self.epoch += 1
-            print("Starting epoch {}".format(self.epoch))
+            print("Starting epoch {}, Beta: {}".format(self.epoch, self.beta))
             t_start_epoch = time.time()
 
             # Set model to train mode
@@ -120,7 +120,8 @@ class Solver(object):
                 self.append_history({'train_loss': loss.item(),
                                      'total_kl_divergence': total_kl_divergence.item(),
                                      'kl_divergence_dim_wise': dim_wise_kld.tolist(),
-                                     'reconstruction_loss': reconstruction_loss.item()
+                                     'reconstruction_loss': reconstruction_loss.item(),
+                                     'beta': self.beta     # Save beta every iteration to multiply with kl div
                                      })
 
                 # Add losses to tensorboard
@@ -131,9 +132,8 @@ class Solver(object):
                 tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
 
             # Reduce beta
-            self.beta *= beta_decay
             tensorboard_writer.add_scalar('beta', self.beta)
-            print('Beta: {}'.format(self.beta))
+            self.beta *= beta_decay
 
             # Validate model
             print("\nValidate model after epoch " + str(self.epoch) + '/' + str(num_epochs))
@@ -160,7 +160,7 @@ class Solver(object):
 
             val_loss /= num_val_batches
 
-            self.append_history({'val_loss': val_loss.item()})
+            self.append_history({'val_loss': val_loss})
 
             print('Avg Train Loss: ' + "{0:.6f}".format(train_loss_avg) +
                   '   Val loss: ' + "{0:.6f}".format(val_loss) +
@@ -213,6 +213,7 @@ class Solver(object):
 
         self.history = checkpoint['history']
         self.epoch = checkpoint['epoch']
+        self.beta = checkpoint['beta']
         self.stop_reason = checkpoint['stop_reason']
         self.training_time_s = checkpoint['training_time_s']
 
