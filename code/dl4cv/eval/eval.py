@@ -9,15 +9,17 @@ from dl4cv.eval.eval_functions import \
     show_latent_variables, \
     show_model_output, \
     eval_correlation
+from dl4cv.eval.latent_variable_slideshow import latent_variable_slideshow
 
 import os
 
 config = {
     'analyze_dataset': False,            # Plot positions of the desired datapoints
     'show_solver_history': False,        # Plot losses of the training
-    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
+    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
     'show_model_output': False,          # Show the model output for the desired datapoints
-    'eval_correlation': False,            # Plot the correlation between the latent variables and ground truth
+    'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
+    'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
@@ -85,7 +87,8 @@ if config['analyze_dataset']:
 if config['show_solver_history'] or \
    config['show_latent_variables'] or \
    config['show_model_output'] or \
-   config['eval_correlation']:
+   config['eval_correlation'] or \
+   config['latent_variable_slideshow']:
 
     model_path, solver_path = get_model_solver_paths(config['save_path'], config['epoch'])
 
@@ -126,3 +129,7 @@ if config['eval_correlation']:
         len_inp_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence']
     )
+
+if config['latent_variable_slideshow']:
+    print("Creating slideshow")
+    latent_variable_slideshow(model, dataset)
