@@ -12,7 +12,8 @@ class Solver(object):
     def __init__(self):
         self.history = {'train_loss': [],
                         'val_loss': [],
-                        'kl_divergence': [],
+                        'total_kl_divergence': [],
+                        'kl_divergence_dim_wise': [],
                         'reconstruction_loss': []
                         }
 
@@ -21,6 +22,7 @@ class Solver(object):
         self.training_time_s = 0
         self.stop_reason = ''
         self.beta = 0
+        self.epoch = 0
 
     def train(self, model, tensorboard_writer, optim=None,
               loss_criterion=torch.nn.MSELoss(),
@@ -32,9 +34,7 @@ class Solver(object):
 
         model.to(device)
 
-        start_epoch = len(self.history['val_loss'])
-
-        if start_epoch == 0:
+        if self.epoch == 0:
             self.optim = optim
             self.criterion = loss_criterion
 
@@ -55,15 +55,14 @@ class Solver(object):
 
         t_start_training = time.time()
 
-        print('Start training at epoch ' + str(start_epoch+1))
+        print('Start training at epoch ' + str(self.epoch))
         t_start = time.time()
 
         # Do the training here
         for i_epoch in range(num_epochs):
-            print("Starting epoch {}".format(start_epoch + i_epoch + 1))
+            self.epoch += 1
+            print("Starting epoch {}".format(self.epoch))
             t_start_epoch = time.time()
-
-            i_epoch += start_epoch
 
             # Set model to train mode
             model.train()
@@ -99,36 +98,15 @@ class Solver(object):
                     mu, logvar = latent_stuff
                     total_kl_divergence, dim_wise_kld, mean_kld = kl_divergence(mu, logvar)
 
-                elif len(latent_stuff) == 1:
-                    z = latent_stuff[0]
-
-                    # Calculate covariance
-                    z = z[:, :, 0, 0]
-                    z_mean = torch.mean(z, dim=0)
-                    cov = 1/len(batch) * torch.mm((z - z_mean).transpose(0, 1), (z-z_mean))
-                    cov = cov - torch.diag(torch.diag(cov)).to(device)
-                    cov = torch.sum(cov*cov)
-
                 loss = reconstruction_loss + cov_penalty * cov + self.beta * total_kl_divergence
 
-                # Packpropagate and update weights
+                # Backpropagate and update weights
                 model.zero_grad()
                 loss.backward()
                 self.optim.step()
 
-                # Save loss to history
                 smooth_window_train = 10
-
-                self.history['train_loss'].append(loss.item())
                 train_loss_avg = (smooth_window_train-1)/smooth_window_train*train_loss_avg + 1/smooth_window_train*loss.item()
-
-                self.history['kl_divergence'].append(total_kl_divergence.item())
-                self.history['reconstruction_loss'].append(reconstruction_loss.item())
-
-                # Add losses to tensorboard
-                tensorboard_writer.add_scalar('kl_loss', total_kl_divergence.item(), i_iter)
-                tensorboard_writer.add_scalar('reconstruction_loss', reconstruction_loss.item(), i_iter)
-                tensorboard_writer.add_scalar('train_loss', loss.item(), i_iter)
 
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
@@ -139,12 +117,26 @@ class Solver(object):
                           " - Time/iter: " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
                           "   time left: {}".format(time_left(t_start, n_iters, i_iter)))
 
+                self.append_history({'train_loss': loss.item(),
+                                     'total_kl_divergence': total_kl_divergence.item(),
+                                     'kl_divergence_dim_wise': dim_wise_kld.tolist(),
+                                     'reconstruction_loss': reconstruction_loss.item()
+                                     })
+
+                # Add losses to tensorboard
+                tensorboard_writer.add_scalar('kl_loss', total_kl_divergence.item(), i_iter)
+                tensorboard_writer.add_scalar('reconstruction_loss', reconstruction_loss.item(), i_iter)
+                tensorboard_writer.add_scalar('train_loss', loss.item(), i_iter)
+                z_keys = ['z{}'.format(i) for i in range(dim_wise_kld.numel())]
+                tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
+
             # Reduce beta
             self.beta *= beta_decay
+            tensorboard_writer.add_scalar('beta', self.beta)
             print('Beta: {}'.format(self.beta))
 
             # Validate model
-            print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
+            print("\nValidate model after epoch " + str(self.epoch) + '/' + str(num_epochs))
 
             # Set model to evaluation mode
             model.eval()
@@ -167,18 +159,19 @@ class Solver(object):
                 val_loss += self.criterion(y, y_pred).item()
 
             val_loss /= num_val_batches
-            self.history['val_loss'].append(val_loss)
+
+            self.append_history({'val_loss': val_loss.item()})
 
             print('Avg Train Loss: ' + "{0:.6f}".format(train_loss_avg) +
                   '   Val loss: ' + "{0:.6f}".format(val_loss) +
                   "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms\n")
 
             # Save model and solver
-            if save_after_epochs is not None and ((i_epoch + 1) % save_after_epochs == 0):
+            if save_after_epochs is not None and (self.epoch % save_after_epochs == 0):
                 os.makedirs(save_path, exist_ok=True)
-                model.save(save_path + '/model' + str(i_epoch + 1))
+                model.save(save_path + '/model' + str(self.epoch))
                 self.training_time_s += time.time() - t_start_training
-                self.save(save_path + '/solver' + str(i_epoch + 1))
+                self.save(save_path + '/solver' + str(self.epoch))
                 model.to(device)
 
             # Stop if training time is over
@@ -192,9 +185,9 @@ class Solver(object):
 
         # Save model and solver after training
         os.makedirs(save_path, exist_ok=True)
-        model.save(save_path + '/model' + str(i_epoch + 1))
+        model.save(save_path + '/model' + str(self.epoch))
         self.training_time_s += time.time() - t_start_training
-        self.save(save_path + '/solver' + str(i_epoch + 1))
+        self.save(save_path + '/solver' + str(self.epoch))
 
         print('FINISH.')
 
@@ -202,6 +195,7 @@ class Solver(object):
         print('Saving solver... %s\n' % path)
         torch.save({
             'history': self.history,
+            'epoch': self.epoch,
             'stop_reason': self.stop_reason,
             'training_time_s': self.training_time_s,
             'criterion': self.criterion,
@@ -218,5 +212,10 @@ class Solver(object):
             self.criterion = checkpoint['criterion']
 
         self.history = checkpoint['history']
+        self.epoch = checkpoint['epoch']
         self.stop_reason = checkpoint['stop_reason']
         self.training_time_s = checkpoint['training_time_s']
+
+    def append_history(self, hist_dict):
+        for key in hist_dict:
+            self.history[key].append(hist_dict[key])
