@@ -21,7 +21,7 @@ config = {
     'solver_path': '../saves/train20190523144416/solver20',
 
     # Data
-    'data_path': '../../datasets/ball/',   # Path to the parent directory of the image folder
+    'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': True,             # Set overfit or regular training
@@ -40,7 +40,8 @@ config = {
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
-    'beta': 1e-3,                          # beta-coefficient for disentangling
+    'beta': 1,                          # beta-coefficient for disentangling
+    'beta_decay': 0.9,
     'use_question': True,
 
     # Logging
@@ -199,4 +200,5 @@ if __name__ == "__main__":
                  save_path=config['save_path'],
                  device=device,
                  cov_penalty=config['cov_penalty'],
-                 beta=config['beta'])
+                 beta=config['beta'],
+                 beta_decay=config['beta_decay'])

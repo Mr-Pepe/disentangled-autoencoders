@@ -20,13 +20,15 @@ class Solver(object):
         self.criterion = []
         self.training_time_s = 0
         self.stop_reason = ''
+        self.beta = 0
 
     def train(self, model, tensorboard_writer, optim=None,
               loss_criterion=torch.nn.MSELoss(),
               num_epochs=10, max_train_time_s=None,
               train_loader=None, val_loader=None,
               log_after_iters=1, save_after_epochs=None,
-              save_path='../saves/train', device='cpu', cov_penalty=0, beta=1):
+              save_path='../saves/train', device='cpu', cov_penalty=0, beta=1,
+              beta_decay=1):
 
         model.to(device)
 
@@ -137,6 +139,10 @@ class Solver(object):
                           " - Time/iter: " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
                           "   time left: {}".format(time_left(t_start, n_iters, i_iter)))
 
+            # Reduce beta
+            self.beta *= beta_decay
+            print('Beta: {}'.format(self.beta))
+
             # Validate model
             print("\nValidate model after epoch " + str(i_epoch+1) + '/' + str(num_epochs))
 
@@ -183,8 +189,6 @@ class Solver(object):
 
         if self.stop_reason is "":
             self.stop_reason = "Reached number of specified epochs."
-
-
 
         # Save model and solver after training
         os.makedirs(save_path, exist_ok=True)
