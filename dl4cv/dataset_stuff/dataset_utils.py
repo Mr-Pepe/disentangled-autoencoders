@@ -89,7 +89,7 @@ class CustomDataset(Dataset):
         x = torch.cat(sequence['images'][:self.len_inp_sequence])
 
         if self.question:
-            target_idx = np.random.randint(low=0, high=2 * self.len_inp_sequence - self.len_out_sequence)
+            target_idx = np.random.randint(low=0, high=len(sequence['images']) - self.len_out_sequence - 1)
             y = torch.cat(sequence['images'][target_idx:target_idx + self.len_out_sequence]) if self.len_out_sequence > 0 else 0
             question = torch.tensor(target_idx, dtype=torch.float32)
         else:

@@ -50,7 +50,7 @@ def show_latent_variables(model, dataset):
     std = 0
 
     len_dataset = len(dataset)
-    log_interval = len_dataset/20
+    log_interval = len_dataset//20
 
     print('\n', end='')
 
@@ -167,14 +167,18 @@ def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence)
         z_t = _get_z(encoder, x, z_dim=model.z_dim_encoder)
 
         f, axes = plt.subplots(len(variables), 1, figsize=(10, 10))
+
         for i_z, z in enumerate(z_t):
             m, c = _regression_line(linspace, z)
             axes[i_z].plot(linspace, z)
             axes[i_z].plot(linspace, m*linspace + c, label='Regression line')
             axes[i_z].set_ylabel("latent %d" % i_z)
+            axes[i_z].set_ylim([-3, 3])
 
         axes[0].legend(loc='upper left')
-        axes[-1].set_xlabel(var)
+        axes[-1].set_xlabel(var, fontsize=16)
+
+        f.tight_layout()
 
         plt.show()
 

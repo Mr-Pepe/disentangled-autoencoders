@@ -21,8 +21,8 @@ config = {
     'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
     'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
 
-    'data_path': '../../../datasets/ball',  # Path to directory of the image folder
-    'eval_data_path': '../../../datasets/evalDataset',
+    'data_path': '../../datasets/ball',  # Path to directory of the image folder
+    'eval_data_path': '../../datasets/evalDataset',
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
     'num_samples': 5,                # Use the whole dataset if none for latent variables

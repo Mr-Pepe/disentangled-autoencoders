@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 
 from dl4cv.utils import save_csv
 
-dataset_path = "../../../datasets/evalDataset"
+dataset_path = "../../datasets/evalDataset"
 os.makedirs(dataset_path, exist_ok=True)
 
 # make dataset_path absolute
