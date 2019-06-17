@@ -1,5 +1,5 @@
 /datasets/**
-/code/saves/**
+/saves/**
 */**/__pycache__
 
 \.idea/
@@ -9,4 +9,4 @@
 !*.gitkeep
 
 # ignore tensorboard log file
-/code/tensorboard_log/**
+/tensorboard_log/**
