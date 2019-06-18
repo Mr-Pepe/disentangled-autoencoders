@@ -31,7 +31,7 @@ class Solver(object):
               train_loader=None, val_loader=None,
               log_after_iters=1, save_after_epochs=None,
               save_path='../saves/train', device='cpu', cov_penalty=0, beta=1,
-              beta_decay=1):
+              beta_decay=1, patience=128):
 
         model.to(device)
 
@@ -52,6 +52,9 @@ class Solver(object):
         # Calculate the total number of minibatches for the training procedure
         n_iters = num_epochs*iter_per_epoch
         i_iter = 0
+
+        best_recon_loss = 1e10
+        n_bad_iters = 0
 
         t_start_training = time.time()
 
@@ -105,6 +108,17 @@ class Solver(object):
                 loss.backward()
                 self.optim.step()
 
+                # Reduce beta
+                if reconstruction_loss.item() < best_recon_loss:
+                    best_recon_loss = reconstruction_loss.item()
+                    n_bad_iters = 0
+                else:
+                    n_bad_iters += 1
+
+                if n_bad_iters >= patience:
+                    self.beta *= beta_decay
+                    n_bad_iters = 0
+
                 smooth_window_train = 10
                 train_loss_avg = (smooth_window_train-1)/smooth_window_train*train_loss_avg + 1/smooth_window_train*loss.item()
 
@@ -130,10 +144,8 @@ class Solver(object):
                 tensorboard_writer.add_scalar('train_loss', loss.item(), i_iter)
                 z_keys = ['z{}'.format(i) for i in range(dim_wise_kld.numel())]
                 tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
+                tensorboard_writer.add_scalar('beta', self.beta)
 
-            # Reduce beta
-            tensorboard_writer.add_scalar('beta', self.beta)
-            self.beta *= beta_decay
 
             # Validate model
             print("\nValidate model after epoch " + str(self.epoch) + '/' + str(num_epochs))

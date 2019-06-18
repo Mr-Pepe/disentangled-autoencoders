@@ -17,8 +17,8 @@ config = {
 
     # Training continuation
     'continue_training':   False,      # Specify whether to continue training with an existing model and solver
-    'model_path': '../saves/train20190523144416/model20',
-    'solver_path': '../saves/train20190523144416/solver20',
+    'model_path': '../saves/train20190617165601/model10',
+    'solver_path': '../saves/train20190617165601/solver10',
 
     # Data
     'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
@@ -43,6 +43,7 @@ config = {
     'beta': 0.01,
     'beta_decay': 0.99,
     'use_question': True,
+    'patience': 128,
 
     # Logging
     'log_interval': 3,           # Number of mini-batches after which to print training loss
@@ -201,4 +202,5 @@ if __name__ == "__main__":
                  device=device,
                  cov_penalty=config['cov_penalty'],
                  beta=config['beta'],
-                 beta_decay=config['beta_decay'])
+                 beta_decay=config['beta_decay'],
+                 patience=config['patience'])

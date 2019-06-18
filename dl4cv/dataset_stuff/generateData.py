@@ -112,8 +112,8 @@ def generate_data(**kwargs):
     y_mean = window_size_y / 2
     y_std = window_size_y / 4
 
-    ax_std = 1
-    ay_std = 1
+    ax_std = 100
+    ay_std = 100
 
     # Initialize x,y,vx,vy,ax,ay
     x_start, y_start, x_end, y_end, ax, ay = [torch.zeros((num_sequences,)) for i in range(6)]
