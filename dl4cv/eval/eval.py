@@ -8,7 +8,8 @@ from dl4cv.eval.eval_functions import \
     show_solver_history, \
     show_latent_variables, \
     show_model_output, \
-    eval_correlation
+    eval_correlation, \
+    show_correlation
 from dl4cv.eval.latent_variable_slideshow import latent_variable_slideshow
 
 import os
@@ -41,6 +42,7 @@ config['data_path'] = os.path.join(file_dir, config['data_path'])
 config['eval_data_path'] = os.path.join(file_dir, config['eval_data_path'])
 config['save_path'] = os.path.join(file_dir, config['save_path'])
 
+z = None
 
 def get_model_solver_paths(save_path, epoch):
     print("Getting model and solver paths")
@@ -79,7 +81,6 @@ dataset = CustomDataset(
     load_to_ram=False
 )
 
-
 if config['analyze_dataset']:
     print("Analysing dataset")
     analyze_dataset(dataset)
@@ -103,8 +104,16 @@ if config['show_solver_history']:
     show_solver_history(solver)
 
 if config['show_latent_variables']:
+    if config['num_samples'] is not None:
+        # Sample equidistantly from dataset
+        indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
+
+        dataset_list = [dataset[i] for i in indices]
+    else:
+        dataset_list = dataset
+
     print("Showing latent variables")
-    show_latent_variables(model, dataset)
+    z = show_latent_variables(model, dataset_list)
 
 if config['show_model_output']:
     print("Showing model output")
@@ -120,15 +129,21 @@ if config['show_model_output']:
 
 if config['eval_correlation']:
     print("Evaluating correlation")
-    # variables to be evaluated, corresponds to the names of the eval mini-datasets
-    variables = ['pos_x', 'pos_y', 'vel_x', 'vel_y', 'acc_x', 'acc_y']
-    eval_correlation(
-        model=model,
-        variables=variables,
-        path=config['eval_data_path'],
-        len_inp_sequence=config['len_inp_sequence'],
-        len_out_sequence=config['len_out_sequence']
-    )
+
+    if config['num_samples'] is not None:
+        # Sample equidistantly from dataset
+        indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
+
+        dataset_list = [dataset[i] for i in indices]
+        ground_truth = [dataset.get_ground_truth(i) for i in indices]
+    else:
+        dataset_list = dataset
+        ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
+
+    if z is None:
+        z = show_latent_variables(model, dataset_list, show=False)
+
+    show_correlation(model, dataset_list, z, ground_truth)
 
 if config['latent_variable_slideshow']:
     print("Creating slideshow")

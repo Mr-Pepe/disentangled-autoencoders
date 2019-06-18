@@ -19,6 +19,7 @@ def analyze_dataset(dataset):
 
 
 def show_solver_history(solver):
+
     print("Stop reason: %s" % solver.stop_reason)
     print("Stop time: %fs" % solver.training_time_s)
     print("Epoch: {}".format(solver.epoch))
@@ -42,16 +43,18 @@ def show_solver_history(solver):
     plt.show()
 
     for i in range(kl_divergence_dim_wise.shape[1]):
-        plt.plot(kl_divergence_dim_wise[:, i], label='z{}'.format(i))
+        plt.plot(moving_average(kl_divergence_dim_wise[:, i], 20), label='z{}'.format(i))
     plt.xlabel("Iterations")
     plt.ylabel("KL Divergences")
+    plt.legend()
 
     plt.show()
 
 
-def show_latent_variables(model, dataset):
+def show_latent_variables(model, dataset, show=True):
     mu = 0
     std = 0
+    z = 0
 
     len_dataset = len(dataset)
     log_interval = len_dataset//20
@@ -65,31 +68,36 @@ def show_latent_variables(model, dataset):
 
         x, _, _, _ = sample
 
-        z_t, mu_tmp, logvar = model.encode(torch.unsqueeze(x, 0))
+        z_tmp, mu_tmp, logvar = model.encode(torch.unsqueeze(x, 0))
 
         std_tmp = logvar.div(2).exp()
 
         if not torch.is_tensor(mu):
             mu = mu_tmp.clone().detach()
             std = std_tmp.clone().detach()
+            z = z_tmp.clone().detach()
 
         else:
             mu = torch.cat((mu, mu_tmp.detach()))
             std = torch.cat((std, std_tmp.detach()))
+            z = torch.cat((z, z_tmp.detach()))
 
     print('\n', end='')
 
-    ax = plt.subplot(2, 1, 1)
-    ax.set_title("Mu")
-    for i in range(mu.shape[1]):
-        plt.scatter(np.ones((mu.shape[0])) * (i + 1), mu.view(mu.shape[0], mu.shape[1]).detach().numpy()[:, i])
+    if show:
+        ax = plt.subplot(2, 1, 1)
+        ax.set_title("Mu")
+        for i in range(mu.shape[1]):
+            plt.scatter(np.ones((mu.shape[0])) * (i + 1), mu.view(mu.shape[0], mu.shape[1]).detach().numpy()[:, i])
 
-    ax = plt.subplot(2, 1, 2)
-    ax.set_title("Std")
-    for i in range(std.shape[1]):
-        plt.scatter(np.ones((std.shape[0])) * (i + 1), std.view(std.shape[0], std.shape[1]).detach().numpy()[:, i])
+        ax = plt.subplot(2, 1, 2)
+        ax.set_title("Std")
+        for i in range(std.shape[1]):
+            plt.scatter(np.ones((std.shape[0])) * (i + 1), std.view(std.shape[0], std.shape[1]).detach().numpy()[:, i])
 
-    plt.show()
+        plt.show()
+
+    return z
 
 
 def show_model_output(model, dataset):
@@ -138,6 +146,43 @@ def show_model_output(model, dataset):
         f.tight_layout()
 
         plt.show(block=True)
+
+
+def show_correlation(model, dataset, z, gt):
+
+    z = z.view(z.shape[0], -1).numpy()
+
+    gt = np.array(gt)
+    gt = gt[:, 0, :]
+
+    z_mean = z.mean(axis=0)
+    gt_mean = gt.mean(axis=0)
+
+    z_std = z.std(axis=0)
+    gt_std = gt.std(axis=0)
+
+    n = z.shape[0]
+
+    correlations = np.zeros((z.shape[1], gt.shape[1]))
+
+    # Calculate correlation from every latent variable to every ground truth variable
+    for i_z in range(z.shape[1]):
+        for i_gt in range(gt.shape[1]):
+
+            # Calculate correlation
+            # From https://www.dummies.com/education/math/statistics/how-to-calculate-a-correlation/
+            correlations[i_z, i_gt] = 1/(n-1) * ((z[:, i_z] - z_mean[i_z]) * (gt[:, i_gt] - gt_mean[i_gt])).sum() / \
+                                      (z_std[i_z]*gt_std[i_gt])
+
+    correlations = np.abs(correlations)
+
+    plt.imshow(correlations, cmap='hot', interpolation='nearest')
+    plt.xlabel('Ground truth variables')
+    plt.ylabel('Latent variables')
+    plt.colorbar()
+    plt.show()
+
+    return correlations
 
 
 def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence):
@@ -202,3 +247,9 @@ def _get_z(encoder, x, z_dim):
     z_t = z_t.reshape([z_t.shape[0], -1]).transpose(1, 0)
 
     return z_t.detach().numpy()
+
+def moving_average(a, n=3) :
+    # From https://stackoverflow.com/questions/14313510/how-to-calculate-moving-average-using-numpy
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
