@@ -24,9 +24,9 @@ config = {
     'data_path': '../datasets/ball/',   # Path to the parent directory of the image folder
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': True,             # Set overfit or regular training
-    'num_train_regular':    900,       # Number of training samples for regular training
-    'num_val_regular':      100,        # Number of validation samples for regular training
+    'do_overfitting': False,             # Set overfit or regular training
+    'num_train_regular':    16384,       # Number of training samples for regular training
+    'num_val_regular':      1024,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 25,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
@@ -35,17 +35,17 @@ config = {
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 100,                  # Number of epochs to train
+    'num_epochs': 500,                  # Number of epochs to train
     'batch_size': 128,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
-    'beta': 1,                          # beta-coefficient for disentangling
-    'beta_decay': 0.9,
+    'beta': 0.01,
+    'beta_decay': 0.99,
     'use_question': True,
 
     # Logging
-    'log_interval': 7,           # Number of mini-batches after which to print training loss
+    'log_interval': 3,           # Number of mini-batches after which to print training loss
     'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': '../saves',
     'tensorboard_log_dir': '../tensorboard_log/exp_1'
@@ -163,8 +163,8 @@ else:
     model = VariationalAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
-        z_dim_encoder=6,
-        z_dim_decoder=7,  # latent variables get concatenated with question
+        z_dim_encoder=10,
+        z_dim_decoder=11,  # latent variables get concatenated with question
         use_physics=False
     )
     solver = Solver()
