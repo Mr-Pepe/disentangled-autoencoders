@@ -17,16 +17,16 @@ import os
 config = {
     'analyze_dataset': False,            # Plot positions of the desired datapoints
     'show_solver_history': True,        # Plot losses of the training
-    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
-    'show_model_output': True,          # Show the model output for the desired datapoints
-    'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
+    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
+    'show_model_output': False,          # Show the model output for the desired datapoints
+    'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
     'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
 
     'data_path': '../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../datasets/evalDataset',
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
-    'num_samples': 1000,                # Use the whole dataset if none for latent variables
+    'num_samples': 500,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
@@ -159,4 +159,14 @@ if config['eval_correlation']:
 
 if config['latent_variable_slideshow']:
     print("Creating slideshow")
+    if config['num_samples'] is not None:
+        # Sample equidistantly from dataset
+        indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
+
+        dataset_list = [dataset[i] for i in indices]
+        ground_truth = [dataset.get_ground_truth(i) for i in indices]
+    else:
+        dataset_list = dataset
+        ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
+
     latent_variable_slideshow(model, dataset)
