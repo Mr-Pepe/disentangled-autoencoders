@@ -7,12 +7,12 @@ from PIL import Image, ImageDraw
 config = {
     'save_dir_path': '../../../datasets/ball',
     'num_sequences': 1000,
-    'sequence_length': 50,
+    'sequence_length': 30,
     'window_size_x': 32,
     'window_size_y': 32,
     'ball_radius': 2,
     't_frame': 1 / 30,
-    'avoid_collisions': False,
+    'avoid_collisions': True,
     'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start'
 }
 
@@ -109,15 +109,15 @@ def generate_data(**kwargs):
     y_min = ball_radius
 
     x_mean = window_size_x / 2
-    x_std = window_size_x / 8
+    x_std = window_size_x / 40
     y_mean = window_size_y / 2
-    y_std = window_size_y / 8
+    y_std = window_size_y / 40
 
-    vx_std = 10
-    vy_std = 10
+    vx_std = 4
+    vy_std = 4
 
-    ax_std = 10
-    ay_std = 10
+    ax_std = 4
+    ay_std = 4
 
     # Initialize x,y,vx,vy,ax,ay
     x_start, y_start, vx_start, vy_start, x_end, y_end, ax, ay = [torch.zeros((num_sequences,)) for i in range(8)]
@@ -160,9 +160,13 @@ def generate_data(**kwargs):
             raise Exception("Invalid sample_mode: {}".format(config['sample_mode']))
 
         collisions = get_collisions(x, y, x_min, x_max, y_min, y_max)
-        print("{} collisions of {} sequences".format(collisions.sum(), config['num_sequences']))
 
-        if not config['avoid_collisions']:
+        if avoid_collisions:
+            print("{} collisions of {} sequences".format(collisions.sum(), num_sequences))
+        else:
+            print("No collision avoidance... but we had {} in {} sequences".format(
+                collisions.sum(), num_sequences)
+            )
             collisions = np.zeros((num_sequences))
 
     # Generate frames for the sequences

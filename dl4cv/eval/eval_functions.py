@@ -21,18 +21,17 @@ def analyze_dataset(dataset, indices):
 
     meta = meta[:, 0]
 
-    plt.plot(np.sort(meta[:, 0]))
-
-    plt.title("Initial Positions in x")
-    plt.show()
-
-    plt.plot(np.sort(meta[:, 2]))
-    plt.title("Initial Velocities in x")
-    plt.show()
-
-    plt.plot(np.sort(meta[:, 4]))
-    plt.title("Initial Accelerations in x")
-    plt.show()
+    # plt.plot(np.sort(meta[:, 0]))
+    # plt.title("Initial Positions in x")
+    # plt.show()
+    #
+    # plt.plot(np.sort(meta[:, 2]))
+    # plt.title("Initial Velocities in x")
+    # plt.show()
+    #
+    # plt.plot(np.sort(meta[:, 4]))
+    # plt.title("Initial Accelerations in x")
+    # plt.show()
 
     meta_mean = meta.mean(axis=0)
     meta_std = meta.std(axis=0)
