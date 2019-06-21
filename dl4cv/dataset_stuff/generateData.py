@@ -5,7 +5,7 @@ import torch
 from PIL import Image, ImageDraw
 
 config = {
-    'save_dir_path': '../../datasets/ball',
+    'save_dir_path': '../../../datasets/ball',
     'num_sequences': 16384+1024,
     'sequence_length': 50,
     'window_size_x': 32,
