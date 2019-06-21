@@ -189,6 +189,7 @@ tensorboard_writer = SummaryWriter(config['tensorboard_log_dir'])
 
 if __name__ == "__main__":
     solver.train(model=model,
+                 config=config,
                  tensorboard_writer=tensorboard_writer,
                  optim=optimizer,
                  loss_criterion=loss_criterion,

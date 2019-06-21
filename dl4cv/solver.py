@@ -25,7 +25,7 @@ class Solver(object):
         self.beta = 0
         self.epoch = 0
 
-    def train(self, model, tensorboard_writer, optim=None,
+    def train(self, model, config, tensorboard_writer, optim=None,
               loss_criterion=torch.nn.MSELoss(),
               num_epochs=10, max_train_time_s=None,
               train_loader=None, val_loader=None,
@@ -33,6 +33,7 @@ class Solver(object):
               save_path='../saves/train', device='cpu', cov_penalty=0, beta=1,
               beta_decay=1, patience=128):
 
+        self.config = config
         model.to(device)
 
         if self.epoch == 0:
@@ -212,7 +213,8 @@ class Solver(object):
             'training_time_s': self.training_time_s,
             'criterion': self.criterion,
             'beta': self.beta,
-            'optim_state_dict': self.optim.state_dict()
+            'optim_state_dict': self.optim.state_dict(),
+            'config': self.config
         }, path)
 
     def load(self, path, device, only_history=False):
@@ -228,6 +230,7 @@ class Solver(object):
         self.beta = checkpoint['beta']
         self.stop_reason = checkpoint['stop_reason']
         self.training_time_s = checkpoint['training_time_s']
+        self.config = checkpoint['config']
 
     def append_history(self, hist_dict):
         for key in hist_dict:
