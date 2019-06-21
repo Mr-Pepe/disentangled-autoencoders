@@ -94,7 +94,12 @@ dataset = CustomDataset(
 
 if config['analyze_dataset']:
     print("Analysing dataset")
-    analyze_dataset(dataset)
+    if config['num_samples'] is not None:
+        indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
+    else:
+        indices = range(len(dataset))
+
+    analyze_dataset(dataset, indices)
 
 if config['show_solver_history'] or \
    config['show_latent_variables'] or \

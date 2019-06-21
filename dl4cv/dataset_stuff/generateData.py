@@ -10,7 +10,7 @@ config = {
     'sequence_length': 50,
     'window_size_x': 32,
     'window_size_y': 32,
-    'ball_radius': 3,
+    'ball_radius': 2,
     't_frame': 1 / 30,
     'avoid_collisions': True
 }

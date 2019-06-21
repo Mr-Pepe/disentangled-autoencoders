@@ -8,13 +8,37 @@ from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from dl4cv.utils import read_csv, reparametrize
 
 
-def analyze_dataset(dataset):
-    meta = np.array([dataset.get_ground_truth(i) for i in range(len(dataset))])
+def analyze_dataset(dataset,indices):
+    meta = np.array([dataset.get_ground_truth(i) for i in indices])
 
     plt.scatter(meta[:, :, 0].reshape(-1), meta[:, :, 1].reshape(-1), s=0.2)
     plt.title("Position")
     plt.xlabel("Position x")
     plt.ylabel("Position y")
+    plt.show()
+
+    n = meta.shape[0]
+
+    meta = meta[:, 0]
+    meta_mean = meta.mean(axis=0)
+    meta_std = meta.std(axis=0)
+
+    correlations = np.zeros((meta.shape[1], meta.shape[1]))
+
+    # Calculate correlation from every latent variable to every ground truth variable
+    for i_z in range(meta.shape[1]):
+        for i_gt in range(meta.shape[1]):
+            # Calculate correlation
+            # From https://www.dummies.com/education/math/statistics/how-to-calculate-a-correlation/
+            correlations[i_z, i_gt] = 1 / (n - 1) * ((meta[:, i_z] - meta_mean[i_z]) * (meta[:, i_gt] - meta_mean[i_gt])).sum() / \
+                                      (meta_std[i_z] * meta_std[i_gt])
+
+    # correlations = np.abs(correlations)
+
+    plt.imshow(correlations, cmap='hot', interpolation='nearest')
+    plt.xlabel('Ground truth variables')
+    plt.ylabel('Latent variables')
+    plt.colorbar()
     plt.show()
 
 
