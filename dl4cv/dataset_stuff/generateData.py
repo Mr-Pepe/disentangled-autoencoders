@@ -12,7 +12,7 @@ config = {
     'window_size_y': 32,
     'ball_radius': 2,
     't_frame': 1 / 30,
-    'avoid_collisions': True,
+    'avoid_collisions': False,
     'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start'
 }
 
@@ -161,6 +161,9 @@ def generate_data(**kwargs):
 
         collisions = get_collisions(x, y, x_min, x_max, y_min, y_max)
         print("{} collisions of {} sequences".format(collisions.sum(), config['num_sequences']))
+
+        if not config['avoid_collisions']:
+            collisions = np.zeros((num_sequences))
 
     # Generate frames for the sequences
     for i_sequence in range(num_sequences):
