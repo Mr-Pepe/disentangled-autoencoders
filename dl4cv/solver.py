@@ -215,9 +215,9 @@ class Solver(object):
             'optim_state_dict': self.optim.state_dict()
         }, path)
 
-    def load(self, path, only_history=False):
+    def load(self, path, device, only_history=False):
 
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, map_location=device)
 
         if not only_history:
             self.optim.load_state_dict(checkpoint['optim_state_dict'])

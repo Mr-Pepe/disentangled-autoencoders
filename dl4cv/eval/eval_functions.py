@@ -248,6 +248,7 @@ def _get_z(encoder, x, z_dim):
 
     return z_t.detach().numpy()
 
+
 def moving_average(a, n=3) :
     # From https://stackoverflow.com/questions/14313510/how-to-calculate-moving-average-using-numpy
     ret = np.cumsum(a, dtype=float)

@@ -16,24 +16,35 @@ import os
 
 config = {
     'analyze_dataset': False,            # Plot positions of the desired datapoints
-    'show_solver_history': False,        # Plot losses of the training
-    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
-    'show_model_output': False,          # Show the model output for the desired datapoints
-    'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
-    'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
+    'show_solver_history': True,        # Plot losses of the training
+    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
+    'show_model_output': True,          # Show the model output for the desired datapoints
+    'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
+    'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
 
     'data_path': '../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../datasets/evalDataset',
     'len_inp_sequence': 25,
     'len_out_sequence': 1,
-    'num_samples': 5,                # Use the whole dataset if none for latent variables
+    'num_samples': 1000,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
-    'save_path': '../../saves/train20190615142355',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/train20190619130020',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
+    'use_cuda': False,
 }
+
+
+""" Configure evaluation with or without cuda """
+
+if config['use_cuda'] and torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+    torch.set_default_tensor_type('torch.FloatTensor')
+
 
 # make all paths absolute
 file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -95,8 +106,8 @@ if config['show_solver_history'] or \
 
     print("Loading model and solver")
     solver = Solver()
-    solver.load(solver_path, only_history=True)
-    model = torch.load(model_path)
+    solver.load(solver_path, device=device, only_history=True)
+    model = torch.load(model_path, map_location=device)
 
 
 if config['show_solver_history']:
@@ -104,6 +115,7 @@ if config['show_solver_history']:
     show_solver_history(solver)
 
 if config['show_latent_variables']:
+    print("Using {} samples to show latent variables".format(config['num_samples']))
     if config['num_samples'] is not None:
         # Sample equidistantly from dataset
         indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
