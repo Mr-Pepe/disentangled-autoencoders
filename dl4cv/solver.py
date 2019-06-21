@@ -230,7 +230,8 @@ class Solver(object):
         self.beta = checkpoint['beta']
         self.stop_reason = checkpoint['stop_reason']
         self.training_time_s = checkpoint['training_time_s']
-        self.config = checkpoint['config']
+        if 'config' in checkpoint.keys():
+            self.config = checkpoint['config']
 
     def append_history(self, hist_dict):
         for key in hist_dict:

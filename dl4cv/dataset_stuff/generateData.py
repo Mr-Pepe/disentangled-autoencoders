@@ -6,13 +6,14 @@ from PIL import Image, ImageDraw
 
 config = {
     'save_dir_path': '../../../datasets/ball',
-    'num_sequences': 16384+1024,
+    'num_sequences': 1000,
     'sequence_length': 50,
     'window_size_x': 32,
     'window_size_y': 32,
     'ball_radius': 2,
     't_frame': 1 / 30,
-    'avoid_collisions': True
+    'avoid_collisions': True,
+    'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start'
 }
 
 # make save_dir_path absolute
@@ -68,8 +69,8 @@ def get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end):
 
 
 def get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame, sequence_length):
-    t = torch.arange(sequence_length).float()*t_frame
-    t = torch.ones(x_start.shape[0],1)*t.view(1, -1)
+    t = torch.arange(sequence_length).float() * t_frame
+    t = torch.ones(x_start.shape[0], 1) * t.view(1, -1)
 
     return equation_of_motion(x_start, y_start, vx_start, vy_start, ax, ay, t)
 
@@ -108,15 +109,18 @@ def generate_data(**kwargs):
     y_min = ball_radius
 
     x_mean = window_size_x / 2
-    x_std = window_size_x / 4
+    x_std = window_size_x / 8
     y_mean = window_size_y / 2
-    y_std = window_size_y / 4
+    y_std = window_size_y / 8
 
-    ax_std = 100
-    ay_std = 100
+    vx_std = 10
+    vy_std = 10
+
+    ax_std = 10
+    ay_std = 10
 
     # Initialize x,y,vx,vy,ax,ay
-    x_start, y_start, x_end, y_end, ax, ay = [torch.zeros((num_sequences,)) for i in range(6)]
+    x_start, y_start, vx_start, vy_start, x_end, y_end, ax, ay = [torch.zeros((num_sequences,)) for i in range(8)]
 
     collisions = np.ones((num_sequences))
 
@@ -124,21 +128,39 @@ def generate_data(**kwargs):
     while collisions.any():
         idx = collisions.nonzero()[0]
 
-        x_start[idx] = torch.normal(x_mean, torch.ones([idx.shape[0]]) * x_std)
-        y_start[idx] = torch.normal(y_mean, torch.ones([idx.shape[0]]) * y_std)
+        if config['sample_mode'] == 'x_start, x_end, a_start':
+            x_start[idx] = torch.normal(x_mean, torch.ones([idx.shape[0]]) * x_std)
+            y_start[idx] = torch.normal(y_mean, torch.ones([idx.shape[0]]) * y_std)
 
-        x_end[idx] = torch.normal(x_mean, torch.ones([idx.shape[0]]) * x_std)
-        y_end[idx] = torch.normal(y_mean, torch.ones([idx.shape[0]]) * y_std)
+            x_end[idx] = torch.normal(x_mean, torch.ones([idx.shape[0]]) * x_std)
+            y_end[idx] = torch.normal(y_mean, torch.ones([idx.shape[0]]) * y_std)
 
-        ax[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ax_std)
-        ay[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ay_std)
+            ax[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ax_std)
+            ay[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ay_std)
 
-        vx_start, vy_start = get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end)
+            vx_start, vy_start = get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end)
 
-        x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame,
-                                        sequence_length)
+            x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame,
+                                            sequence_length)
+
+        elif config['sample_mode'] == 'x_start, v_start, a_start':
+            x_start[idx] = torch.normal(x_mean, torch.ones([idx.shape[0]]) * x_std)
+            y_start[idx] = torch.normal(y_mean, torch.ones([idx.shape[0]]) * y_std)
+
+            vx_start[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * vx_std)
+            vy_start[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * vy_std)
+
+            ax[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ax_std)
+            ay[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ay_std)
+
+            x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame,
+                                            sequence_length)
+
+        else:
+            raise Exception("Invalid sample_mode: {}".format(config['sample_mode']))
 
         collisions = get_collisions(x, y, x_min, x_max, y_min, y_max)
+        print("{} collisions of {} sequences".format(collisions.sum(), config['num_sequences']))
 
     # Generate frames for the sequences
     for i_sequence in range(num_sequences):
@@ -165,7 +187,6 @@ def generate_data(**kwargs):
 
             draw_ball(screen, window_size_x, window_size_y, ball_radius, x[i_sequence, i_frame], y[i_sequence, i_frame])
             img.save(save_path_frame)
-
 
         # Save the values at the last
         save_path_ground_truth = os.path.join(

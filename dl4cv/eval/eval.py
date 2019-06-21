@@ -15,8 +15,8 @@ from dl4cv.eval.latent_variable_slideshow import latent_variable_slideshow
 import os
 
 config = {
-    'analyze_dataset': False,            # Plot positions of the desired datapoints
-    'show_solver_history': True,        # Plot losses of the training
+    'analyze_dataset': True,            # Plot positions of the desired datapoints
+    'show_solver_history': False,        # Plot losses of the training
     'show_latent_variables': False,      # Show the latent variables for the desired datapoints
     'show_model_output': False,          # Show the model output for the desired datapoints
     'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
@@ -54,6 +54,7 @@ config['eval_data_path'] = os.path.join(file_dir, config['eval_data_path'])
 config['save_path'] = os.path.join(file_dir, config['save_path'])
 
 z = None
+
 
 def get_model_solver_paths(save_path, epoch):
     print("Getting model and solver paths")
