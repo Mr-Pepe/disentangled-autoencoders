@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 
 config = {
     'save_dir_path': '../../../datasets/ball',
-    'num_sequences': 1000,
+    'num_sequences': 16384 + 1024,
     'sequence_length': 30,
     'window_size_x': 32,
     'window_size_y': 32,

@@ -28,14 +28,14 @@ config = {
     'num_train_regular':    16384,       # Number of training samples for regular training
     'num_val_regular':      1024,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
-    'len_inp_sequence': 25,              # Length of training sequence
+    'len_inp_sequence': 15,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
 
     'num_workers': 4,                   # Number of workers for data loading
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 500,                  # Number of epochs to train
+    'num_epochs': 200,                  # Number of epochs to train
     'batch_size': 128,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
