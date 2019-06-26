@@ -25,13 +25,28 @@ class Solver(object):
         self.beta = 0
         self.epoch = 0
 
-    def train(self, model, config, tensorboard_writer, optim=None,
-              loss_criterion=torch.nn.MSELoss(),
-              num_epochs=10, max_train_time_s=None,
-              train_loader=None, val_loader=None,
-              log_after_iters=1, save_after_epochs=None,
-              save_path='../saves/train', device='cpu', cov_penalty=0, beta=1,
-              beta_decay=1, patience=128):
+    def train(
+            self,
+            model,
+            config,
+            tensorboard_writer,
+            optim=None,
+            loss_criterion=torch.nn.MSELoss(),
+            num_epochs=10,
+            max_train_time_s=None,
+            train_loader=None,
+            val_loader=None,
+            log_after_iters=1,
+            save_after_epochs=None,
+            save_path='../saves/train',
+            device='cpu',
+            cov_penalty=0,
+            beta=1,
+            beta_decay=1,
+            patience=128,
+            loss_weighting=False,
+            loss_weight_ball=2.
+    ):
 
         self.config = config
         model.to(device)
@@ -73,29 +88,31 @@ class Solver(object):
 
             for i_iter_in_epoch, batch in enumerate(train_loader):
                 t_start_iter = time.time()
-
                 i_iter += 1
 
                 x, y, question, _ = batch
-
-                # If the current minibatch does not have the full number of samples, skip it
-                if len(x) < train_loader.batch_size:
-                    print("Skipped batch, len(x): {}, batch_size: {}".format(
-                        len(x), train_loader.batch_size
-                    ))
-                    continue
 
                 x = x.to(device)
                 y = y.to(device)
                 if question is not None:
                     question = question.to(device)
 
+                # If using Loss weighting, create a weighting mask
+                if loss_weighting:
+                    loss_weight_mask = torch.where(y > 1e-3, y * loss_weight_ball, torch.ones_like(y))
+
                 # Forward pass
                 y_pred, latent_stuff = model(x, question)
 
+                # Compute losses
                 cov = torch.zeros(1, device=device)
                 total_kl_divergence = torch.zeros(1, device=device)
                 reconstruction_loss = self.criterion(y_pred, y)
+
+                # When using loss weight, multiply the rec_loss with the weight mask and reduce afterwards
+                if loss_weighting:
+                    reconstruction_loss = reconstruction_loss * loss_weight_mask
+                    reconstruction_loss = reconstruction_loss.mean() / loss_weight_mask.mean()
 
                 # KL-loss if latent_stuff contains mu and logvar
                 if len(latent_stuff) == 2:
@@ -147,7 +164,6 @@ class Solver(object):
                 tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
                 tensorboard_writer.add_scalar('beta', self.beta)
 
-
             # Validate model
             print("\nValidate model after epoch " + str(self.epoch) + '/' + str(num_epochs))
 
@@ -167,9 +183,20 @@ class Solver(object):
                 if question is not None:
                     question = question.to(device)
 
+                # If using Loss weighting, create a weighting mask
+                if loss_weighting:
+                    loss_weight_mask = torch.where(y > 1e-3, y * loss_weight_ball, torch.ones_like(y))
+
                 y_pred, latent_stuff = model(x, question)
 
-                val_loss += self.criterion(y, y_pred).item()
+                current_val_loss = self.criterion(y, y_pred)
+
+                # When using loss weight, multiply the rec_loss with the weight mask and reduce afterwards
+                if loss_weighting:
+                    current_val_loss = current_val_loss * loss_weight_mask
+                    current_val_loss = current_val_loss.mean() / loss_weight_mask.mean()
+
+                val_loss += current_val_loss.item()
 
             val_loss /= num_val_batches
 

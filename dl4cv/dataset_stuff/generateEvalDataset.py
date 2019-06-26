@@ -8,11 +8,13 @@ from PIL import Image, ImageDraw
 from dl4cv.utils import save_csv
 
 dataset_path = "../../../datasets/evalDataset"
-os.makedirs(dataset_path, exist_ok=True)
 
 # make dataset_path absolute
 file_dir = os.path.dirname(os.path.realpath(__file__))
 dataset_path = os.path.join(file_dir, dataset_path)
+
+os.makedirs(dataset_path, exist_ok=True)
+
 
 SEQUENCE_LENGTH = 50
 

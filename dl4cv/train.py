@@ -25,8 +25,8 @@ config = {
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': False,             # Set overfit or regular training
-    'num_train_regular':    16384,       # Number of training samples for regular training
-    'num_val_regular':      1024,        # Number of validation samples for regular training
+    'num_train_regular':    1972,       # Number of training samples for regular training
+    'num_val_regular':      128,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 15,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
@@ -36,7 +36,7 @@ config = {
     # Hyper parameters
     'max_train_time_s': None,
     'num_epochs': 200,                  # Number of epochs to train
-    'batch_size': 128,
+    'batch_size': 64,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
@@ -44,6 +44,8 @@ config = {
     'beta_decay': 0.99,
     'use_question': True,
     'patience': 128,
+    'loss_weighting': True,
+    'loss_weight_ball': 2.,
 
     # Logging
     'log_interval': 3,           # Number of mini-batches after which to print training loss
@@ -60,6 +62,7 @@ file_dir = os.path.dirname(os.path.realpath(__file__))
 config['model_path'] = os.path.join(file_dir, config['model_path'])
 config['solver_path'] = os.path.join(file_dir, config['solver_path'])
 config['data_path'] = os.path.join(file_dir, config['data_path'])
+config['tensorboard_log_dir'] = os.path.join(file_dir, config['tensorboard_log_dir'])
 
 
 """ Add a seed to have reproducible results """
@@ -133,6 +136,7 @@ train_data_loader = torch.utils.data.DataLoader(
     batch_size=config['batch_size'],
     num_workers=config['num_workers'],
     sampler=train_data_sampler,
+    drop_last=True,
     **kwargs
 )
 val_data_loader = torch.utils.data.DataLoader(
@@ -140,6 +144,7 @@ val_data_loader = torch.utils.data.DataLoader(
     batch_size=config['batch_size'],
     num_workers=config['num_workers'],
     sampler=val_data_sampler,
+    drop_last=True,
     **kwargs
 )
 
@@ -169,8 +174,10 @@ else:
         use_physics=False
     )
     solver = Solver()
-    loss_criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
+    # When using loss weighting, the loss is reduced only after multiplication with the weight mask
+    reduction = 'none' if config['loss_weight_ball'] else 'mean'
+    loss_criterion = nn.MSELoss(reduction=reduction)
 
 
 """ Initialize tensorboard summary writer """
@@ -204,4 +211,6 @@ if __name__ == "__main__":
                  cov_penalty=config['cov_penalty'],
                  beta=config['beta'],
                  beta_decay=config['beta_decay'],
-                 patience=config['patience'])
+                 patience=config['patience'],
+                 loss_weighting=['loss_weighting'],
+                 loss_weight_ball=config['loss_weight_ball'])
