@@ -62,6 +62,7 @@ file_dir = os.path.dirname(os.path.realpath(__file__))
 config['model_path'] = os.path.join(file_dir, config['model_path'])
 config['solver_path'] = os.path.join(file_dir, config['solver_path'])
 config['data_path'] = os.path.join(file_dir, config['data_path'])
+config['save_path'] = os.path.join(file_dir, config['save_path'])
 config['tensorboard_log_dir'] = os.path.join(file_dir, config['tensorboard_log_dir'])
 
 
