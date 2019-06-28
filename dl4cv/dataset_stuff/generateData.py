@@ -13,7 +13,7 @@ config = {
     'ball_radius': 2,
     't_frame': 1 / 30,
     'avoid_collisions': True,
-    'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start'
+    'sample_mode': 'only_position',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start', 'only_position'
 }
 
 # make save_dir_path absolute
@@ -152,6 +152,13 @@ def generate_data(**kwargs):
 
             ax[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ax_std)
             ay[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * ay_std)
+
+            x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame,
+                                            sequence_length)
+
+        elif config['sample_mode'] == 'only_position':
+            x_start[idx] = torch.normal(x_mean, torch.ones([idx.shape[0]]) * x_std)
+            y_start[idx] = torch.normal(y_mean, torch.ones([idx.shape[0]]) * y_std)
 
             x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame,
                                             sequence_length)
