@@ -89,7 +89,7 @@ class VariationalAutoEncoder(BaseModel):
         else:
             z_decoder = z_encoder
 
-        if q is not None:
+        if torch.any(q != -1):
             q = q[:, None, None, None]
             z_decoder = torch.cat((z_decoder, q), dim=1)
 
