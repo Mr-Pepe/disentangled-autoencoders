@@ -9,7 +9,8 @@ from dl4cv.eval.eval_functions import \
     show_latent_variables, \
     show_model_output, \
     show_correlation, \
-    latent_variable_slideshow
+    latent_variable_slideshow, \
+    print_traning_config
 
 import os
 
@@ -20,6 +21,7 @@ config = {
     'show_model_output': False,          # Show the model output for the desired datapoints
     'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
     'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
+    'print_training_config': True,       # Print the config that was used for training the model
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
@@ -118,6 +120,9 @@ if config['show_solver_history'] or \
 if config['show_solver_history']:
     print("Showing solver history")
     show_solver_history(solver)
+
+if config['print_training_config']:
+    print_traning_config(solver)
 
 if config['show_latent_variables']:
     print("Using {} samples to show latent variables".format(config['num_samples']))

@@ -394,3 +394,10 @@ def latent_variable_slideshow(model, dataset):
 
     fig.canvas.mpl_connect('scroll_event', tracker.onscroll)
     plt.show()
+
+
+def print_traning_config(solver):
+    print('""" Training Config """\n')
+    max_len = max([len(key) for key in solver.config.keys()])
+    for key in solver.config.keys():
+        print("{key: <{fill}}: {val}".format(key=key, val=solver.config[key], fill=max_len))
