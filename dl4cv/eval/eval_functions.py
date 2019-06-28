@@ -147,9 +147,14 @@ def show_model_output(model, dataset):
 
     for i_sample, sample in enumerate(dataset):
         x, y, question, meta = sample
-        y_pred, latent_stuff = model(
-            torch.unsqueeze(x, 0), torch.unsqueeze(question, 0)
-        )
+        if question != -1:
+            y_pred, latent_stuff = model(
+                torch.unsqueeze(x, 0), torch.unsqueeze(question, 0)
+            )
+        else:
+            y_pred, latent_stuff = model(
+                torch.unsqueeze(x, 0), torch.Tensor([-1])
+            )
 
         to_pil = transforms.ToPILImage()
 
