@@ -8,29 +8,30 @@ from dl4cv.eval.eval_functions import \
     show_solver_history, \
     show_latent_variables, \
     show_model_output, \
-    eval_correlation, \
-    show_correlation
-from dl4cv.eval.latent_variable_slideshow import latent_variable_slideshow
+    show_correlation, \
+    latent_variable_slideshow, \
+    print_traning_config
 
 import os
 
 config = {
-    'analyze_dataset': True,            # Plot positions of the desired datapoints
+    'analyze_dataset': False,            # Plot positions of the desired datapoints
     'show_solver_history': False,        # Plot losses of the training
     'show_latent_variables': False,      # Show the latent variables for the desired datapoints
     'show_model_output': False,          # Show the model output for the desired datapoints
     'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
-    'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
+    'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
+    'print_training_config': True,       # Print the config that was used for training the model
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
-    'len_inp_sequence': 25,
+    'len_inp_sequence': 15,
     'len_out_sequence': 1,
     'num_samples': 500,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
-    'save_path': '../../saves/train20190619130020',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/server_200E_loss_weight2',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
     'use_cuda': False,
@@ -120,6 +121,9 @@ if config['show_solver_history']:
     print("Showing solver history")
     show_solver_history(solver)
 
+if config['print_training_config']:
+    print_traning_config(solver)
+
 if config['show_latent_variables']:
     print("Using {} samples to show latent variables".format(config['num_samples']))
     if config['num_samples'] is not None:
@@ -175,4 +179,4 @@ if config['latent_variable_slideshow']:
         dataset_list = dataset
         ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
 
-    latent_variable_slideshow(model, dataset)
+    latent_variable_slideshow(model, dataset_list)
