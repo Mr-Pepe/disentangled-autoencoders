@@ -10,7 +10,8 @@ from dl4cv.eval.eval_functions import \
     show_model_output, \
     show_correlation, \
     latent_variable_slideshow, \
-    print_traning_config
+    print_traning_config, \
+    show_latent_walk_gifs
 
 import os
 
@@ -20,18 +21,19 @@ config = {
     'show_latent_variables': False,      # Show the latent variables for the desired datapoints
     'show_model_output': False,          # Show the model output for the desired datapoints
     'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
-    'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
-    'print_training_config': True,       # Print the config that was used for training the model
+    'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
+    'print_training_config': False,       # Print the config that was used for training the model
+    'latent_walk_gifs': True,
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
-    'len_inp_sequence': 15,
+    'len_inp_sequence': 1,
     'len_out_sequence': 1,
-    'num_samples': 500,                # Use the whole dataset if none for latent variables
+    'num_samples': 50,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
-    'save_path': '../../saves/server_200E_loss_weight2',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/train20190703160334',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
     'use_cuda': False,
@@ -55,6 +57,7 @@ config['eval_data_path'] = os.path.join(file_dir, config['eval_data_path'])
 config['save_path'] = os.path.join(file_dir, config['save_path'])
 
 z = None
+mu = None
 
 
 def get_model_solver_paths(save_path, epoch):
@@ -90,7 +93,7 @@ dataset = CustomDataset(
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
     load_ground_truth=False,
-    question=True,
+    question=False,
     load_to_ram=False
 )
 
@@ -107,7 +110,8 @@ if config['show_solver_history'] or \
    config['show_latent_variables'] or \
    config['show_model_output'] or \
    config['eval_correlation'] or \
-   config['latent_variable_slideshow']:
+   config['latent_variable_slideshow'] or \
+   config['latent_walk_gifs']:
 
     model_path, solver_path = get_model_solver_paths(config['save_path'], config['epoch'])
 
@@ -135,7 +139,7 @@ if config['show_latent_variables']:
         dataset_list = dataset
 
     print("Showing latent variables")
-    z = show_latent_variables(model, dataset_list)
+    z, mu = show_latent_variables(model, dataset_list)
 
 if config['show_model_output']:
     print("Showing model output")
@@ -163,7 +167,7 @@ if config['eval_correlation']:
         ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
 
     if z is None:
-        z = show_latent_variables(model, dataset_list, show=False)
+        z, mu = show_latent_variables(model, dataset_list, show=False)
 
     show_correlation(model, dataset_list, z, ground_truth)
 
@@ -180,3 +184,20 @@ if config['latent_variable_slideshow']:
         ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
 
     latent_variable_slideshow(model, dataset_list)
+
+if config['latent_walk_gifs']:
+    print("Creating GIFs for walks over latent variables")
+    if config['num_samples'] is not None:
+        # Sample equidistantly from dataset
+        indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
+
+        dataset_list = [dataset[i] for i in indices]
+        ground_truth = [dataset.get_ground_truth(i) for i in indices]
+    else:
+        dataset_list = dataset
+        ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
+
+    if mu is None:
+        z, mu = show_latent_variables(model, dataset_list, show=False)
+
+    show_latent_walk_gifs(model, mu)
