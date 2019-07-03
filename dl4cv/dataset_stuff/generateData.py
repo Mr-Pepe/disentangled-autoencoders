@@ -6,14 +6,14 @@ from PIL import Image, ImageDraw
 
 config = {
     'save_dir_path': '../../../datasets/ball',
-    'num_sequences': 2100,
+    'num_sequences': 8192 + 1024,
     'sequence_length': 30,
     'window_size_x': 32,
     'window_size_y': 32,
     'ball_radius': 2,
     't_frame': 1 / 30,
     'avoid_collisions': True,
-    'sample_mode': 'only_position',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start', 'only_position'
+    'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start', 'only_position'
 }
 
 # make save_dir_path absolute
@@ -109,14 +109,14 @@ def generate_data(**kwargs):
     y_min = ball_radius
 
     x_mean = window_size_x / 2
-    x_std = window_size_x / 40
+    x_std = window_size_x / 30
     y_mean = window_size_y / 2
     y_std = window_size_y / 40
 
-    vx_std = 4
+    vx_std = 5
     vy_std = 4
 
-    ax_std = 4
+    ax_std = 5
     ay_std = 4
 
     # Initialize x,y,vx,vy,ax,ay

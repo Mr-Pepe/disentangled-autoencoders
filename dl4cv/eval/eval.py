@@ -15,13 +15,13 @@ from dl4cv.eval.eval_functions import \
 import os
 
 config = {
-    'analyze_dataset': False,            # Plot positions of the desired datapoints
+    'analyze_dataset': True,            # Plot positions of the desired datapoints
     'show_solver_history': False,        # Plot losses of the training
     'show_latent_variables': False,      # Show the latent variables for the desired datapoints
     'show_model_output': False,          # Show the model output for the desired datapoints
     'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
-    'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
-    'print_training_config': True,       # Print the config that was used for training the model
+    'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
+    'print_training_config': False,       # Print the config that was used for training the model
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
