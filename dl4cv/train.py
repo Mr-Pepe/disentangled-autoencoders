@@ -40,8 +40,8 @@ config = {
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
-    'beta': 0.01,
-    'beta_decay': 0.99,
+    'beta': 0.001,
+    'beta_decay': 1.,
     'use_question': True,
     'patience': 128,
     'loss_weighting': True,
