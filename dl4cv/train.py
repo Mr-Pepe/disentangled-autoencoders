@@ -24,9 +24,9 @@ config = {
     'data_path': '../../datasets/ball/',   # Path to the parent directory of the image folder
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': True,             # Set overfit or regular training
-    'num_train_regular':    2048,       # Number of training samples for regular training
-    'num_val_regular':      256,        # Number of validation samples for regular training
+    'do_overfitting': False,             # Set overfit or regular training
+    'num_train_regular':    8196,       # Number of training samples for regular training
+    'num_val_regular':      1024,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 15,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
@@ -170,9 +170,9 @@ else:
     model = VariationalAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
-        z_dim_encoder=6,
-        z_dim_decoder=2,
-        use_physics=True
+        z_dim_encoder=4,
+        z_dim_decoder=5,
+        use_physics=False
     )
     solver = Solver()
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])

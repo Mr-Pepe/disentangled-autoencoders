@@ -17,12 +17,12 @@ import os
 
 config = {
     'analyze_dataset': False,            # Plot positions of the desired datapoints
-    'show_solver_history': False,        # Plot losses of the training
-    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
-    'show_model_output': False,          # Show the model output for the desired datapoints
+    'show_solver_history': True,        # Plot losses of the training
+    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
+    'show_model_output': True,          # Show the model output for the desired datapoints
     'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
     'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
-    'print_training_config': False,       # Print the config that was used for training the model
+    'print_training_config': True,       # Print the config that was used for training the model
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
@@ -32,7 +32,7 @@ config = {
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
-    'save_path': '../../saves/server_200E_physics_fixed_beta',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/server_100E_fixed_beta_0307',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
     'use_cuda': False,
@@ -168,9 +168,9 @@ if config['eval_correlation']:
 
     show_correlation(model, dataset_list, z, ground_truth)
 
-    try:
+    if model.use_physics:
         show_correlation_after_physics(model, dataset_list)
-    except:
+    else:
         print("Model without physics layer")
 
 if config['latent_variable_slideshow']:
