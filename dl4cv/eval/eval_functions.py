@@ -48,7 +48,7 @@ def analyze_dataset(dataset, indices):
             correlations[i_z, i_gt] = 1 / (n - 1) * ((meta[:, i_z] - meta_mean[i_z]) * (meta[:, i_gt] - meta_mean[i_gt])).sum() / \
                                       (meta_std[i_z] * meta_std[i_gt])
 
-    # correlations = np.abs(correlations)
+    correlations = np.abs(correlations)
 
     plt.imshow(correlations, cmap='hot', interpolation='nearest')
     plt.xlabel('Ground truth variables')
