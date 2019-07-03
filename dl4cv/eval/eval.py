@@ -10,16 +10,17 @@ from dl4cv.eval.eval_functions import \
     show_model_output, \
     show_correlation, \
     latent_variable_slideshow, \
-    print_traning_config
+    print_traning_config, \
+    show_correlation_after_physics
 
 import os
 
 config = {
-    'analyze_dataset': True,            # Plot positions of the desired datapoints
+    'analyze_dataset': False,            # Plot positions of the desired datapoints
     'show_solver_history': False,        # Plot losses of the training
     'show_latent_variables': False,      # Show the latent variables for the desired datapoints
     'show_model_output': False,          # Show the model output for the desired datapoints
-    'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
+    'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
     'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
     'print_training_config': False,       # Print the config that was used for training the model
 
@@ -31,7 +32,7 @@ config = {
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
-    'save_path': '../../saves/server_200E_loss_weight2',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/server_200E_physics_fixed_beta',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
     'use_cuda': False,
@@ -89,7 +90,7 @@ dataset = CustomDataset(
     ]),
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
-    load_ground_truth=False,
+    load_ground_truth=True,
     question=True,
     load_to_ram=False
 )
@@ -166,6 +167,11 @@ if config['eval_correlation']:
         z = show_latent_variables(model, dataset_list, show=False)
 
     show_correlation(model, dataset_list, z, ground_truth)
+
+    try:
+        show_correlation_after_physics(model, dataset_list)
+    except:
+        print("Model without physics layer")
 
 if config['latent_variable_slideshow']:
     print("Creating slideshow")

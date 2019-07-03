@@ -115,7 +115,6 @@ def show_latent_variables(model, dataset, show=True):
             mu = mu_tmp.clone().detach()
             std = std_tmp.clone().detach()
             z = z_tmp.clone().detach()
-
         else:
             mu = torch.cat((mu, mu_tmp.detach()))
             std = torch.cat((std, std_tmp.detach()))
@@ -193,7 +192,6 @@ def show_model_output(model, dataset):
 
 
 def show_correlation(model, dataset, z, gt):
-
     z = z.view(z.shape[0], -1).numpy()
 
     gt = np.array(gt)
@@ -406,3 +404,58 @@ def print_traning_config(solver):
     max_len = max([len(key) for key in solver.config.keys()])
     for key in solver.config.keys():
         print("{key: <{fill}}: {val}".format(key=key, val=solver.config[key], fill=max_len))
+
+
+def show_correlation_after_physics(model, dataset):
+    physics_layer = model.physics_layer
+    z = 0
+    gt = 0
+
+    len_dataset = len(dataset)
+    log_interval = len_dataset // 20
+
+    for i_sample, sample in enumerate(dataset):
+        if (i_sample + 1) % log_interval == 0:
+            print("\rGetting latent variables for the dataset: {}/{}".format(i_sample+1, len_dataset), end='')
+
+        x, _, question, gt_tmp = sample
+        z_tmp, _, _ = model.encode(x[None, :, :, :])
+        z_tmp = physics_layer(z_tmp, question).view(1, -1)
+        gt_tmp = torch.tensor(gt_tmp[int(question), :2]).view(1, -1)
+
+        if not torch.is_tensor(z):
+            z = z_tmp.clone().detach()
+            gt = gt_tmp
+        else:
+            z = torch.cat((z, z_tmp.detach()))
+            gt = torch.cat((gt, gt_tmp))
+
+    print('\n', end='')
+
+    gt = gt.numpy()
+    z = z.numpy()
+    z_mean = z.mean(axis=0)
+    gt_mean = gt.mean(axis=0)
+
+    z_std = z.std(axis=0)
+    gt_std = gt.std(axis=0)
+
+    n = z.shape[0]
+
+    correlations = np.zeros((z.shape[1], gt.shape[1]))
+
+    # Calculate correlation from every latent variable to every ground truth variable
+    for i_z in range(z.shape[1]):
+        for i_gt in range(gt.shape[1]):
+            # Calculate correlation
+            # From https://www.dummies.com/education/math/statistics/how-to-calculate-a-correlation/
+            correlations[i_z, i_gt] = 1 / (n - 1) * ((z[:, i_z] - z_mean[i_z]) * (gt[:, i_gt] - gt_mean[i_gt])).sum() / \
+                                      (z_std[i_z] * gt_std[i_gt])
+
+    correlations = np.abs(correlations)
+
+    plt.imshow(correlations, cmap='hot', interpolation='nearest')
+    plt.xlabel('Ground truth variables')
+    plt.ylabel('Latent variables')
+    plt.colorbar()
+    plt.show()

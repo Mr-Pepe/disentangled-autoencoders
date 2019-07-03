@@ -24,9 +24,9 @@ config = {
     'data_path': '../../datasets/ball/',   # Path to the parent directory of the image folder
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': False,             # Set overfit or regular training
-    'num_train_regular':    8192,       # Number of training samples for regular training
-    'num_val_regular':      1024,        # Number of validation samples for regular training
+    'do_overfitting': True,             # Set overfit or regular training
+    'num_train_regular':    2048,       # Number of training samples for regular training
+    'num_val_regular':      256,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 15,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
@@ -35,8 +35,8 @@ config = {
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 200,                  # Number of epochs to train
-    'batch_size': 512,
+    'num_epochs': 100,                  # Number of epochs to train
+    'batch_size': 256,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
