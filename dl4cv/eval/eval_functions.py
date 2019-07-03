@@ -54,6 +54,8 @@ def analyze_dataset(dataset, indices):
     plt.xlabel('Ground truth variables')
     plt.ylabel('Ground truth variables')
     plt.colorbar()
+    plt.gca().xaxis.tick_top()
+    plt.gca().xaxis.set_label_position('top')
     plt.show()
 
 
