@@ -3,30 +3,25 @@ import torch.nn as nn
 
 
 class PhysicsLayer(nn.Module):
-    def __init__(self, dt=1./30, out_dim=2):
+    def __init__(self, dt=1./30):
         super(PhysicsLayer, self).__init__()
         self.dt = dt
-        self.out_dim = out_dim
 
     def forward(self, x, q):
         """
             x.shape: [batch, 6, 1, 1]
             return shape: [batch, 6, 1, 1]
         """
-        dt = torch.tensor(self.dt * q, dtype=torch.float32)
+        dt = self.dt * q
         d2 = 0.5 * dt.pow(2.)
-        mat = torch.tensor(
-            [[1., 0., 0., 0., 0., 0.],
-             [0., 1., 0., 0., 0., 0.],
-             [dt, 0., 1., 0., 0., 0.],
-             [0., dt, 0., 1., 0., 0.],
-             [d2, 0., dt, 0., 1., 0.],
-             [0., d2, 0., dt, 0., 1.]]
-        )[:, :self.out_dim]
+        zero = torch.zeros_like(dt)
+        one = torch.ones_like(dt)
 
         x = x.view(x.shape[0], -1)
-        return torch.mm(x, mat).view(x.shape[0], -2, 1, 1)
+        res_x = (x * torch.stack((one, zero, dt, zero, d2, zero), dim=1)).sum(dim=1)
+        res_y = (x * torch.stack((zero, one, zero, dt, zero, d2), dim=1)).sum(dim=1)
 
+        return torch.cat((res_x, res_y)).view(-1, 2, 1, 1)
 
 
 class PhysicsPVA(nn.Module):
