@@ -458,4 +458,6 @@ def show_correlation_after_physics(model, dataset):
     plt.xlabel('Ground truth variables')
     plt.ylabel('Latent variables')
     plt.colorbar()
+    plt.gca().xaxis.tick_top()
+    plt.gca().xaxis.set_label_position('top')
     plt.show()

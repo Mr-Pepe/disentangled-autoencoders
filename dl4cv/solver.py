@@ -146,8 +146,7 @@ class Solver(object):
                           "   KL loss: " + "{0:.6f}".format(total_kl_divergence.item()) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
-                          " - Time/iter: " + str(int((time.time()-t_start_iter)*1000)) + "ms" +
-                          "   time left: {}".format(time_left(t_start, n_iters, i_iter)))
+                          " - Time/iter: " + str(int((time.time()-t_start_iter)*1000)) + "ms")
 
                 self.append_history({'train_loss': loss.item(),
                                      'total_kl_divergence': total_kl_divergence.item(),
@@ -204,7 +203,8 @@ class Solver(object):
 
             print('Avg Train Loss: ' + "{0:.6f}".format(train_loss_avg) +
                   '   Val loss: ' + "{0:.6f}".format(val_loss) +
-                  "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms\n")
+                  "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms\n" +
+                  "   time left: {}".format(time_left(t_start, n_iters, i_iter)))
 
             # Save model and solver
             if save_after_epochs is not None and (self.epoch % save_after_epochs == 0):
