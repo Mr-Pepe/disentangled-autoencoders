@@ -52,7 +52,7 @@ def analyze_dataset(dataset, indices):
 
     plt.imshow(correlations, cmap='hot', interpolation='nearest')
     plt.xlabel('Ground truth variables')
-    plt.ylabel('Latent variables')
+    plt.ylabel('Ground truth variables')
     plt.colorbar()
     plt.show()
 
