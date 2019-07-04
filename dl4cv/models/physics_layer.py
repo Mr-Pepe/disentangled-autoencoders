@@ -5,7 +5,7 @@ import torch.nn as nn
 class PhysicsLayer(nn.Module):
     def __init__(self, dt=1./30):
         super(PhysicsLayer, self).__init__()
-        self.dt = torch.tensor([dt])
+        self.dt = torch.nn.Parameter(torch.tensor([dt]))
 
     def forward(self, x, q):
         """
