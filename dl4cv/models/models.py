@@ -81,9 +81,16 @@ class VariationalAutoEncoder(BaseModel):
 
         self.physics_layer = PhysicsLayer(dt=1 / 30)
 
-    def forward(self, x, q=None):
+    def forward(self, x, q=-1):
         z_encoder, mu, logvar = self.encode(x)
 
+        z_decoder = self.bottleneck(z_encoder, q)
+
+        y = self.decode(z_decoder)
+
+        return y, (mu, logvar)
+
+    def bottleneck(self, z_encoder, q):
         if torch.any(q != -1):
             if self.use_physics:
                 z_decoder = self.physics_layer(z_encoder, q)
@@ -93,9 +100,7 @@ class VariationalAutoEncoder(BaseModel):
         else:
             z_decoder = z_encoder
 
-        y = self.decode(z_decoder)
-
-        return y, (mu, logvar)
+        return z_decoder
 
     def encode(self, x):
         z_params = self.encoder(x)

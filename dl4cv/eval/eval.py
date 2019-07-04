@@ -33,6 +33,7 @@ config = {
     'num_samples': 500,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
+    'question': True,
 
     'save_path': '../../saves/4_latents_150E',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
@@ -94,7 +95,7 @@ dataset = CustomDataset(
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
     load_ground_truth=True,
-    question=True,
+    question=config['question'],
     load_to_ram=False
 )
 
@@ -152,7 +153,7 @@ if config['show_model_output']:
 
     dataset_list = [dataset[i] for i in indices]
 
-    show_model_output(model, dataset_list)
+    show_model_output(model, dataset_list, dataset.len_out_sequence)
 
 if config['eval_correlation']:
     print("Evaluating correlation")
@@ -206,4 +207,4 @@ if config['latent_walk_gifs']:
     if mu is None:
         z, mu = show_latent_variables(model, dataset_list, show=False)
 
-    show_latent_walk_gifs(model, mu)
+    show_latent_walk_gifs(model, mu, question=config['question'], len_out_sequence=dataset.len_out_sequence)

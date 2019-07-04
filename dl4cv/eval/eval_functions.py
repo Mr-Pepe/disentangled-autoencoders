@@ -146,11 +146,10 @@ def show_latent_variables(model, dataset, show=True):
     return z, mu
 
 
-def show_model_output(model, dataset):
+def show_model_output(model, dataset, num_rows):
     plt.interactive(False)
 
     num_cols = 3
-    num_rows = 1
 
     plt.rcParams.update({'font.size': 8})
 
@@ -170,15 +169,29 @@ def show_model_output(model, dataset):
         f, axes = plt.subplots(num_rows, num_cols)
         f.suptitle("\nSample {}, question: {}".format(i_sample, question), fontsize=16)
 
-        # Plot ground truth
-        axes[0].imshow(to_pil(y), cmap='gray')
+        if num_rows > 1:
+            for i_frame in range(num_rows):
+                # Plot ground truth
+                axes[i_frame, 0].imshow(to_pil(y[i_frame]), cmap='gray')
 
-        # Plot prediction
-        axes[1].imshow(to_pil(y_pred[0]), cmap='gray')
+                # Plot prediction
+                axes[i_frame, 1].imshow(to_pil(y_pred[0, i_frame]), cmap='gray')
 
-        # Plot Deviation
-        diff = abs(y_pred[0] - y)
-        axes[2].imshow(to_pil(diff), cmap='gray')
+                # Plot Deviation
+                diff = abs(y_pred[0, i_frame] - y[i_frame])
+                axes[i_frame, 2].imshow(to_pil(diff), cmap='gray')
+        else:
+            for i_frame in range(num_rows):
+                # Plot ground truth
+                axes[0].imshow(to_pil(y), cmap='gray')
+
+                # Plot prediction
+                axes[1].imshow(to_pil(y_pred[0]), cmap='gray')
+
+                # Plot Deviation
+                diff = abs(y_pred[0] - y)
+                axes[2].imshow(to_pil(diff), cmap='gray')
+
 
         # Remove axis ticks
         for ax in axes.reshape(-1):
@@ -190,9 +203,13 @@ def show_model_output(model, dataset):
                   1: 'Prediction',
                   2: 'Deviation'}
 
-        for i in range(num_cols):
-            plt.sca(axes[i])
-            axes[i].set_title(labels[i], rotation=0, size=14)
+        for i_col in range(num_cols):
+            if num_rows > 1:
+                plt.sca(axes[0, i_col])
+                axes[0, i_col].set_title(labels[i_col], rotation=0, size=14)
+            else:
+                plt.sca(axes[i_col])
+                axes[i_col].set_title(labels[i_col], rotation=0, size=14)
 
         f.tight_layout()
 
@@ -282,7 +299,7 @@ def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence)
         plt.show()
 
 
-def show_latent_walk_gifs(model, mus, num_images_per_variable=20):
+def show_latent_walk_gifs(model, mus, num_images_per_variable=20, question=False, len_out_sequence=1):
 
     # mus contains that were obtained on a dataset. The random walk is performed between the min and max value of mu for
     # each variable
@@ -293,23 +310,40 @@ def show_latent_walk_gifs(model, mus, num_images_per_variable=20):
 
     to_pil = transforms.ToPILImage()
 
-    f, axes = plt.subplots(1, len(mean_mu))
+    f, axes = plt.subplots(len_out_sequence, len(mean_mu))
 
-    images = [[] for i in range(num_images_per_variable)]
+    if len_out_sequence > 1:
+        images = []
+    else:
+        images = [[] for i in range(num_images_per_variable)]
 
     for i_var in range(len(mean_mu)):
         # Do a walk over latent variable i
-        z = mean_mu
+        z_encoder = mean_mu
 
         values = np.linspace(min_mu[i_var], max_mu[i_var], num_images_per_variable, dtype=float).tolist()
 
         for i_frame, value in enumerate(values):
-            z[i_var] = value
+            z_encoder[i_var] = value
 
-            output = model.decode(z.view(1, -1, 1, 1))
+            images_this_frame = []
 
-            im = axes[i_var].imshow(to_pil(output[0]), cmap='gray')
-            images[i_frame].append(im)
+            if question:
+                z_decoder = model.bottleneck(z_encoder.view(1, -1, 1, 1), torch.tensor(0.).view(-1))
+            else:
+                z_decoder = model.bottleneck(z_encoder, torch.tensor(-1.))
+
+            output = model.decode(z_decoder.view(1, -1, 1, 1))
+
+            if len_out_sequence > 1:
+                for i_row in range(len_out_sequence):
+                    images_this_frame.append(axes[i_row, i_var].imshow(to_pil(output[0, i_row]), cmap='gray'))
+
+                images.append(images_this_frame)
+            else:
+                im = axes[i_var].imshow(to_pil(output[0]), cmap='gray')
+                images[i_frame].append(im)
+
 
     # Remove axis ticks
     for ax in axes.reshape(-1):
