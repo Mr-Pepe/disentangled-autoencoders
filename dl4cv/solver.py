@@ -166,10 +166,10 @@ class Solver(object):
                 z_keys = ['z{}'.format(i) for i in range(dim_wise_kld.numel())]
                 tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
                 tensorboard_writer.add_scalar('beta', self.beta)
-                f = generate_img_figure_for_tensorboardx(y, y_pred, question)
                 if log_reconstructed_images and os.getcwd()[:20] != '/home/felix.meissen':
+                    f = generate_img_figure_for_tensorboardx(y, y_pred, question)
                     plt.show()  # don't log images on server
-                tensorboard_writer.add_figure('Reconstructed sample', f, i_iter)
+                    tensorboard_writer.add_figure('Reconstructed sample', f, i_iter)
 
             # Validate model
             print("\nValidate model after epoch " + str(self.epoch) + '/' + str(num_epochs))

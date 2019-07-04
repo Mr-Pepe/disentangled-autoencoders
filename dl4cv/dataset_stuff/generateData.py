@@ -15,7 +15,7 @@ config = {
     't_frame': 1 / 30,
     'avoid_collisions': True,
     'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start', 'only_position'
-    'eval_before_generating': False,  # evaluate the dataset before generating it
+    'eval_before_generating': True,  # evaluate the dataset before generating it
 }
 
 # make save_dir_path absolute
@@ -217,6 +217,7 @@ def generate_data(**kwargs):
 
     # Generate frames for the sequences
     for i_sequence in range(num_sequences):
+        break
 
         save_path_sequence = os.path.join(
             save_dir_path,
