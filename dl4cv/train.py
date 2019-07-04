@@ -52,7 +52,7 @@ config = {
     'log_interval': 1,           # Number of mini-batches after which to print training loss
     'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': '../saves',
-    'log_reconstructed_images': True,  # Show a reconstructed sample after every epoch
+    'log_reconstructed_images': False,  # Show a reconstructed sample after every epoch
     'tensorboard_log_dir': '../tensorboard_log/exp_1'
 }
 
@@ -173,8 +173,8 @@ else:
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
         z_dim_encoder=4,
-        z_dim_decoder=2,
-        use_physics=True
+        z_dim_decoder=5,
+        use_physics=False
     )
     solver = Solver()
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
