@@ -42,7 +42,7 @@ config = {
     'cov_penalty': 0.,  #1e-1,
     'beta': 0.001,
     'beta_decay': 1.,
-    'target_var': 0.01,                 # Target variance for the kl loss
+    'target_var': 1.,                 # Target variance for the kl loss
     'use_question': True,
     'patience': 128,
     'loss_weighting': True,
@@ -52,6 +52,7 @@ config = {
     'log_interval': 1,           # Number of mini-batches after which to print training loss
     'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': '../saves',
+    'log_reconstructed_images': True,  # Show a reconstructed sample after every epoch
     'tensorboard_log_dir': '../tensorboard_log/exp_1'
 }
 
@@ -172,8 +173,8 @@ else:
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
         z_dim_encoder=4,
-        z_dim_decoder=5,
-        use_physics=False
+        z_dim_decoder=2,
+        use_physics=True
     )
     solver = Solver()
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
@@ -216,4 +217,5 @@ if __name__ == "__main__":
                  target_var=config['target_var'],
                  patience=config['patience'],
                  loss_weighting=config['loss_weighting'],
-                 loss_weight_ball=config['loss_weight_ball'])
+                 loss_weight_ball=config['loss_weight_ball'],
+                 log_reconstructed_images=config['log_reconstructed_images'])
