@@ -39,7 +39,7 @@ config = {
     'batch_size': 1024,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
-    'cov_penalty': 0.,  #1e-1,
+    'cov_penalty': 0.,  # 1e-1,
     'beta': 0.001,
     'beta_decay': 1.,
     'target_var': 1.,                 # Target variance for the kl loss

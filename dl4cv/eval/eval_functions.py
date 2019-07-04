@@ -514,20 +514,23 @@ def show_correlation_after_physics(model, dataset):
     plt.show()
 
 
-def generate_img_figure_for_tensorboardx(y, y_pred, question):
+def generate_img_figure_for_tensorboardx(target, prediction, question):
     to_pil = transforms.ToPILImage()
+    y = target[0].cpu().detach()
+    y_pred = prediction[0].cpu().detach()
+    q = question[0].cpu().detach()
 
     f, axes = plt.subplots(1, 3)
-    f.suptitle("Question: {}".format(question[0]), fontsize=16)
+    f.suptitle("Question: {}".format(q), fontsize=16)
 
     # Plot ground truth
-    axes[0].imshow(to_pil(y[0]), cmap='gray')
+    axes[0].imshow(to_pil(y), cmap='gray')
 
     # Plot prediction
-    axes[1].imshow(to_pil(y_pred[0]), cmap='gray')
+    axes[1].imshow(to_pil(y_pred), cmap='gray')
 
     # Plot Deviation
-    diff = abs(y_pred[0] - y[0])
+    diff = abs(y_pred - y)
     axes[2].imshow(to_pil(diff), cmap='gray')
 
     # Remove axis ticks
