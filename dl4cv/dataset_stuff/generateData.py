@@ -186,7 +186,8 @@ def generate_data(**kwargs):
 
         os.makedirs(save_path_sequence, exist_ok=True)
 
-        ground_truth = np.zeros((sequence_length, 6))
+        ground_truth = np.zeros((sequence_length, 4))
+        # ground_truth = np.zeros((sequence_length, 6))
 
         for i_frame in range(sequence_length):
 
