@@ -187,7 +187,6 @@ def generate_data(**kwargs):
         os.makedirs(save_path_sequence, exist_ok=True)
 
         ground_truth = np.zeros((sequence_length, 4))
-        # ground_truth = np.zeros((sequence_length, 6))
 
         for i_frame in range(sequence_length):
 
@@ -198,9 +197,6 @@ def generate_data(**kwargs):
 
             ground_truth[i_frame] = np.array([x[i_sequence, i_frame], y[i_sequence, i_frame],
                                               vx[i_sequence, i_frame], vy[i_sequence, i_frame]])
-            # ground_truth[i_frame] = np.array([x[i_sequence, i_frame], y[i_sequence, i_frame],
-            #                                   vx[i_sequence, i_frame], vy[i_sequence, i_frame],
-            #                                   ax[i_sequence], ay[i_sequence]])
 
             draw_ball(screen, window_size_x, window_size_y, ball_radius, x[i_sequence, i_frame], y[i_sequence, i_frame])
             img.save(save_path_frame)
