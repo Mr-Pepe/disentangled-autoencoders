@@ -5,6 +5,8 @@ import time
 import torch
 
 from dl4cv.utils import kl_divergence, time_left
+from dl4cv.eval.eval_functions import generate_img_figure_for_tensorboardx
+import matplotlib.pyplot as plt
 
 
 class Solver(object):
@@ -163,6 +165,8 @@ class Solver(object):
                 z_keys = ['z{}'.format(i) for i in range(dim_wise_kld.numel())]
                 tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
                 tensorboard_writer.add_scalar('beta', self.beta)
+                f = generate_img_figure_for_tensorboardx(y, y_pred, question)
+                tensorboard_writer.add_figure('Reconstructed sample', f, i_iter)
 
             # Validate model
             print("\nValidate model after epoch " + str(self.epoch) + '/' + str(num_epochs))

@@ -512,3 +512,38 @@ def show_correlation_after_physics(model, dataset):
     plt.gca().xaxis.tick_top()
     plt.gca().xaxis.set_label_position('top')
     plt.show()
+
+
+def generate_img_figure_for_tensorboardx(y, y_pred, question):
+    to_pil = transforms.ToPILImage()
+
+    f, axes = plt.subplots(1, 3)
+    f.suptitle("Question: {}".format(question[0]), fontsize=16)
+
+    # Plot ground truth
+    axes[0].imshow(to_pil(y[0]), cmap='gray')
+
+    # Plot prediction
+    axes[1].imshow(to_pil(y_pred[0]), cmap='gray')
+
+    # Plot Deviation
+    diff = abs(y_pred[0] - y[0])
+    axes[2].imshow(to_pil(diff), cmap='gray')
+
+    # Remove axis ticks
+    for ax in axes.reshape(-1):
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_tick_params(which='both', length=0, labelleft=False)
+
+    # Label rows
+    labels = {0: 'Ground truth',
+              1: 'Prediction',
+              2: 'Deviation'}
+
+    for i in range(3):
+        plt.sca(axes[i])
+        axes[i].set_title(labels[i], rotation=0, size=14)
+
+    f.tight_layout()
+
+    return f
