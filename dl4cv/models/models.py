@@ -79,7 +79,7 @@ class VariationalAutoEncoder(BaseModel):
             out_channels=len_out_sequence
         )
 
-        self.physics_layer = PhysicsLayer(dt=1 / 30)
+        self.physics_layer = PhysicsLayer(dt=1. / 30.)
 
     def forward(self, x, q=None):
         z_encoder, mu, logvar = self.encode(x)

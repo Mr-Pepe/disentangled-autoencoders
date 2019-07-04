@@ -7,7 +7,7 @@ class PhysicsLayer(nn.Module):
         super(PhysicsLayer, self).__init__()
         self.dt = torch.tensor([dt])
 
-    def forward(self, x, q):
+    def forward(self, z, q):
         """
             x.shape: [batch, 6, 1, 1]
             return shape: [batch, 6, 1, 1]
@@ -17,9 +17,9 @@ class PhysicsLayer(nn.Module):
         zero = torch.zeros_like(dt)
         one = torch.ones_like(dt)
 
-        x = x.view(x.shape[0], -1)
-        res_x = (x * torch.stack((one, zero, dt, zero, d2, zero), dim=1)).sum(dim=1)
-        res_y = (x * torch.stack((zero, one, zero, dt, zero, d2), dim=1)).sum(dim=1)
+        z = z.view(z.shape[0], -1)
+        res_x = (z * torch.stack((one, zero, dt, zero, d2, zero), dim=1)[:, :z.shape[1]]).sum(dim=1)
+        res_y = (z * torch.stack((zero, one, zero, dt, zero, d2), dim=1)[:, :z.shape[1]]).sum(dim=1)
 
         return torch.cat((res_x, res_y)).view(-1, 2, 1, 1)
 
