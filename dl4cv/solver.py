@@ -43,6 +43,7 @@ class Solver(object):
             cov_penalty=0,
             beta=1,
             beta_decay=1,
+            target_var=1.,
             patience=128,
             loss_weighting=False,
             loss_weight_ball=2.
@@ -117,7 +118,7 @@ class Solver(object):
                 # KL-loss if latent_stuff contains mu and logvar
                 if len(latent_stuff) == 2:
                     mu, logvar = latent_stuff
-                    total_kl_divergence, dim_wise_kld, mean_kld = kl_divergence(mu, logvar)
+                    total_kl_divergence, dim_wise_kld, mean_kld = kl_divergence(mu, logvar, target_var)
 
                 loss = reconstruction_loss + cov_penalty * cov + self.beta * total_kl_divergence
 

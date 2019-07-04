@@ -39,9 +39,10 @@ config = {
     'batch_size': 1024,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
-    'cov_penalty': 1e-1,
+    'cov_penalty': 0.,  #1e-1,
     'beta': 0.001,
     'beta_decay': 1.,
+    'target_var': 0.01,                 # Target variance for the kl loss
     'use_question': True,
     'patience': 128,
     'loss_weighting': True,
@@ -212,6 +213,7 @@ if __name__ == "__main__":
                  cov_penalty=config['cov_penalty'],
                  beta=config['beta'],
                  beta_decay=config['beta_decay'],
+                 target_var=config['target_var'],
                  patience=config['patience'],
-                 loss_weighting=['loss_weighting'],
+                 loss_weighting=config['loss_weighting'],
                  loss_weight_ball=config['loss_weight_ball'])

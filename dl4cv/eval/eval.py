@@ -17,24 +17,24 @@ from dl4cv.eval.eval_functions import \
 import os
 
 config = {
-    'analyze_dataset': False,            # Plot positions of the desired datapoints
-    'show_solver_history': False,        # Plot losses of the training
-    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
-    'show_model_output': False,          # Show the model output for the desired datapoints
-    'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
+    'analyze_dataset': True,            # Plot positions of the desired datapoints
+    'show_solver_history': True,        # Plot losses of the training
+    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
+    'show_model_output': True,          # Show the model output for the desired datapoints
+    'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
     'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
-    'print_training_config': False,       # Print the config that was used for training the model
-    'latent_walk_gifs': True,
+    'print_training_config': True,       # Print the config that was used for training the model
+    'latent_walk_gifs': False,
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
-    'len_inp_sequence': 1,
+    'len_inp_sequence': 15,
     'len_out_sequence': 1,
-    'num_samples': 50,                # Use the whole dataset if none for latent variables
+    'num_samples': 500,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
 
-    'save_path': '../../saves/train20190703160334',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/4_latents_150E',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
     'use_cuda': False,
