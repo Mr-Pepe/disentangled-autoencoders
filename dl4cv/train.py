@@ -36,7 +36,7 @@ config = {
     # Hyper parameters
     'max_train_time_s': None,
     'num_epochs': 100,                  # Number of epochs to train
-    'batch_size': 256,
+    'batch_size': 1024,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
