@@ -10,7 +10,7 @@ import torch.nn as nn
 import dl4cv.utils as utils
 from dl4cv.models.decoder import VanillaDecoder
 from dl4cv.models.encoder import VanillaEncoder
-from dl4cv.models.physics_layer import PhysicsPVA
+from dl4cv.models.physics_layer import PhysicsPVA, PhysicsLayer
 
 
 class BaseModel(nn.Module):
@@ -79,19 +79,19 @@ class VariationalAutoEncoder(BaseModel):
             out_channels=len_out_sequence
         )
 
-        self.physics_layer = PhysicsPVA(dt=1 / 30, out_dim=z_dim_decoder)
+        self.physics_layer = PhysicsLayer(dt=1 / 30)
 
     def forward(self, x, q=None):
         z_encoder, mu, logvar = self.encode(x)
 
-        if self.use_physics:
-            z_decoder = self.physics(z_encoder)
+        if torch.any(q != -1):
+            if self.use_physics:
+                z_decoder = self.physics_layer(z_encoder, q)
+            else:
+                q = q[:, None, None, None]
+                z_decoder = torch.cat((z_encoder, q), dim=1)
         else:
             z_decoder = z_encoder
-
-        if torch.any(q != -1):
-            q = q[:, None, None, None]
-            z_decoder = torch.cat((z_decoder, q), dim=1)
 
         y = self.decode(z_decoder)
 

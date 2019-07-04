@@ -6,14 +6,14 @@ from PIL import Image, ImageDraw
 
 config = {
     'save_dir_path': '../../../datasets/ball',
-    'num_sequences': 2100,
+    'num_sequences': 8196 + 1024,
     'sequence_length': 30,
     'window_size_x': 32,
     'window_size_y': 32,
     'ball_radius': 2,
     't_frame': 1 / 30,
     'avoid_collisions': True,
-    'sample_mode': 'only_position',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start', 'only_position'
+    'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start', 'only_position'
 }
 
 # make save_dir_path absolute
@@ -109,15 +109,15 @@ def generate_data(**kwargs):
     y_min = ball_radius
 
     x_mean = window_size_x / 2
-    x_std = window_size_x / 40
+    x_std = window_size_x / 25
     y_mean = window_size_y / 2
     y_std = window_size_y / 40
 
-    vx_std = 4
-    vy_std = 4
+    vx_std = 6.
+    vy_std = 4.
 
-    ax_std = 4
-    ay_std = 4
+    ax_std = 0.
+    ay_std = 0.
 
     # Initialize x,y,vx,vy,ax,ay
     x_start, y_start, vx_start, vy_start, x_end, y_end, ax, ay = [torch.zeros((num_sequences,)) for i in range(8)]
@@ -186,7 +186,8 @@ def generate_data(**kwargs):
 
         os.makedirs(save_path_sequence, exist_ok=True)
 
-        ground_truth = np.zeros((sequence_length, 6))
+        ground_truth = np.zeros((sequence_length, 4))
+        # ground_truth = np.zeros((sequence_length, 6))
 
         for i_frame in range(sequence_length):
 
@@ -196,8 +197,10 @@ def generate_data(**kwargs):
             )
 
             ground_truth[i_frame] = np.array([x[i_sequence, i_frame], y[i_sequence, i_frame],
-                                              vx[i_sequence, i_frame], vy[i_sequence, i_frame],
-                                              ax[i_sequence], ay[i_sequence]])
+                                              vx[i_sequence, i_frame], vy[i_sequence, i_frame]])
+            # ground_truth[i_frame] = np.array([x[i_sequence, i_frame], y[i_sequence, i_frame],
+            #                                   vx[i_sequence, i_frame], vy[i_sequence, i_frame],
+            #                                   ax[i_sequence], ay[i_sequence]])
 
             draw_ball(screen, window_size_x, window_size_y, ball_radius, x[i_sequence, i_frame], y[i_sequence, i_frame])
             img.save(save_path_frame)

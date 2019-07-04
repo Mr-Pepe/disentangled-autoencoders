@@ -25,8 +25,8 @@ config = {
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': False,             # Set overfit or regular training
-    'num_train_regular':    1972,       # Number of training samples for regular training
-    'num_val_regular':      128,        # Number of validation samples for regular training
+    'num_train_regular':    8196,       # Number of training samples for regular training
+    'num_val_regular':      1024,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 15,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
@@ -35,20 +35,20 @@ config = {
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 200,                  # Number of epochs to train
-    'batch_size': 64,
+    'num_epochs': 100,                  # Number of epochs to train
+    'batch_size': 256,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 1e-1,
-    'beta': 0.01,
-    'beta_decay': 0.99,
+    'beta': 0.001,
+    'beta_decay': 1.,
     'use_question': True,
     'patience': 128,
     'loss_weighting': True,
     'loss_weight_ball': 2.,
 
     # Logging
-    'log_interval': 3,           # Number of mini-batches after which to print training loss
+    'log_interval': 1,           # Number of mini-batches after which to print training loss
     'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': '../saves',
     'tensorboard_log_dir': '../tensorboard_log/exp_1'
@@ -170,8 +170,8 @@ else:
     model = VariationalAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
-        z_dim_encoder=10,
-        z_dim_decoder=11,  # latent variables get concatenated with question
+        z_dim_encoder=4,
+        z_dim_decoder=5,
         use_physics=False
     )
     solver = Solver()

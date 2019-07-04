@@ -11,6 +11,7 @@ from dl4cv.eval.eval_functions import \
     show_correlation, \
     latent_variable_slideshow, \
     print_traning_config, \
+    show_correlation_after_physics, \
     show_latent_walk_gifs
 
 import os
@@ -92,8 +93,8 @@ dataset = CustomDataset(
     ]),
     len_inp_sequence=config['len_inp_sequence'],
     len_out_sequence=config['len_out_sequence'],
-    load_ground_truth=False,
-    question=False,
+    load_ground_truth=True,
+    question=True,
     load_to_ram=False
 )
 
@@ -170,6 +171,11 @@ if config['eval_correlation']:
         z, mu = show_latent_variables(model, dataset_list, show=False)
 
     show_correlation(model, dataset_list, z, ground_truth)
+
+    if model.use_physics:
+        show_correlation_after_physics(model, dataset_list)
+    else:
+        print("Model without physics layer")
 
 if config['latent_variable_slideshow']:
     print("Creating slideshow")
