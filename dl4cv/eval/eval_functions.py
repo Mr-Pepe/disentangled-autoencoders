@@ -1,6 +1,7 @@
 import copy
 import os
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import numpy as np
 import torch
 import torchvision.transforms as transforms
@@ -53,12 +54,14 @@ def analyze_dataset(dataset, indices):
             correlations[i_z, i_gt] = 1 / (n - 1) * ((meta[:, i_z] - meta_mean[i_z]) * (meta[:, i_gt] - meta_mean[i_gt])).sum() / \
                                       (meta_std[i_z] * meta_std[i_gt])
 
-    # correlations = np.abs(correlations)
+    correlations = np.abs(correlations)
 
     plt.imshow(correlations, cmap='hot', interpolation='nearest')
     plt.xlabel('Ground truth variables')
-    plt.ylabel('Latent variables')
+    plt.ylabel('Ground truth variables')
     plt.colorbar()
+    plt.gca().xaxis.tick_top()
+    plt.gca().xaxis.set_label_position('top')
     plt.show()
 
 
@@ -140,7 +143,7 @@ def show_latent_variables(model, dataset, show=True):
 
         plt.show()
 
-    return z
+    return z, mu
 
 
 def show_model_output(model, dataset):
@@ -277,6 +280,49 @@ def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence)
         f.tight_layout()
 
         plt.show()
+
+
+def show_latent_walk_gifs(model, mus, num_images_per_variable=20):
+
+    # mus contains that were obtained on a dataset. The random walk is performed between the min and max value of mu for
+    # each variable
+
+    min_mu = mus.min(dim=0).values.view(-1)
+    max_mu = mus.max(dim=0).values.view(-1)
+    mean_mu = mus.mean(dim=0).view(-1)
+
+    to_pil = transforms.ToPILImage()
+
+    f, axes = plt.subplots(1, len(mean_mu))
+
+    images = [[] for i in range(num_images_per_variable)]
+
+    for i_var in range(len(mean_mu)):
+        # Do a walk over latent variable i
+        z = mean_mu
+
+        values = np.linspace(min_mu[i_var], max_mu[i_var], num_images_per_variable, dtype=float).tolist()
+
+        for i_frame, value in enumerate(values):
+            z[i_var] = value
+
+            output = model.decode(z.view(1, -1, 1, 1))
+
+            im = axes[i_var].imshow(to_pil(output[0]), cmap='gray')
+            images[i_frame].append(im)
+
+    # Remove axis ticks
+    for ax in axes.reshape(-1):
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_tick_params(which='both', length=0, labelleft=False)
+
+    f.tight_layout()
+
+    ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=100)
+
+    plt.show()
+
+    pass
 
 
 def _regression_line(x, y):
