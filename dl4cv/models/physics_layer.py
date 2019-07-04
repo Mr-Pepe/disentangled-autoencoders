@@ -5,12 +5,12 @@ import torch.nn as nn
 class PhysicsLayer(nn.Module):
     def __init__(self, dt=1./30):
         super(PhysicsLayer, self).__init__()
-        self.dt = torch.tensor([dt])
+        self.dt = torch.nn.Parameter(torch.tensor([dt]))
 
     def forward(self, z, q):
         """
             x.shape: [batch, 6, 1, 1]
-            return shape: [batch, 6, 1, 1]
+            return shape: [batch, 2, 1, 1]
         """
         dt = self.dt * q
         d2 = 0.5 * dt.pow(2.)
