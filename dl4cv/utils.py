@@ -17,8 +17,8 @@ def kl_divergence(mu, logvar, target_var=1.):
 
     target_var = torch.ones_like(mu, dtype=torch.float32) * target_var
 
-    klds = 0.5 * ((mu.pow(2) / target_var) + (logvar.exp() / target_var) - logvar + target_var.log())
-    # klds = -0.5*(1 + logvar - (mu.pow(2) / target_var) - (logvar.exp() / target_var))
+    # klds = 0.5 * ((mu.pow(2) / target_var) + (logvar.exp() / target_var) - logvar + target_var.log())
+    klds = -0.5*(1 + logvar - (mu.pow(2) / target_var) - (logvar.exp() / target_var))
     total_kld = klds.sum(1).mean(0, True)
     dimension_wise_kld = klds.mean(0)
     mean_kld = klds.mean(1).mean(0, True)

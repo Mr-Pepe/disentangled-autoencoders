@@ -21,14 +21,14 @@ config = {
     'solver_path': '../saves/train20190617165601/solver10',
 
     # Data
-    'data_path': '../../datasets/ball/',   # Path to the parent directory of the image folder
+    'data_path': '../../datasets/correlated',   # Path to the parent directory of the image folder
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': False,             # Set overfit or regular training
-    'num_train_regular':    8196,       # Number of training samples for regular training
-    'num_val_regular':      1024,        # Number of validation samples for regular training
+    'num_train_regular':    2048,       # Number of training samples for regular training
+    'num_val_regular':      256,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
-    'len_inp_sequence': 5,              # Length of training sequence
+    'len_inp_sequence': 15,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
 
     'num_workers': 4,                   # Number of workers for data loading
@@ -36,15 +36,15 @@ config = {
     # Hyper parameters
     'max_train_time_s': None,
     'num_epochs': 100,                  # Number of epochs to train
-    'batch_size': 1024,
+    'batch_size': 64,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'cov_penalty': 0.,  #1e-1,
     'beta': 0.001,
-    'beta_decay': 1.,
-    'target_var': 0.01,                 # Target variance for the kl loss
+    'beta_decay': 0.9,
+    'target_var': 1,                 # Target variance for the kl loss
     'use_question': True,
-    'patience': 128,
+    'patience': 32,
     'loss_weighting': True,
     'loss_weight_ball': 2.,
 
