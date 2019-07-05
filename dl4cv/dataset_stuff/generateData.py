@@ -16,6 +16,7 @@ config = {
     'avoid_collisions': True,
     'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start', 'only_position'
     'eval_before_generating': True,  # evaluate the dataset before generating it
+    'generate': False
 }
 
 # make save_dir_path absolute
@@ -181,6 +182,8 @@ def generate_data(**kwargs):
     if config['eval_before_generating']:
         plt.figure(figsize=(6, 6))
         plt.scatter(x, y, s=0.2)
+        for i in range(x.shape[0]):
+            plt.plot(x[i, :].tolist(), y[i, :].tolist(), 'b', linewidth=0.5)
         plt.title("Position")
         plt.xlabel("Position x")
         plt.ylabel("Position y")
@@ -215,42 +218,43 @@ def generate_data(**kwargs):
         plt.gca().xaxis.set_label_position('top')
         plt.show()
 
-    # Generate frames for the sequences
-    for i_sequence in range(num_sequences):
+    if config['generate']:
+        # Generate frames for the sequences
+        for i_sequence in range(num_sequences):
 
-        save_path_sequence = os.path.join(
-            save_dir_path,
-            'seq' + str(i_sequence)
-        )
-
-        os.makedirs(save_path_sequence, exist_ok=True)
-
-        ground_truth = np.zeros((sequence_length, 6))
-
-        for i_frame in range(sequence_length):
-
-            save_path_frame = os.path.join(
-                save_path_sequence,
-                'frame' + str(i_frame) + '.jpeg'
+            save_path_sequence = os.path.join(
+                save_dir_path,
+                'seq' + str(i_sequence)
             )
 
-            ground_truth[i_frame] = np.array([x[i_sequence, i_frame], y[i_sequence, i_frame],
-                                              vx[i_sequence, i_frame], vy[i_sequence, i_frame],
-                                              ax[i_sequence], ay[i_sequence]])
+            os.makedirs(save_path_sequence, exist_ok=True)
 
-            draw_ball(screen, window_size_x, window_size_y, ball_radius, x[i_sequence, i_frame], y[i_sequence, i_frame])
-            img.save(save_path_frame)
+            ground_truth = np.zeros((sequence_length, 6))
 
-        # Save the values at the last
-        save_path_ground_truth = os.path.join(
-            save_path_sequence,
-            'ground_truth'
-        )
-        np.save(save_path_ground_truth, ground_truth)
+            for i_frame in range(sequence_length):
 
-        if (i_sequence+1) % 100 == 0:
-            print("Generated sequence: %d of %d with length %d ..." % (
-                i_sequence+1, num_sequences, sequence_length))
+                save_path_frame = os.path.join(
+                    save_path_sequence,
+                    'frame' + str(i_frame) + '.jpeg'
+                )
+
+                ground_truth[i_frame] = np.array([x[i_sequence, i_frame], y[i_sequence, i_frame],
+                                                  vx[i_sequence, i_frame], vy[i_sequence, i_frame],
+                                                  ax[i_sequence], ay[i_sequence]])
+
+                draw_ball(screen, window_size_x, window_size_y, ball_radius, x[i_sequence, i_frame], y[i_sequence, i_frame])
+                img.save(save_path_frame)
+
+            # Save the values at the last
+            save_path_ground_truth = os.path.join(
+                save_path_sequence,
+                'ground_truth'
+            )
+            np.save(save_path_ground_truth, ground_truth)
+
+            if (i_sequence+1) % 100 == 0:
+                print("Generated sequence: %d of %d with length %d ..." % (
+                    i_sequence+1, num_sequences, sequence_length))
 
 
 if __name__ == '__main__':

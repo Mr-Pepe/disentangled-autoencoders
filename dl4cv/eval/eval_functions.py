@@ -17,7 +17,8 @@ def analyze_dataset(dataset, indices):
     meta = np.array([dataset.get_ground_truth(i) for i in indices])
 
     plt.figure(figsize=(6, 6))
-    plt.scatter(meta[:, :, 0].reshape(-1), meta[:, :, 1].reshape(-1), s=0.2)
+    for i in range(meta.shape[0]):
+        plt.plot(meta[i, :, 0].reshape(-1), meta[i, :, 1].reshape(-1), 'b', linewidth=0.5)
     plt.title("Position")
     plt.xlabel("Position x")
     plt.ylabel("Position y")
