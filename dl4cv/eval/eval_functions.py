@@ -56,7 +56,7 @@ def analyze_dataset(dataset, indices):
 
     correlations = np.abs(correlations)
 
-    plt.imshow(correlations, cmap='hot', interpolation='nearest')
+    plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
     plt.xlabel('Ground truth variables')
     plt.ylabel('Ground truth variables')
     plt.colorbar()
@@ -95,6 +95,11 @@ def show_solver_history(solver):
     plt.ylabel("KL Divergences")
     plt.legend()
 
+    plt.show()
+
+    plt.plot(beta)
+    plt.xlabel("Iterations")
+    plt.ylabel("Beta")
     plt.show()
 
 
@@ -226,7 +231,7 @@ def show_correlation(model, dataset, z, gt):
 
     correlations = np.abs(correlations)
 
-    plt.imshow(correlations, cmap='hot', interpolation='nearest')
+    plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
     plt.xlabel('Ground truth variables')
     plt.ylabel('Latent variables')
     plt.colorbar()
@@ -505,7 +510,7 @@ def show_correlation_after_physics(model, dataset):
 
     correlations = np.abs(correlations)
 
-    plt.imshow(correlations, cmap='hot', interpolation='nearest')
+    plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
     plt.xlabel('Ground truth variables')
     plt.ylabel('Latent variables')
     plt.colorbar()
