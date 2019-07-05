@@ -8,14 +8,14 @@ from PIL import Image, ImageDraw
 config = {
     'save_dir_path': '../../../datasets/correlated',
     'num_sequences': 2000,
-    'sequence_length': 2,
+    'sequence_length': 30,
     'window_size_x': 32,
     'window_size_y': 32,
     'ball_radius': 2,
     't_frame': 1 / 30,
     'avoid_collisions': True,
     'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start', 'only_position'
-    'eval_before_generating': False,  # evaluate the dataset before generating it
+    'eval_before_generating': True,  # evaluate the dataset before generating it
 }
 
 # make save_dir_path absolute
@@ -188,7 +188,7 @@ def generate_data(**kwargs):
         plt.ylim(0, window_size_y)
         plt.show()
 
-        meta = torch.stack([x, y, vx, vy], dim=-1)
+        meta = torch.stack([x, y, vx, vy, ax.view(-1, 1).repeat(1, vx.shape[1]), ay.view(-1, 1).repeat(1, vx.shape[1])], dim=-1)
         n = meta.shape[0]
         meta = meta[:, 0]
         meta_mean = meta.mean(dim=0)
@@ -236,7 +236,7 @@ def generate_data(**kwargs):
 
             ground_truth[i_frame] = np.array([x[i_sequence, i_frame], y[i_sequence, i_frame],
                                               vx[i_sequence, i_frame], vy[i_sequence, i_frame],
-                                              ax[i_sequence, i_frame], ay[i_sequence, i_frame]])
+                                              ax[i_sequence], ay[i_sequence]])
 
             draw_ball(screen, window_size_x, window_size_y, ball_radius, x[i_sequence, i_frame], y[i_sequence, i_frame])
             img.save(save_path_frame)
