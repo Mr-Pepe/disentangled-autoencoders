@@ -589,3 +589,30 @@ def generate_img_figure_for_tensorboardx(target, prediction, question):
     f.tight_layout()
 
     return f
+
+
+def walk_over_question(model, dataset):
+    to_pil = transforms.ToPILImage()
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
+    x, _, ques, _ = next(iter(dataloader))
+    questions = torch.arange(x.shape[1])
+
+    images = []
+    f, axes = plt.subplots(1, 2)
+    for q in questions:
+        pred, _ = model(x, torch.tensor([q], dtype=torch.float32))
+        im = axes[0].imshow(to_pil(pred[0]), cmap='gray')
+        gt = axes[1].imshow(to_pil(x[0, q]), cmap='gray')
+        images.append([im, gt])
+
+    # Remove axis ticks
+    for ax in axes.reshape(-1):
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_tick_params(which='both', length=0, labelleft=False)
+
+    f.tight_layout()
+
+    ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=500)
+
+    plt.show()
+

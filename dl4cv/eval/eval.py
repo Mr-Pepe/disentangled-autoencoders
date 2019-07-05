@@ -12,7 +12,8 @@ from dl4cv.eval.eval_functions import \
     latent_variable_slideshow, \
     print_traning_config, \
     show_correlation_after_physics, \
-    show_latent_walk_gifs
+    show_latent_walk_gifs, \
+    walk_over_question
 
 import os
 
@@ -25,6 +26,7 @@ config = {
     'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
     'print_training_config': True,       # Print the config that was used for training the model
     'latent_walk_gifs': False,
+    'walk_over_question': True,
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
@@ -99,6 +101,27 @@ dataset = CustomDataset(
     load_to_ram=False
 )
 
+if config['num_samples'] is not None:
+    if config['num_show_images'] > len(dataset):
+        raise Exception('Dataset does not contain {} images to show'.format(config['num_show_images']))
+    print("Using {} samples to show latent variables".format(config['num_samples']))
+    # Sample equidistantly from dataset
+    indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
+
+    dataset_list = [dataset[i] for i in indices]
+    ground_truth = [dataset.get_ground_truth(i) for i in indices]
+else:
+    dataset_list = dataset
+    ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
+
+model_path, solver_path = get_model_solver_paths(config['save_path'], config['epoch'])
+
+print("Loading model and solver")
+solver = Solver()
+solver.load(solver_path, device=device, only_history=True)
+model = torch.load(model_path, map_location=device)
+
+
 if config['analyze_dataset']:
     print("Analysing dataset")
     if config['num_samples'] is not None:
@@ -108,65 +131,29 @@ if config['analyze_dataset']:
 
     analyze_dataset(dataset, indices)
 
-if config['show_solver_history'] or \
-   config['show_latent_variables'] or \
-   config['show_model_output'] or \
-   config['eval_correlation'] or \
-   config['latent_variable_slideshow'] or \
-   config['latent_walk_gifs']:
-
-    model_path, solver_path = get_model_solver_paths(config['save_path'], config['epoch'])
-
-    print("Loading model and solver")
-    solver = Solver()
-    solver.load(solver_path, device=device, only_history=True)
-    model = torch.load(model_path, map_location=device)
-
 
 if config['show_solver_history']:
     print("Showing solver history")
     show_solver_history(solver)
 
+
 if config['print_training_config']:
     print_traning_config(solver)
 
+
 if config['show_latent_variables']:
-    print("Using {} samples to show latent variables".format(config['num_samples']))
-    if config['num_samples'] is not None:
-        # Sample equidistantly from dataset
-        indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
-
-        dataset_list = [dataset[i] for i in indices]
-    else:
-        dataset_list = dataset
-
     print("Showing latent variables")
     z, mu = show_latent_variables(model, dataset_list)
 
+
 if config['show_model_output']:
     print("Showing model output")
-    # Sample equidistantly from dataset
-    if config['num_show_images'] > len(dataset):
-        raise Exception('Dataset does not contain {} images to show'.format(config['num_show_images']))
-
     indices = np.linspace(0, len(dataset) - 1, config['num_show_images'], dtype=int).tolist()
+    show_model_output(model, [dataset[i] for i in indices], dataset.len_out_sequence)
 
-    dataset_list = [dataset[i] for i in indices]
-
-    show_model_output(model, dataset_list, dataset.len_out_sequence)
 
 if config['eval_correlation']:
     print("Evaluating correlation")
-
-    if config['num_samples'] is not None:
-        # Sample equidistantly from dataset
-        indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
-
-        dataset_list = [dataset[i] for i in indices]
-        ground_truth = [dataset.get_ground_truth(i) for i in indices]
-    else:
-        dataset_list = dataset
-        ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
 
     if z is None:
         z, mu = show_latent_variables(model, dataset_list, show=False)
@@ -178,19 +165,11 @@ if config['eval_correlation']:
     else:
         print("Model without physics layer")
 
+
 if config['latent_variable_slideshow']:
     print("Creating slideshow")
-    if config['num_samples'] is not None:
-        # Sample equidistantly from dataset
-        indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
-
-        dataset_list = [dataset[i] for i in indices]
-        ground_truth = [dataset.get_ground_truth(i) for i in indices]
-    else:
-        dataset_list = dataset
-        ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
-
     latent_variable_slideshow(model, dataset_list)
+
 
 if config['latent_walk_gifs']:
     print("Creating GIFs for walks over latent variables")
@@ -208,3 +187,7 @@ if config['latent_walk_gifs']:
         z, mu = show_latent_variables(model, dataset_list, show=False)
 
     show_latent_walk_gifs(model, mu, question=config['question'], len_out_sequence=dataset.len_out_sequence)
+
+if config['walk_over_question']:
+    print("Walk over questions")
+    walk_over_question(model, dataset)
