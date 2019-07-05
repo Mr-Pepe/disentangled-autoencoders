@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from PIL import Image, ImageDraw
@@ -7,13 +8,14 @@ from PIL import Image, ImageDraw
 config = {
     'save_dir_path': '../../../datasets/ball',
     'num_sequences': 8196 + 1024,
-    'sequence_length': 30,
+    'sequence_length': 10,
     'window_size_x': 32,
     'window_size_y': 32,
     'ball_radius': 2,
     't_frame': 1 / 30,
     'avoid_collisions': True,
     'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start', 'x_start, x_end, a_start', 'only_position'
+    'eval_before_generating': True,  # evaluate the dataset before generating it
 }
 
 # make save_dir_path absolute
@@ -109,15 +111,15 @@ def generate_data(**kwargs):
     y_min = ball_radius
 
     x_mean = window_size_x / 2
-    x_std = window_size_x / 40
+    x_std = window_size_x / 6
     y_mean = window_size_y / 2
-    y_std = window_size_y / 40
+    y_std = window_size_y / 9
 
-    vx_std = 4
-    vy_std = 4
+    vx_std = 12.
+    vy_std = 10.
 
-    ax_std = 4
-    ay_std = 4
+    ax_std = 0.
+    ay_std = 0.
 
     # Initialize x,y,vx,vy,ax,ay
     x_start, y_start, vx_start, vy_start, x_end, y_end, ax, ay = [torch.zeros((num_sequences,)) for i in range(8)]
@@ -176,8 +178,46 @@ def generate_data(**kwargs):
             )
             collisions = np.zeros((num_sequences))
 
+    if config['eval_before_generating']:
+        plt.figure(figsize=(6, 6))
+        plt.scatter(x, y, s=0.2)
+        plt.title("Position")
+        plt.xlabel("Position x")
+        plt.ylabel("Position y")
+        plt.xlim(0, window_size_x)
+        plt.ylim(0, window_size_y)
+        plt.show()
+
+        meta = torch.stack([x, y, vx, vy], dim=-1)
+        n = meta.shape[0]
+        meta = meta[:, 0]
+        meta_mean = meta.mean(dim=0)
+        meta_std = meta.std(dim=0)
+
+        correlations = np.zeros((meta.shape[1], meta.shape[1]))
+
+        # Calculate correlation from every latent variable to every ground truth variable
+        for i_z in range(meta.shape[1]):
+            for i_gt in range(meta.shape[1]):
+                # Calculate correlation
+                # From https://www.dummies.com/education/math/statistics/how-to-calculate-a-correlation/
+                correlations[i_z, i_gt] = 1 / (n - 1) * (
+                            (meta[:, i_z] - meta_mean[i_z]) * (meta[:, i_gt] - meta_mean[i_gt])).sum() / \
+                                          (meta_std[i_z] * meta_std[i_gt])
+
+        correlations = np.abs(correlations)
+
+        plt.imshow(correlations, cmap='hot', interpolation='nearest')
+        plt.xlabel('Ground truth variables')
+        plt.ylabel('Ground truth variables')
+        plt.colorbar()
+        plt.gca().xaxis.tick_top()
+        plt.gca().xaxis.set_label_position('top')
+        plt.show()
+
     # Generate frames for the sequences
     for i_sequence in range(num_sequences):
+        break
 
         save_path_sequence = os.path.join(
             save_dir_path,
@@ -186,7 +226,7 @@ def generate_data(**kwargs):
 
         os.makedirs(save_path_sequence, exist_ok=True)
 
-        ground_truth = np.zeros((sequence_length, 6))
+        ground_truth = np.zeros((sequence_length, 4))
 
         for i_frame in range(sequence_length):
 
@@ -196,8 +236,7 @@ def generate_data(**kwargs):
             )
 
             ground_truth[i_frame] = np.array([x[i_sequence, i_frame], y[i_sequence, i_frame],
-                                              vx[i_sequence, i_frame], vy[i_sequence, i_frame],
-                                              ax[i_sequence], ay[i_sequence]])
+                                              vx[i_sequence, i_frame], vy[i_sequence, i_frame]])
 
             draw_ball(screen, window_size_x, window_size_y, ball_radius, x[i_sequence, i_frame], y[i_sequence, i_frame])
             img.save(save_path_frame)

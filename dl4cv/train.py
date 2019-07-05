@@ -28,7 +28,7 @@ config = {
     'num_train_regular':    8196,       # Number of training samples for regular training
     'num_val_regular':      1024,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
-    'len_inp_sequence': 15,              # Length of training sequence
+    'len_inp_sequence': 5,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
 
     'num_workers': 4,                   # Number of workers for data loading
@@ -52,6 +52,7 @@ config = {
     'log_interval': 1,           # Number of mini-batches after which to print training loss
     'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': '../saves',
+    'log_reconstructed_images': False,  # Show a reconstructed sample after every epoch
     'tensorboard_log_dir': '../tensorboard_log/exp_1'
 }
 
@@ -162,7 +163,7 @@ if config['continue_training']:
     model.to(device)
     solver = Solver()
     solver.optim = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
-    solver.load(config['solver_path'])
+    solver.load(config['solver_path'], device=device)
     loss_criterion = None
     optimizer = None
 
@@ -216,4 +217,5 @@ if __name__ == "__main__":
                  target_var=config['target_var'],
                  patience=config['patience'],
                  loss_weighting=config['loss_weighting'],
-                 loss_weight_ball=config['loss_weight_ball'])
+                 loss_weight_ball=config['loss_weight_ball'],
+                 log_reconstructed_images=config['log_reconstructed_images'])

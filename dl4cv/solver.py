@@ -5,6 +5,8 @@ import time
 import torch
 
 from dl4cv.utils import kl_divergence, time_left
+from dl4cv.eval.eval_functions import generate_img_figure_for_tensorboardx
+import matplotlib.pyplot as plt
 
 
 class Solver(object):
@@ -46,7 +48,8 @@ class Solver(object):
             target_var=1.,
             patience=128,
             loss_weighting=False,
-            loss_weight_ball=2.
+            loss_weight_ball=2.,
+            log_reconstructed_images=True
     ):
 
         self.config = config
@@ -163,6 +166,10 @@ class Solver(object):
                 z_keys = ['z{}'.format(i) for i in range(dim_wise_kld.numel())]
                 tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
                 tensorboard_writer.add_scalar('beta', self.beta)
+                if log_reconstructed_images and os.getcwd()[:20] != '/home/felix.meissen':
+                    f = generate_img_figure_for_tensorboardx(y, y_pred, question)
+                    plt.show()  # don't log images on server
+                    tensorboard_writer.add_figure('Reconstructed sample', f, i_iter)
 
             # Validate model
             print("\nValidate model after epoch " + str(self.epoch) + '/' + str(num_epochs))
@@ -204,8 +211,8 @@ class Solver(object):
 
             print('Avg Train Loss: ' + "{0:.6f}".format(train_loss_avg) +
                   '   Val loss: ' + "{0:.6f}".format(val_loss) +
-                  "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms\n" +
-                  "   time left: {}".format(time_left(t_start, n_iters, i_iter)))
+                  "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms" +
+                  "   time left: {}\n".format(time_left(t_start, n_iters, i_iter)))
 
             # Save model and solver
             if save_after_epochs is not None and (self.epoch % save_after_epochs == 0):

@@ -56,7 +56,7 @@ def analyze_dataset(dataset, indices):
 
     correlations = np.abs(correlations)
 
-    plt.imshow(correlations, cmap='hot', interpolation='nearest')
+    plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
     plt.xlabel('Ground truth variables')
     plt.ylabel('Ground truth variables')
     plt.colorbar()
@@ -95,6 +95,11 @@ def show_solver_history(solver):
     plt.ylabel("KL Divergences")
     plt.legend()
 
+    plt.show()
+
+    plt.plot(beta)
+    plt.xlabel("Iterations")
+    plt.ylabel("Beta")
     plt.show()
 
 
@@ -243,7 +248,7 @@ def show_correlation(model, dataset, z, gt):
 
     correlations = np.abs(correlations)
 
-    plt.imshow(correlations, cmap='hot', interpolation='nearest')
+    plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
     plt.xlabel('Ground truth variables')
     plt.ylabel('Latent variables')
     plt.colorbar()
@@ -539,10 +544,48 @@ def show_correlation_after_physics(model, dataset):
 
     correlations = np.abs(correlations)
 
-    plt.imshow(correlations, cmap='hot', interpolation='nearest')
+    plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
     plt.xlabel('Ground truth variables')
     plt.ylabel('Latent variables')
     plt.colorbar()
     plt.gca().xaxis.tick_top()
     plt.gca().xaxis.set_label_position('top')
     plt.show()
+
+
+def generate_img_figure_for_tensorboardx(target, prediction, question):
+    to_pil = transforms.ToPILImage()
+    y = target[0].cpu().detach()
+    y_pred = prediction[0].cpu().detach()
+    q = question[0].cpu().detach()
+
+    f, axes = plt.subplots(1, 3)
+    f.suptitle("Question: {}".format(q), fontsize=16)
+
+    # Plot ground truth
+    axes[0].imshow(to_pil(y), cmap='gray')
+
+    # Plot prediction
+    axes[1].imshow(to_pil(y_pred), cmap='gray')
+
+    # Plot Deviation
+    diff = abs(y_pred - y)
+    axes[2].imshow(to_pil(diff), cmap='gray')
+
+    # Remove axis ticks
+    for ax in axes.reshape(-1):
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_tick_params(which='both', length=0, labelleft=False)
+
+    # Label rows
+    labels = {0: 'Ground truth',
+              1: 'Prediction',
+              2: 'Deviation'}
+
+    for i in range(3):
+        plt.sca(axes[i])
+        axes[i].set_title(labels[i], rotation=0, size=14)
+
+    f.tight_layout()
+
+    return f
