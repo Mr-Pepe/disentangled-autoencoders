@@ -18,7 +18,6 @@ def analyze_dataset(trajectories):
     x_min = trajectories[:, :, 0].min()-2
     y_max = trajectories[:, :, 1].max()+2
     y_min = trajectories[:, :, 1].min()-2
-    window_size_y = 32
 
     plt.figure(figsize=(6, 6))
     for i in range(trajectories.shape[0]):

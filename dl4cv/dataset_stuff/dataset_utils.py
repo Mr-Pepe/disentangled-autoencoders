@@ -1,6 +1,6 @@
 import copy
 import os
-
+import pickle
 import numpy as np
 import torch
 from torch.utils.data.dataset import Dataset
@@ -10,7 +10,7 @@ from torchvision.datasets.folder import IMG_EXTENSIONS, has_file_allowed_extensi
 class CustomDataset(Dataset):
     def __init__(self, path, transform, len_inp_sequence, len_out_sequence,
                  question=False, load_ground_truth=False, load_to_ram=False,
-                 only_input=False):
+                 only_input=False, load_config=False):
         self.path = path
         self.transform = transform
         self.sequences = {}
@@ -23,6 +23,10 @@ class CustomDataset(Dataset):
         self.only_input = only_input
 
         num_sequences = 0
+
+        if load_config:
+            with open(os.path.join(path, 'config.p'), 'rb') as f:
+                self.config = pickle.load(f)
 
         # Find all sequences. Taken form torchvision.dataset.folder.make_dataset()
         for root, dir_names, _ in sorted(os.walk(path)):

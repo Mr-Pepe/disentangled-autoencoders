@@ -98,7 +98,8 @@ dataset = CustomDataset(
     len_out_sequence=config['len_out_sequence'],
     load_ground_truth=True,
     question=config['question'],
-    load_to_ram=False
+    load_to_ram=False,
+    load_config=True
 )
 
 if config['num_samples'] is not None:
