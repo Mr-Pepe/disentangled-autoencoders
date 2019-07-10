@@ -1,4 +1,5 @@
 import os
+import pickle
 
 from dl4cv.utils import Config
 import numpy as np
@@ -117,7 +118,7 @@ def generate_data(c):
 
     collisions = np.ones((c.num_sequences))
 
-    # Generate new accelerations where the sequence has collisions
+    # Generate Trajectories for all the sequences
     while collisions.any():
         idx = collisions.nonzero()[0]
 
@@ -182,6 +183,10 @@ def generate_data(c):
         analyze_dataset(trajectories)
 
     if config['generate']:
+        # Save configuration
+        with open(os.path.join(c.save_dir_path, 'config.p'), 'wb') as f:
+            pickle.dump(c, f)
+
         # Generate frames for the sequences
         for i_sequence in range(c.num_sequences):
 
