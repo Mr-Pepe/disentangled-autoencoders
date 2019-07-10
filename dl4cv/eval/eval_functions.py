@@ -11,48 +11,40 @@ from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from dl4cv.utils import read_csv, reparametrize
 
 
-def analyze_dataset(dataset, indices):
-    window_size_x = 32
+def analyze_dataset(trajectories):
+
+    # TODO: Get sizes from dataset
+    x_max = trajectories[:, :, 0].max()+2
+    x_min = trajectories[:, :, 0].min()-2
+    y_max = trajectories[:, :, 1].max()+2
+    y_min = trajectories[:, :, 1].min()-2
     window_size_y = 32
-    meta = np.array([dataset.get_ground_truth(i) for i in indices])
 
     plt.figure(figsize=(6, 6))
-    for i in range(meta.shape[0]):
-        plt.plot(meta[i, :, 0].reshape(-1), meta[i, :, 1].reshape(-1), 'b', linewidth=0.5)
+    for i in range(trajectories.shape[0]):
+        plt.plot(trajectories[i, :, 0].reshape(-1), trajectories[i, :, 1].reshape(-1), 'b', linewidth=0.5)
     plt.title("Position")
     plt.xlabel("Position x")
     plt.ylabel("Position y")
-    plt.xlim(0, window_size_x)
-    plt.ylim(0, window_size_y)
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
     plt.show()
 
-    n = meta.shape[0]
+    n = trajectories.shape[0]
 
-    meta = meta[:, 0]
+    trajectories = trajectories[:, 0]
 
-    # plt.plot(np.sort(meta[:, 0]))
-    # plt.title("Initial Positions in x")
-    # plt.show()
-    #
-    # plt.plot(np.sort(meta[:, 2]))
-    # plt.title("Initial Velocities in x")
-    # plt.show()
-    #
-    # plt.plot(np.sort(meta[:, 4]))
-    # plt.title("Initial Accelerations in x")
-    # plt.show()
+    meta_mean = trajectories.mean(axis=0)
+    meta_std = trajectories.std(axis=0)
 
-    meta_mean = meta.mean(axis=0)
-    meta_std = meta.std(axis=0)
+    correlations = np.zeros((trajectories.shape[1], trajectories.shape[1]))
 
-    correlations = np.zeros((meta.shape[1], meta.shape[1]))
-
-    # Calculate correlation from every latent variable to every ground truth variable
-    for i_z in range(meta.shape[1]):
-        for i_gt in range(meta.shape[1]):
+    # Calculate correlation from every ground truth variable to itself
+    for i_z in range(trajectories.shape[1]):
+        for i_gt in range(trajectories.shape[1]):
             # Calculate correlation
             # From https://www.dummies.com/education/math/statistics/how-to-calculate-a-correlation/
-            correlations[i_z, i_gt] = 1 / (n - 1) * ((meta[:, i_z] - meta_mean[i_z]) * (meta[:, i_gt] - meta_mean[i_gt])).sum() / \
+            correlations[i_z, i_gt] = 1 / (n - 1) * ((trajectories[:, i_z] - meta_mean[i_z]) * (trajectories[:, i_gt] - meta_mean[i_gt])).sum() / \
                                       (meta_std[i_z] * meta_std[i_gt])
 
     correlations = np.abs(correlations)

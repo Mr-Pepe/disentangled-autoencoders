@@ -6,6 +6,12 @@ import numpy as np
 import torch
 
 
+class Config(dict):
+    def __init__(self, *args, **kwargs):
+        super(Config, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
 def kl_divergence(mu, logvar, target_var=1.):
     # Taken from https://github.com/1Konny/Beta-VAE/blob/master/solver.py
     batch_size = mu.size(0)

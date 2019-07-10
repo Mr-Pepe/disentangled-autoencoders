@@ -104,7 +104,7 @@ dataset = CustomDataset(
 if config['num_samples'] is not None:
     if config['num_show_images'] > len(dataset):
         raise Exception('Dataset does not contain {} images to show'.format(config['num_show_images']))
-    print("Using {} samples to show latent variables".format(config['num_samples']))
+
     # Sample equidistantly from dataset
     indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
 
@@ -129,7 +129,9 @@ if config['analyze_dataset']:
     else:
         indices = range(len(dataset))
 
-    analyze_dataset(dataset, indices)
+    trajectories = np.array([dataset.get_ground_truth(i) for i in indices])
+
+    analyze_dataset(trajectories)
 
 
 if config['show_solver_history']:
@@ -142,7 +144,7 @@ if config['print_training_config']:
 
 
 if config['show_latent_variables']:
-    print("Showing latent variables")
+    print("Using {} samples to show latent variables".format(config['num_samples']))
     z, mu = show_latent_variables(model, dataset_list)
 
 
