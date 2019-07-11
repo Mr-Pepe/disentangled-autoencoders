@@ -8,6 +8,7 @@ from dl4cv.utils import kl_divergence, time_left
 from dl4cv.eval.eval_functions import generate_img_figure_for_tensorboardx
 import matplotlib.pyplot as plt
 
+from tensorboardX import SummaryWriter
 
 class Solver(object):
 
@@ -32,7 +33,7 @@ class Solver(object):
             model,
             train_config,
             dataset_config,
-            tensorboard_writer,
+            tensorboard_path,
             optim=None,
             loss_criterion=torch.nn.MSELoss(),
             num_epochs=10,
@@ -69,6 +70,9 @@ class Solver(object):
 
         # Path to save model and solver
         save_path = os.path.join(save_path, 'train' + datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+
+        tensorboard_writer = SummaryWriter(os.path.join(tensorboard_path, 'train' + datetime.datetime.now().strftime("%Y%m%d%H%M%S")),
+                                           flush_secs=30)
 
         # Calculate the total number of minibatches for the training procedure
         n_iters = num_epochs*iter_per_epoch
@@ -160,12 +164,15 @@ class Solver(object):
                                      })
 
                 # Add losses to tensorboard
-                tensorboard_writer.add_scalar('kl_loss', total_kl_divergence.item(), i_iter)
-                tensorboard_writer.add_scalar('reconstruction_loss', reconstruction_loss.item(), i_iter)
-                tensorboard_writer.add_scalar('train_loss', loss.item(), i_iter)
+                loss_names = ['kl_loss', 'reconstruction_loss', 'train_loss']
+                losses = [total_kl_divergence.item()*self.beta, reconstruction_loss.item(), loss.item()]
+                tensorboard_writer.add_scalars('loss', dict(zip(loss_names, losses)), i_iter)
+
                 z_keys = ['z{}'.format(i) for i in range(dim_wise_kld.numel())]
                 tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
-                tensorboard_writer.add_scalar('beta', self.beta)
+
+                tensorboard_writer.add_scalar('beta', self.beta, i_iter)
+
                 if log_reconstructed_images and os.getcwd()[:20] != '/home/felix.meissen':
                     f = generate_img_figure_for_tensorboardx(y, y_pred, question)
                     plt.show()  # don't log images on server

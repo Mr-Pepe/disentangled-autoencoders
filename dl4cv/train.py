@@ -3,7 +3,6 @@ import os
 import torch
 import torch.nn as nn
 
-from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 from torchvision import transforms
 
@@ -57,7 +56,7 @@ config = {
     'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': '../saves',
     'log_reconstructed_images': False,  # Show a reconstructed sample after every epoch
-    'tensorboard_log_dir': '../tensorboard_log/exp_1'
+    'tensorboard_log_dir': '../tensorboard_log/'
 }
 
 
@@ -187,26 +186,13 @@ else:
     reduction = 'none' if config['loss_weight_ball'] else 'mean'
     loss_criterion = nn.MSELoss(reduction=reduction)
 
-
-""" Initialize tensorboard summary writer """
-
-tensorboard_writer = SummaryWriter(config['tensorboard_log_dir'])
-
-# Add graph to tensorboard
-# example_input, _, _, _ = next(iter(train_data_loader))
-# tensorboard_writer.add_graph(
-#     model=model,
-#     input_to_model=example_input
-# )
-
-
 """ Perform training """
 
 if __name__ == "__main__":
     solver.train(model=model,
                  train_config=config,
                  dataset_config=dataset.config,
-                 tensorboard_writer=tensorboard_writer,
+                 tensorboard_path=config['tensorboard_log_dir'],
                  optim=optimizer,
                  loss_criterion=loss_criterion,
                  num_epochs=config['num_epochs'],
