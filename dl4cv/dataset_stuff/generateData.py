@@ -138,8 +138,12 @@ def generate_data(c):
                                             c.sequence_length)
 
         elif config['sample_mode'] == 'x_start, v_start, a_start':
-            x_start[idx] = torch.normal(c.x_mean, torch.ones([idx.shape[0]]) * c.x_std)
-            y_start[idx] = torch.normal(c.y_mean, torch.ones([idx.shape[0]]) * c.y_std)
+
+            # x_start[idx] = torch.normal(c.x_mean, torch.ones([idx.shape[0]]) * c.x_std)
+            # y_start[idx] = torch.normal(c.y_mean, torch.ones([idx.shape[0]]) * c.y_std)
+
+            x_start[idx] = torch.rand_like(torch.Tensor(idx))*(c.x_max - c.x_min) + c.x_min
+            y_start[idx] = torch.rand_like(torch.Tensor(idx))*(c.y_max - c.y_min) + c.y_min
 
             vx_start[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vx_std)
             vy_start[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vy_std)
