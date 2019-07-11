@@ -13,7 +13,6 @@ from dl4cv.utils import read_csv, reparametrize
 
 def analyze_dataset(trajectories):
 
-    # TODO: Get sizes from dataset
     x_max = trajectories[:, :, 0].max()+2
     x_min = trajectories[:, :, 0].min()-2
     y_max = trajectories[:, :, 1].max()+2
@@ -231,12 +230,12 @@ def show_correlation(model, dataset, z, gt):
 
     # Calculate correlation from every latent variable to every ground truth variable
     for i_z in range(z.shape[1]):
-        for i_gt in range(gt.shape[1]):
+        for i_z2 in range(gt.shape[1]):
 
             # Calculate correlation
             # From https://www.dummies.com/education/math/statistics/how-to-calculate-a-correlation/
-            correlations[i_z, i_gt] = 1/(n-1) * ((z[:, i_z] - z_mean[i_z]) * (gt[:, i_gt] - gt_mean[i_gt])).sum() / \
-                                      (z_std[i_z]*gt_std[i_gt])
+            correlations[i_z, i_z2] = 1/(n-1) * ((z[:, i_z] - z_mean[i_z]) * (gt[:, i_z2] - gt_mean[i_z2])).sum() / \
+                                      (z_std[i_z]*gt_std[i_z2])
 
     correlations = np.abs(correlations)
 
@@ -245,6 +244,26 @@ def show_correlation(model, dataset, z, gt):
     plt.ylabel('Latent variables')
     plt.colorbar()
     plt.show()
+
+
+    correlations = np.zeros((z.shape[1], z.shape[1]))
+
+    # Calculate intercorrelation of latent variables
+    for i_z in range(z.shape[1]):
+        for i_z2 in range(z.shape[1]):
+            # Calculate correlation
+            # From https://www.dummies.com/education/math/statistics/how-to-calculate-a-correlation/
+            correlations[i_z, i_z2] = 1 / (n - 1) * ((z[:, i_z] - z_mean[i_z]) * (z[:, i_z2] - z_mean[i_z2])).sum() / \
+                                      (z_std[i_z] * z_std[i_z2])
+
+    correlations = np.abs(correlations)
+
+    plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
+    plt.xlabel('Latent variables')
+    plt.ylabel('Latent variables')
+    plt.colorbar()
+    plt.show()
+
 
     return correlations
 
