@@ -39,14 +39,18 @@ config = {
     'batch_size': 64,
     'learning_rate': 1e-3,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
-    'cov_penalty': 0.,  #1e-1,
     'beta': 0.001,
-    'beta_decay': 0.9,
+    'beta_decay': 1,
+    'patience': 32,
     'target_var': 1,                 # Target variance for the kl loss
     'use_question': True,
-    'patience': 32,
     'loss_weighting': True,
     'loss_weight_ball': 2.,
+
+    # Model parameters
+    'z_dim_encoder': 10,
+    'z_dim_decoder': 11,
+    'use_physics': False,
 
     # Logging
     'log_interval': 1,           # Number of mini-batches after which to print training loss
@@ -105,6 +109,7 @@ dataset = CustomDataset(
     load_to_ram=config['load_data_to_ram'],
     question=config['use_question'],
     load_ground_truth=False,
+    load_config=True
 )
 
 
@@ -172,9 +177,9 @@ else:
     model = VariationalAutoEncoder(
         len_in_sequence=config['len_inp_sequence'],
         len_out_sequence=config['len_out_sequence'],
-        z_dim_encoder=4,
-        z_dim_decoder=5,
-        use_physics=False
+        z_dim_encoder=config['z_dim_encoder'],
+        z_dim_decoder=config['z_dim_decoder'],
+        use_physics=config['use_physics']
     )
     solver = Solver()
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
@@ -199,7 +204,8 @@ tensorboard_writer = SummaryWriter(config['tensorboard_log_dir'])
 
 if __name__ == "__main__":
     solver.train(model=model,
-                 config=config,
+                 train_config=config,
+                 dataset_config=dataset.config,
                  tensorboard_writer=tensorboard_writer,
                  optim=optimizer,
                  loss_criterion=loss_criterion,
@@ -211,7 +217,6 @@ if __name__ == "__main__":
                  save_after_epochs=config['save_interval'],
                  save_path=config['save_path'],
                  device=device,
-                 cov_penalty=config['cov_penalty'],
                  beta=config['beta'],
                  beta_decay=config['beta_decay'],
                  target_var=config['target_var'],

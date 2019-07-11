@@ -30,7 +30,8 @@ class Solver(object):
     def train(
             self,
             model,
-            config,
+            train_config,
+            dataset_config,
             tensorboard_writer,
             optim=None,
             loss_criterion=torch.nn.MSELoss(),
@@ -42,7 +43,6 @@ class Solver(object):
             save_after_epochs=None,
             save_path='../saves/train',
             device='cpu',
-            cov_penalty=0,
             beta=1,
             beta_decay=1,
             target_var=1.,
@@ -52,7 +52,8 @@ class Solver(object):
             log_reconstructed_images=True
     ):
 
-        self.config = config
+        self.train_config = train_config
+        self.dataset_config = dataset_config
         model.to(device)
 
         if self.epoch == 0:
@@ -109,7 +110,6 @@ class Solver(object):
                 y_pred, latent_stuff = model(x, question)
 
                 # Compute losses
-                cov = torch.zeros(1, device=device)
                 total_kl_divergence = torch.zeros(1, device=device)
                 reconstruction_loss = self.criterion(y_pred, y)
 
@@ -123,7 +123,7 @@ class Solver(object):
                     mu, logvar = latent_stuff
                     total_kl_divergence, dim_wise_kld, mean_kld = kl_divergence(mu, logvar, target_var)
 
-                loss = reconstruction_loss + cov_penalty * cov + self.beta * total_kl_divergence
+                loss = reconstruction_loss + self.beta * total_kl_divergence
 
                 # Backpropagate and update weights
                 model.zero_grad()
@@ -249,7 +249,8 @@ class Solver(object):
             'criterion': self.criterion,
             'beta': self.beta,
             'optim_state_dict': self.optim.state_dict(),
-            'config': self.config
+            'train_config': self.train_config,
+            'dataset_config': self.dataset_config
         }, path)
 
     def load(self, path, device, only_history=False):
@@ -265,8 +266,10 @@ class Solver(object):
         self.beta = checkpoint['beta']
         self.stop_reason = checkpoint['stop_reason']
         self.training_time_s = checkpoint['training_time_s']
-        if 'config' in checkpoint.keys():
-            self.config = checkpoint['config']
+        if 'train_config' in checkpoint.keys():
+            self.train_config = checkpoint['train_config']
+        if 'dataset_config' in checkpoint.keys():
+            self.dataset_config = checkpoint['dataset_config']
 
     def append_history(self, hist_dict):
         for key in hist_dict:

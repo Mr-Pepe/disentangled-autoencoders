@@ -483,9 +483,9 @@ def latent_variable_slideshow(model, dataset):
 
 def print_traning_config(solver):
     print('""" Training Config """\n')
-    max_len = max([len(key) for key in solver.config.keys()])
-    for key in solver.config.keys():
-        print("{key: <{fill}}: {val}".format(key=key, val=solver.config[key], fill=max_len))
+    max_len = max([len(key) for key in solver.train_config.keys()])
+    for key in solver.train_config.keys():
+        print("{key: <{fill}}: {val}".format(key=key, val=solver.train_config[key], fill=max_len))
 
 
 def show_correlation_after_physics(model, dataset):
