@@ -183,7 +183,7 @@ else:
     solver = Solver()
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
     # When using loss weighting, the loss is reduced only after multiplication with the weight mask
-    reduction = 'none' if config['loss_weight_ball'] else 'mean'
+    reduction = 'none' if config['loss_weighting'] else 'mean'
     loss_criterion = nn.MSELoss(reduction=reduction)
 
 """ Perform training """
