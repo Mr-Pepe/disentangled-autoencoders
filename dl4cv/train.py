@@ -24,36 +24,36 @@ config = {
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
     'do_overfitting': False,             # Set overfit or regular training
-    'num_train_regular':    2048,       # Number of training samples for regular training
-    'num_val_regular':      256,        # Number of validation samples for regular training
+    'num_train_regular':    4096,       # Number of training samples for regular training
+    'num_val_regular':      512,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
-    'len_inp_sequence': 15,              # Length of training sequence
+    'len_inp_sequence': 1,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
 
     'num_workers': 4,                   # Number of workers for data loading
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 100,                  # Number of epochs to train
+    'num_epochs': 15000,                  # Number of epochs to train
     'batch_size': 64,
-    'learning_rate': 1e-3,
+    'learning_rate': 5e-4,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
-    'beta': 0.001,
+    'beta': 0,
     'beta_decay': 1,
     'patience': 32,
     'target_var': 1,                 # Target variance for the kl loss
-    'use_question': True,
+    'use_question': False,
     'loss_weighting': True,
     'loss_weight_ball': 2.,
 
     # Model parameters
-    'z_dim_encoder': 10,
-    'z_dim_decoder': 11,
+    'z_dim_encoder': 4,
+    'z_dim_decoder': 4,
     'use_physics': False,
 
     # Logging
-    'log_interval': 1,           # Number of mini-batches after which to print training loss
-    'save_interval': 10,         # Number of epochs after which to save model and solver
+    'log_interval': 20,           # Number of mini-batches after which to print training loss
+    'save_interval': 50,         # Number of epochs after which to save model and solver
     'save_path': '../saves',
     'log_reconstructed_images': False,  # Show a reconstructed sample after every epoch
     'tensorboard_log_dir': '../tensorboard_log/'

@@ -8,15 +8,15 @@ from PIL import Image, ImageDraw
 from dl4cv.eval.eval_functions import analyze_dataset
 
 config = Config({
-    'save_dir_path': '../../../datasets/correlated',
-    'num_sequences': 2000,
-    'sequence_length': 30,
+    'save_dir_path': '../../../datasets/ball',
+    'num_sequences': 4096+512,
+    'sequence_length': 5,
     'window_size_x': 32,
     'window_size_y': 32,
     'ball_radius': 2,
     't_frame': 1 / 30,
     'eval_before_generating': True,  # Evaluate the dataset before generating it
-    'generate': False                # Generate the dataset
+    'generate': True                # Generate the dataset
 })
 
 # Define trajectory properties. Do this separately as some values need the config to already exist
@@ -37,11 +37,11 @@ config.update({
     'y_mean': config.window_size_y / 2,
     'y_std':  config.window_size_y / 1,
 
-    'vx_std': 10,
-    'vy_std': 10,
+    'vx_std': 0,
+    'vy_std': 0,
 
-    'ax_std': 10,
-    'ay_std': 10
+    'ax_std': 0,
+    'ay_std': 0
 })
 
 

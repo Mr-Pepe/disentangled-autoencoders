@@ -8,6 +8,7 @@ from dl4cv.utils import kl_divergence, time_left
 from dl4cv.eval.eval_functions import generate_img_figure_for_tensorboardx
 import matplotlib.pyplot as plt
 import numpy as np
+import torch.nn.functional as F
 
 from tensorboardX import SummaryWriter
 
@@ -87,6 +88,13 @@ class Solver(object):
         print('Start training at epoch ' + str(self.epoch))
         t_start = time.time()
 
+        C_offset = 0
+        C_max = 20
+        C_stop_iter = 1e5
+        gamma = 100
+        C_max = torch.autograd.Variable(torch.FloatTensor([C_max]))
+        C_max = C_max.to(device)
+
         # Do the training here
         for i_epoch in range(num_epochs):
             self.epoch += 1
@@ -116,19 +124,22 @@ class Solver(object):
 
                 # Compute losses
                 total_kl_divergence = torch.zeros(1, device=device)
-                reconstruction_loss = self.criterion(y_pred, y)
+                # reconstruction_loss = self.criterion(y_pred, y)
+                reconstruction_loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
 
                 # When using loss weight, multiply the rec_loss with the weight mask and reduce afterwards
-                if loss_weighting:
-                    reconstruction_loss = reconstruction_loss * loss_weight_mask
-                    reconstruction_loss = reconstruction_loss.mean() / loss_weight_mask.mean()
+                # if loss_weighting:
+                #     reconstruction_loss = reconstruction_loss * loss_weight_mask
+                #     reconstruction_loss = reconstruction_loss.mean() / loss_weight_mask.mean()
 
                 # KL-loss if latent_stuff contains mu and logvar
                 if len(latent_stuff) == 2:
                     mu, logvar = latent_stuff
                     total_kl_divergence, dim_wise_kld, mean_kld = kl_divergence(mu, logvar, target_var)
 
-                loss = reconstruction_loss + self.beta * total_kl_divergence
+                C = torch.clamp(C_offset + C_max / C_stop_iter * i_iter, 0, C_max.data[0])
+
+                loss = reconstruction_loss + gamma * (total_kl_divergence-C).abs()
 
                 # Backpropagate and update weights
                 model.zero_grad()
@@ -151,6 +162,7 @@ class Solver(object):
 
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
+                          "   C: {0:.2f}".format(C.item()) +
                           "   Reconstruction loss: " + "{0:.6f}".format(reconstruction_loss.item()),
                           "   KL loss: " + "{0:.6f}".format(total_kl_divergence.item()) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
@@ -167,14 +179,17 @@ class Solver(object):
                                      })
 
                 # Add losses to tensorboard
-                loss_names = ['kl_loss', 'reconstruction_loss', 'train_loss']
-                losses = [total_kl_divergence.item()*self.beta, reconstruction_loss.item(), loss.item()]
-                tensorboard_writer.add_scalars('loss', dict(zip(loss_names, losses)), i_iter)
+                # loss_names = ['kl_loss', 'reconstruction_loss', 'train_loss']
+                # losses = [total_kl_divergence.item()*self.beta, reconstruction_loss.item(), loss.item()]
+                # tensorboard_writer.add_scalars('loss', dict(zip(loss_names, losses)), i_iter)
+                tensorboard_writer.add_scalar('loss', reconstruction_loss.item(), i_iter)
 
-                z_keys = ['z{}'.format(i) for i in range(dim_wise_kld.numel())]
-                tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
+                z_keys = ['Total']
+                z_keys.extend(['z{}'.format(i) for i in range(dim_wise_kld.numel())])
+                kls = [total_kl_divergence.item()]
+                kls.extend(dim_wise_kld.tolist())
 
-                tensorboard_writer.add_scalar('beta', self.beta, i_iter)
+                tensorboard_writer.add_scalars('KL',  dict(zip(z_keys, kls)), i_iter)
 
                 if log_reconstructed_images and os.getcwd()[:20] != '/home/felix.meissen':
                     f = generate_img_figure_for_tensorboardx(y, y_pred, question)

@@ -8,9 +8,6 @@ import torch
 import torch.nn as nn
 
 import dl4cv.utils as utils
-from dl4cv.models.decoder import VanillaDecoder
-from dl4cv.models.encoder import VanillaEncoder
-from dl4cv.models.physics_layer import PhysicsPVA, PhysicsLayer
 
 
 class BaseModel(nn.Module):
@@ -33,34 +30,6 @@ class BaseModel(nn.Module):
         torch.save(self.cpu(), path)
 
 
-class AutoEncoder(BaseModel):
-    def __init__(self, len_in_sequence, z_dim, greyscale=False):
-        super(AutoEncoder, self).__init__()
-        # input frames get concatenated, in_channels depends on the length
-        # of the sequences
-        # number of output channels depend only on using grayscale or not
-        if greyscale:
-            in_channels = len_in_sequence
-            out_channels = 1
-        else:
-            in_channels = len_in_sequence * 3
-            out_channels = 3
-
-        self.encoder = VanillaEncoder(
-            in_channels=in_channels,
-            z_dim=z_dim
-        )
-        self.decoder = VanillaDecoder(
-            z_dim=z_dim,
-            out_channels=out_channels
-        )
-
-    def forward(self, x):
-        z = self.encoder(x)
-        y = self.decoder(z)
-        return y, (z,)
-
-
 class VariationalAutoEncoder(BaseModel):
     """"This VAE generates means and log-variances of
     the latent variables and samples from those distributions"""
@@ -70,37 +39,51 @@ class VariationalAutoEncoder(BaseModel):
         self.z_dim_decoder = z_dim_decoder
         self.use_physics = use_physics
 
-        self.encoder = VanillaEncoder(
-            in_channels=len_in_sequence,
-            z_dim=z_dim_encoder*2
+        self.encoder = nn.Sequential(
+            nn.Conv2d(len_in_sequence, 32, 4, 2, 1),  # B,  32, 16, 16
+            nn.ReLU(True),
+            nn.Conv2d(32, 32, 4, 2, 1),  # B,  32,  8,  8
+            nn.ReLU(True),
+            nn.Conv2d(32, 32, 4, 2, 1),  # B,  32,  4,  4
+            nn.ReLU(True),
+            View((-1, 32 * 4 * 4)),  # B, 512
+            nn.Linear(32 * 4 * 4, 256),  # B, 256
+            nn.ReLU(True),
+            # nn.Linear(256, 256),  # B, 256
+            # nn.ReLU(True),
+            nn.Linear(256, z_dim_encoder * 2),  # B, z_dim*2
         )
-        self.decoder = VanillaDecoder(
-            z_dim=z_dim_decoder,
-            out_channels=len_out_sequence
+        self.decoder = nn.Sequential(
+            nn.Linear(z_dim_decoder, 256),  # B, 256
+            nn.ReLU(True),
+            # nn.Linear(256, 256),  # B, 256
+            # nn.ReLU(True),
+            nn.Linear(256, 32 * 4 * 4),  # B, 512
+            nn.ReLU(True),
+            View((-1, 32, 4, 4)),  # B,  32,  4,  4
+            nn.Upsample(scale_factor=2),
+            nn.ConvTranspose2d(32, 32, 3, 1, 1),  # B,  32,  8,  8
+            nn.ReLU(True),
+            nn.Upsample(scale_factor=2),
+            nn.ConvTranspose2d(32, 32, 3, 1, 1),  # B,  32, 16, 16
+            nn.ReLU(True),
+            nn.Upsample(scale_factor=2),
+            nn.ConvTranspose2d(32, len_out_sequence, 3, 1, 1),
         )
 
-        self.physics_layer = PhysicsLayer(dt=1. / 30.)
+        self.weight_init()
+
+    def weight_init(self):
+        for block in self._modules:
+            for m in self._modules[block]:
+                kaiming_init(m)
 
     def forward(self, x, q=-1):
-        z_encoder, mu, logvar = self.encode(x)
+        z, mu, logvar = self.encode(x)
 
-        z_decoder = self.bottleneck(z_encoder, q)
-
-        y = self.decode(z_decoder)
+        y = self.decode(z)
 
         return y, (mu, logvar)
-
-    def bottleneck(self, z_encoder, q):
-        if torch.any(q != -1):
-            if self.use_physics:
-                z_decoder = self.physics_layer(z_encoder, q)
-            else:
-                q = q[:, None, None, None]
-                z_decoder = torch.cat((z_encoder, q), dim=1)
-        else:
-            z_decoder = z_encoder
-
-        return z_decoder
 
     def encode(self, x):
         z_params = self.encoder(x)
@@ -114,5 +97,22 @@ class VariationalAutoEncoder(BaseModel):
     def decode(self, z_decoder):
         return self.decoder(z_decoder)
 
-    def physics(self, x):
-        return self.physics_layer(x)
+
+class View(nn.Module):
+    def __init__(self, size):
+        super(View, self).__init__()
+        self.size = size
+
+    def forward(self, tensor):
+        return tensor.view(self.size)
+
+
+def kaiming_init(m):
+    if isinstance(m, (nn.Linear, nn.Conv2d)):
+        nn.init.kaiming_normal_(m.weight)
+        if m.bias is not None:
+            m.bias.data.fill_(0)
+    elif isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d)):
+        m.weight.data.fill_(1)
+        if m.bias is not None:
+            m.bias.data.fill_(0)
