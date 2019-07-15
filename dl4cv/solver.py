@@ -7,6 +7,7 @@ import torch
 from dl4cv.utils import kl_divergence, time_left
 from dl4cv.eval.eval_functions import generate_img_figure_for_tensorboardx
 import matplotlib.pyplot as plt
+import numpy as np
 
 from tensorboardX import SummaryWriter
 
@@ -156,6 +157,8 @@ class Solver(object):
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
                           " - Time/iter: " + str(int((time.time()-t_start_iter)*1000)) + "ms")
 
+                    # plot_grad_flow(model.named_parameters())
+
                 self.append_history({'train_loss': loss.item(),
                                      'total_kl_divergence': total_kl_divergence.item(),
                                      'kl_divergence_dim_wise': dim_wise_kld.tolist(),
@@ -281,3 +284,32 @@ class Solver(object):
     def append_history(self, hist_dict):
         for key in hist_dict:
             self.history[key].append(hist_dict[key])
+
+def plot_grad_flow(named_parameters):
+    '''Plots the gradients flowing through different layers in the net during training.
+    Can be used for checking for possible gradient vanishing / exploding problems.
+
+    Usage: Plug this function in Trainer class after loss.backwards() as
+    "plot_grad_flow(self.model.named_parameters())" to visualize the gradient flow'''
+    ave_grads = []
+    max_grads = []
+    layers = []
+    for n, p in named_parameters:
+        if (p.requires_grad) and ("bias" not in n):
+            layers.append(n)
+            ave_grads.append(p.grad.abs().mean())
+            max_grads.append(p.grad.abs().max())
+    plt.bar(np.arange(len(max_grads)), max_grads, alpha=0.1, lw=1, color="c")
+    plt.bar(np.arange(len(max_grads)), ave_grads, alpha=0.1, lw=1, color="b")
+    plt.hlines(0, 0, len(ave_grads) + 1, lw=2, color="k")
+    plt.xticks(range(0, len(ave_grads), 1), layers, rotation="vertical")
+    plt.xlim(left=0, right=len(ave_grads))
+    plt.ylim(bottom=-0.001, top=0.02)  # zoom in on the lower gradient regions
+    plt.xlabel("Layers")
+    plt.ylabel("average gradient")
+    plt.title("Gradient flow")
+    plt.grid(True)
+    plt.legend([plt.Line2D([0], [0], color="c", lw=4),
+                plt.Line2D([0], [0], color="b", lw=4),
+                plt.Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'])
+    plt.show()
