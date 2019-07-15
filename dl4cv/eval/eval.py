@@ -132,7 +132,7 @@ if config['analyze_dataset']:
 
     trajectories = np.array([dataset.get_ground_truth(i) for i in indices])
 
-    analyze_dataset(trajectories)
+    analyze_dataset(trajectories, mode='points')
 
 
 if config['show_solver_history']:

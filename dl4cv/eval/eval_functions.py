@@ -62,41 +62,46 @@ def analyze_dataset(trajectories, mode='lines'):
 
 def show_solver_history(solver):
 
+    avg_w = 20
+
     print("Stop reason: %s" % solver.stop_reason)
     print("Stop time: %fs" % solver.training_time_s)
     print("Epoch: {}".format(solver.epoch))
-    print("Beta: {}".format(solver.beta))
 
-    train_loss = np.array(solver.history['train_loss'])
-    val_loss = np.array(solver.history['val_loss'])
     total_kl_divergence = np.array(solver.history['total_kl_divergence'])
     kl_divergence_dim_wise = np.array(solver.history['kl_divergence_dim_wise'])
     reconstruction_loss = np.array(solver.history['reconstruction_loss'])
-    beta = np.array(solver.history['beta'])
+    posterior_mu = np.array(solver.history['posterior_mu'])
+    posterior_var = np.array(solver.history['posterior_var'])
 
-    plt.plot(train_loss, label='Train loss')
-    plt.plot(total_kl_divergence*beta, label='Overall KL divergence scaled with beta')
     plt.plot(reconstruction_loss, label='Reconstruction loss')
-    plt.plot(np.linspace(1, len(train_loss), len(val_loss)), val_loss, label='Validation loss')
     plt.xlabel("Iterations")
-    plt.ylabel("Train/Val loss")
-    plt.legend()
-
+    plt.ylabel("Reconstruction loss")
     plt.show()
 
+    plt.plot(total_kl_divergence, label='Total')
     for i in range(kl_divergence_dim_wise.shape[1]):
-        plt.plot(moving_average(kl_divergence_dim_wise[:, i], 20), label='z{}'.format(i))
+        plt.plot(moving_average(kl_divergence_dim_wise[:, i], avg_w), label='z{}'.format(i))
     plt.xlabel("Iterations")
     plt.ylabel("KL Divergences")
     plt.legend()
-
     plt.show()
 
-    plt.plot(beta)
+    f, axes = plt.subplots(2, 1)
+    plt.sca(axes[0])
+    for i in range(kl_divergence_dim_wise.shape[1]):
+        plt.plot(moving_average(posterior_mu[:, i], avg_w), label='z{}'.format(i))
     plt.xlabel("Iterations")
-    plt.ylabel("Beta")
-    plt.show()
+    plt.ylabel("Posterior means")
+    plt.legend()
 
+    plt.sca(axes[1])
+    for i in range(kl_divergence_dim_wise.shape[1]):
+        plt.plot(moving_average(posterior_var[:, i], avg_w), label='z{}'.format(i))
+    plt.xlabel("Iterations")
+    plt.ylabel("Posterior variances")
+    plt.legend()
+    plt.show()
 
 def show_latent_variables(model, dataset, show=True):
     mu = 0
