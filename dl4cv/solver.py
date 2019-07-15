@@ -8,25 +8,19 @@ from dl4cv.utils import kl_divergence, time_left
 from dl4cv.eval.eval_functions import generate_img_figure_for_tensorboardx
 import matplotlib.pyplot as plt
 import numpy as np
+import torch.nn.functional as F
 
 from tensorboardX import SummaryWriter
 
 class Solver(object):
 
     def __init__(self):
-        self.history = {'train_loss': [],
-                        'val_loss': [],
-                        'total_kl_divergence': [],
-                        'kl_divergence_dim_wise': [],
-                        'reconstruction_loss': [],
-                        'beta': []
-                        }
+        self.history = {}
 
         self.optim = []
         self.criterion = []
         self.training_time_s = 0
         self.stop_reason = ''
-        self.beta = 0
         self.epoch = 0
 
     def train(
@@ -36,7 +30,6 @@ class Solver(object):
             dataset_config,
             tensorboard_path,
             optim=None,
-            loss_criterion=torch.nn.MSELoss(),
             num_epochs=10,
             max_train_time_s=None,
             train_loader=None,
@@ -45,12 +38,11 @@ class Solver(object):
             save_after_epochs=None,
             save_path='../saves/train',
             device='cpu',
-            beta=1,
-            beta_decay=1,
             target_var=1.,
-            patience=128,
-            loss_weighting=False,
-            loss_weight_ball=2.,
+            C_offset=0,
+            C_max=20,
+            C_stop_iter=1e5,
+            gamma=100,
             log_reconstructed_images=True
     ):
 
@@ -60,8 +52,6 @@ class Solver(object):
 
         if self.epoch == 0:
             self.optim = optim
-            self.criterion = loss_criterion
-            self.beta = beta
 
         iter_per_epoch = len(train_loader)
         print("Iterations per epoch: {}".format(iter_per_epoch))
@@ -79,18 +69,19 @@ class Solver(object):
         n_iters = num_epochs*iter_per_epoch
         i_iter = 0
 
-        best_recon_loss = 1e10
-        n_bad_iters = 0
-
+        print('Start training at epoch ' + str(self.epoch))
         t_start_training = time.time()
 
-        print('Start training at epoch ' + str(self.epoch))
-        t_start = time.time()
+        self.C_offset = C_offset
+        self.C_stop_iter = C_stop_iter
+        self.gamma = gamma
+        self.C_max = torch.autograd.Variable(torch.FloatTensor([C_max]))
+        self.C_max = self.C_max.to(device)
 
         # Do the training here
         for i_epoch in range(num_epochs):
             self.epoch += 1
-            print("Starting epoch {}, Beta: {}".format(self.epoch, self.beta))
+            print("Starting epoch {}".format(self.epoch))
             t_start_epoch = time.time()
 
             # Set model to train mode
@@ -107,50 +98,28 @@ class Solver(object):
                 if question is not None:
                     question = question.to(device)
 
-                # If using Loss weighting, create a weighting mask
-                if loss_weighting:
-                    loss_weight_mask = torch.where(y > 1e-3, y * loss_weight_ball, torch.ones_like(y))
-
                 # Forward pass
-                y_pred, latent_stuff = model(x, question)
+                y_pred, (mu, logvar) = model(x, question)
 
                 # Compute losses
-                total_kl_divergence = torch.zeros(1, device=device)
-                reconstruction_loss = self.criterion(y_pred, y)
+                reconstruction_loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
+                total_kl_divergence, dim_wise_kld, mean_kld = kl_divergence(mu, logvar, target_var)
 
-                # When using loss weight, multiply the rec_loss with the weight mask and reduce afterwards
-                if loss_weighting:
-                    reconstruction_loss = reconstruction_loss * loss_weight_mask
-                    reconstruction_loss = reconstruction_loss.mean() / loss_weight_mask.mean()
+                C = torch.clamp(self.C_offset + self.C_max / self.C_stop_iter * i_iter, 0, self.C_max.data[0])
 
-                # KL-loss if latent_stuff contains mu and logvar
-                if len(latent_stuff) == 2:
-                    mu, logvar = latent_stuff
-                    total_kl_divergence, dim_wise_kld, mean_kld = kl_divergence(mu, logvar, target_var)
-
-                loss = reconstruction_loss + self.beta * total_kl_divergence
+                loss = reconstruction_loss + gamma * (total_kl_divergence-C).abs()
 
                 # Backpropagate and update weights
                 model.zero_grad()
                 loss.backward()
                 self.optim.step()
 
-                # Reduce beta
-                if reconstruction_loss.item() < best_recon_loss:
-                    best_recon_loss = reconstruction_loss.item()
-                    n_bad_iters = 0
-                else:
-                    n_bad_iters += 1
-
-                if n_bad_iters >= patience:
-                    self.beta *= beta_decay
-                    n_bad_iters = 0
-
                 smooth_window_train = 10
                 train_loss_avg = (smooth_window_train-1)/smooth_window_train*train_loss_avg + 1/smooth_window_train*loss.item()
 
                 if log_after_iters is not None and (i_iter % log_after_iters == 0):
                     print("Iteration " + str(i_iter) + "/" + str(n_iters) +
+                          "   C: {0:.2f}".format(C.item()) +
                           "   Reconstruction loss: " + "{0:.6f}".format(reconstruction_loss.item()),
                           "   KL loss: " + "{0:.6f}".format(total_kl_divergence.item()) +
                           "   Train loss: " + "{0:.6f}".format(loss.item()) +
@@ -159,22 +128,29 @@ class Solver(object):
 
                     # plot_grad_flow(model.named_parameters())
 
+                mus = mu.mean(dim=0).tolist()
+                vars = logvar.exp().mean(dim=0).tolist()
+
                 self.append_history({'train_loss': loss.item(),
                                      'total_kl_divergence': total_kl_divergence.item(),
                                      'kl_divergence_dim_wise': dim_wise_kld.tolist(),
                                      'reconstruction_loss': reconstruction_loss.item(),
-                                     'beta': self.beta     # Save beta every iteration to multiply with kl div
+                                     'posterior_mu': mus,
+                                     'posterior_var': vars
                                      })
 
                 # Add losses to tensorboard
-                loss_names = ['kl_loss', 'reconstruction_loss', 'train_loss']
-                losses = [total_kl_divergence.item()*self.beta, reconstruction_loss.item(), loss.item()]
-                tensorboard_writer.add_scalars('loss', dict(zip(loss_names, losses)), i_iter)
+                tensorboard_writer.add_scalar('Reconstruction_loss', reconstruction_loss.item(), i_iter)
+
+                z_keys = ['C', 'Total_KL_loss']
+                z_keys.extend(['z{}'.format(i) for i in range(dim_wise_kld.numel())])
+                kls = [C.item(), total_kl_divergence.item()]
+                kls.extend(dim_wise_kld.tolist())
+                tensorboard_writer.add_scalars('KL_loss', dict(zip(z_keys, kls)), i_iter)
 
                 z_keys = ['z{}'.format(i) for i in range(dim_wise_kld.numel())]
-                tensorboard_writer.add_scalars('kl_loss_dim_wise',  dict(zip(z_keys, dim_wise_kld.tolist())), i_iter)
-
-                tensorboard_writer.add_scalar('beta', self.beta, i_iter)
+                tensorboard_writer.add_scalars('Posterior_means', dict(zip(z_keys, mus)), i_iter)
+                tensorboard_writer.add_scalars('Posterior_variances', dict(zip(z_keys, vars)), i_iter)
 
                 if log_reconstructed_images and os.getcwd()[:20] != '/home/felix.meissen':
                     f = generate_img_figure_for_tensorboardx(y, y_pred, question)
@@ -200,18 +176,9 @@ class Solver(object):
                 if question is not None:
                     question = question.to(device)
 
-                # If using Loss weighting, create a weighting mask
-                if loss_weighting:
-                    loss_weight_mask = torch.where(y > 1e-3, y * loss_weight_ball, torch.ones_like(y))
-
                 y_pred, latent_stuff = model(x, question)
 
-                current_val_loss = self.criterion(y, y_pred)
-
-                # When using loss weight, multiply the rec_loss with the weight mask and reduce afterwards
-                if loss_weighting:
-                    current_val_loss = current_val_loss * loss_weight_mask
-                    current_val_loss = current_val_loss.mean() / loss_weight_mask.mean()
+                current_val_loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
 
                 val_loss += current_val_loss.item()
 
@@ -222,7 +189,7 @@ class Solver(object):
             print('Avg Train Loss: ' + "{0:.6f}".format(train_loss_avg) +
                   '   Val loss: ' + "{0:.6f}".format(val_loss) +
                   "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms" +
-                  "   time left: {}\n".format(time_left(t_start, n_iters, i_iter)))
+                  "   time left: {}\n".format(time_left(t_start_training, n_iters, i_iter)))
 
             # Save model and solver
             if save_after_epochs is not None and (self.epoch % save_after_epochs == 0):
@@ -257,7 +224,6 @@ class Solver(object):
             'stop_reason': self.stop_reason,
             'training_time_s': self.training_time_s,
             'criterion': self.criterion,
-            'beta': self.beta,
             'optim_state_dict': self.optim.state_dict(),
             'train_config': self.train_config,
             'dataset_config': self.dataset_config
@@ -273,7 +239,6 @@ class Solver(object):
 
         self.history = checkpoint['history']
         self.epoch = checkpoint['epoch']
-        self.beta = checkpoint['beta']
         self.stop_reason = checkpoint['stop_reason']
         self.training_time_s = checkpoint['training_time_s']
         if 'train_config' in checkpoint.keys():
@@ -283,7 +248,10 @@ class Solver(object):
 
     def append_history(self, hist_dict):
         for key in hist_dict:
-            self.history[key].append(hist_dict[key])
+            if key not in self.history:
+                self.history[key] = [hist_dict[key]]
+            else:
+                self.history[key].append(hist_dict[key])
 
 def plot_grad_flow(named_parameters):
     '''Plots the gradients flowing through different layers in the net during training.
