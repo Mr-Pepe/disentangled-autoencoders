@@ -79,11 +79,24 @@ class VariationalAutoEncoder(BaseModel):
                 kaiming_init(m)
 
     def forward(self, x, q=-1):
-        z, mu, logvar = self.encode(x)
+        z_encoder, mu, logvar = self.encode(x)
 
-        y = self.decode(z)
+        z_decoder = self.bottleneck(z_encoder, q)
+
+        y = self.decode(z_decoder)
 
         return y, (mu, logvar)
+
+    def bottleneck(self, z_encoder, q):
+        if torch.any(q != -1):
+            if self.use_physics:
+                z_decoder = self.physics_layer(z_encoder, q)
+            else:
+                z_decoder = torch.cat((z_encoder, q.view(-1, 1)), dim=1)
+        else:
+            z_decoder = z_encoder
+
+        return z_decoder
 
     def encode(self, x):
         z_params = self.encoder(x)
