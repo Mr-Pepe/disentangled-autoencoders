@@ -11,11 +11,13 @@ from dl4cv.eval.eval_functions import analyze_dataset
 eval_config = {
     'dataset_config_path': '../../../datasets/ball/config.p',  # Path to train dataset config
     'save_dir_path': '../../../datasets/evalDataset',
-    'num_sequences': 100,
+    'num_sequences': 1000,
 
     'eval_before_generating': True,  # Evaluate the dataset before generating it
-    'generate': False,               # Generate the dataset
+    'generate': True,               # Generate the dataset
 }
+
+assert eval_config['num_sequences'] % 2 == 0  # We need to build pairs, select an even number of sequences
 
 # Reuse old config
 config = pickle.load(open(eval_config['dataset_config_path'], 'rb'))
@@ -129,22 +131,19 @@ def generate_data(c):
                 start_vars[4][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ax_std)
                 start_vars[5][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ay_std)
 
-                # Always keep one latent variable constant
-                start_vars[i_latent][idx] = torch.ones_like(start_vars[i_latent]) * latent_means[i_latent]
-
-                x, y, vx, vy = get_trajectories(*start_vars, c.t_frame, c.sequence_length)
-
             elif config['sample_mode'] == 'only_position':
+
                 start_vars[0][idx] = torch.normal(c.x_mean, torch.ones([idx.shape[0]]) * c.x_std)
                 start_vars[1][idx] = torch.normal(c.y_mean, torch.ones([idx.shape[0]]) * c.y_std)
 
-                # Always keep one latent variable constant
-                start_vars[i_latent][idx] = torch.ones_like(start_vars[i_latent]) * latent_means[i_latent]
-
-                x, y, vx, vy = get_trajectories(*start_vars, c.t_frame, c.sequence_length)
-
             else:
                 raise Exception("Invalid sample_mode: {}".format(config['sample_mode']))
+
+            # Build pairs where one variable is always fixed for two consecutive sequences
+            for i_pair in range(0, start_vars[i_latent].shape[0], 2):
+                start_vars[i_latent][i_pair + 1] = start_vars[i_latent][i_pair]
+
+            x, y, vx, vy = get_trajectories(*start_vars, c.t_frame, c.sequence_length)
 
             collisions = get_collisions(x, y, c.x_min, c.x_max, c.y_min, c.y_max)
 

@@ -1,0 +1,108 @@
+import os
+import pickle
+
+import numpy as np
+
+import torch
+import torchvision.transforms as transforms
+
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+from dl4cv.solver import Solver
+
+
+config = {
+    'analyze_dataset': True,            # Plot positions of the desired datapoints
+    'show_solver_history': True,        # Plot losses of the training
+    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
+    'show_model_output': True,          # Show the model output for the desired datapoints
+    'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
+    'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
+    'print_training_config': True,       # Print the config that was used for training the model
+    'latent_walk_gifs': False,
+    'walk_over_question': True,
+
+    'data_path': '../../../datasets/ball',  # Path to directory of the image folder
+    'eval_data_path': '../../../datasets/evalDataset',
+    'len_inp_sequence': 15,
+    'len_out_sequence': 1,
+    'num_samples': 500,                # Use the whole dataset if none for latent variables
+    'num_show_images': 10,              # Number of outputs to show when show_model_output is True
+
+    'question': True,
+
+    'save_path': '../../saves/4_latents_150E',  # Path to the directory where the model and solver are saved
+    'epoch': None,                                  # Use last model and solver if epoch is none
+
+}
+
+
+print(os.scandir(config['eval_data_path']))
+
+
+device = 'cpu'
+
+def get_model_solver_paths(save_path, epoch):
+    print("Getting model and solver paths")
+    model_paths = []
+    solver_paths = []
+
+    for _, _, fnames in os.walk(save_path):
+        model_paths = [fname for fname in fnames if 'model' in fname]
+        solver_paths = [fname for fname in fnames if 'solver' in fname]
+
+    if not model_paths or not solver_paths:
+        raise Exception('Model or solver not found.')
+
+    if not epoch:
+        model_path = os.path.join(save_path, sorted(model_paths, key=lambda s: int(s.split("model")[1]))[-1])
+        solver_path = os.path.join(save_path, sorted(solver_paths, key=lambda s: int(s.split("solver")[1]))[-1])
+    else:
+        model_path = os.path.join(save_path, 'model' + str(epoch))
+        solver_path = os.path.join(save_path, 'solver' + str(epoch))
+
+    return model_path, solver_path
+
+
+print("Loading dataset")
+
+dataset = CustomDataset(
+    config['data_path'],
+    transform=transforms.Compose([
+        transforms.Grayscale(),
+        transforms.ToTensor()
+    ]),
+    len_inp_sequence=config['len_inp_sequence'],
+    len_out_sequence=config['len_out_sequence'],
+    load_ground_truth=True,
+    question=config['question'],
+    load_to_ram=False,
+    load_config=True
+)
+dataset_config = pickle.load(open(os.path.join(config['data_path'], 'config.p'), 'rb'))
+
+if config['num_samples'] is not None:
+    if config['num_show_images'] > len(dataset):
+        raise Exception('Dataset does not contain {} images to show'.format(config['num_show_images']))
+
+    # Sample equidistantly from dataset
+    indices = np.linspace(0, len(dataset) - 1, config['num_samples'], dtype=int).tolist()
+
+    dataset_list = [dataset[i] for i in indices]
+    ground_truth = [dataset.get_ground_truth(i) for i in indices]
+else:
+    dataset_list = dataset
+    ground_truth = [dataset.get_ground_truth(i) for i in range(len(dataset))]
+
+model_path, solver_path = get_model_solver_paths(config['save_path'], config['epoch'])
+
+print("Loading model and solver")
+solver = Solver()
+solver.load(solver_path, device=device, only_history=True)
+model = torch.load(model_path, map_location=device)
+
+
+######### Start eval here
+
+# load eval dataset
+datasets = []
+
