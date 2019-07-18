@@ -107,7 +107,7 @@ class Solver(object):
 
                 C = torch.clamp(self.C_offset + self.C_max / self.C_stop_iter * i_iter, 0, self.C_max.data[0])
 
-                loss = reconstruction_loss + gamma * (total_kl_divergence-C).abs()
+                loss = reconstruction_loss + self.gamma * (total_kl_divergence-C).abs()
 
                 # Backpropagate and update weights
                 model.zero_grad()

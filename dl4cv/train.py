@@ -200,6 +200,6 @@ if __name__ == "__main__":
                  C_offset=config['C_offset'],
                  C_max=config['C_max'],
                  C_stop_iter=config['C_stop_iter'],
-                 gamma=100,
+                 gamma=config['gamma'],
                  target_var=config['target_var'],
                  log_reconstructed_images=config['log_reconstructed_images'])
