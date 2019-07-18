@@ -24,7 +24,7 @@ from dl4cv.eval.eval_functions import \
 
 
 config = {
-    'analyze_dataset': True,            # Plot positions of the desired datapoints
+    'analyze_dataset': False,            # Plot positions of the desired datapoints
     'show_solver_history': False,        # Plot losses of the training
     'show_latent_variables': False,      # Show the latent variables for the desired datapoints
     'show_model_output': False,          # Show the model output for the desired datapoints
@@ -44,7 +44,7 @@ config = {
 
     'question': True,
 
-    'save_path': '../../saves/4_latents_150E',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/von_felipe',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
     'use_cuda': False,

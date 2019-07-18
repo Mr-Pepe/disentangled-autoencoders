@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 
+from sklearn import linear_model
 from torchvision.utils import make_grid
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
@@ -667,54 +668,23 @@ def eval_disentanglement(model, eval_datasets, device, num_epochs=50):
                 z_diff += torch.abs(z1 - z2)
 
             z_diff /= num_pairs
-            z_diffs.append(z_diff)
-            target = torch.tensor([i_dataset], dtype=torch.long)
-            targets.append(target.long())
+            z_diffs.append(z_diff.detach().numpy())
+            target = np.array([i_dataset], dtype=np.long)
+            targets.append(target)
 
     # Shuffle training data
     c = list(zip(z_diffs, targets))
     random.shuffle(c)
     z_diffs, targets = zip(*c)
 
-    # Linear Classifier
-    num_in_features = z_diff.shape[1]
-    num_out_features = len(eval_datasets)
+    z_diffs = np.array(z_diffs)[:, 0]
+    targets = np.array(targets)[:, 0]
 
-    classifier = torch.nn.Sequential(
-        torch.nn.Linear(num_in_features, num_out_features),
-        torch.nn.Softmax()
-    ).to(device).train()
+    # Linear classifier as in
+    # https://github.com/google-research/disentanglement_lib/blob/master/disentanglement_lib/evaluation/metrics/beta_vae.py
+    model = linear_model.LogisticRegression()
+    model.fit(z_diffs, targets)
 
-    optimizer = torch.optim.Adagrad(classifier.parameters(), lr=1e-2)
-    loss_criterion = torch.nn.NLLLoss()
-
-    es = EarlyStopping(patience=3)
-
-    for i_epoch in range(num_epochs):
-        print("Starting epoch {}".format(i_epoch + 1))
-        avg_loss = 0.
-        accuracy = 0.
-        for z_diff, target in zip(z_diffs, targets):
-            pred = classifier(z_diff)
-            loss = loss_criterion(pred, target)
-
-            classifier.zero_grad()
-            loss.backward(retain_graph=True)
-            optimizer.step()
-
-            avg_loss += loss.item()
-            _, indices = pred.max(dim=1)
-            if indices == target:
-                accuracy += 1
-
-        avg_loss /= len(z_diffs)
-        accuracy /= len(z_diffs)
-        print("Average loss: {}, accuracy: {}".format(avg_loss, accuracy))
-        if es.step(avg_loss):
-            print("Patience reached")
-            break
-        if i_epoch + 1 == num_epochs:
-            print("Not converged after {} epochs".format(num_epochs))
-
-    print("Final accuracy: {}".format(accuracy))
+    train_accuracy = np.mean(model.predict(z_diffs) == targets)
+    print("Training set accuracy: {:.4f}".format(train_accuracy))
 
