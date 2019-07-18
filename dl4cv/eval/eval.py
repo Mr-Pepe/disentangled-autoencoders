@@ -1,7 +1,12 @@
-from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+import os
+import pickle
+
 import numpy as np
+
 import torch
 import torchvision.transforms as transforms
+
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from dl4cv.solver import Solver
 from dl4cv.eval.eval_functions import \
     analyze_dataset, \
@@ -15,7 +20,6 @@ from dl4cv.eval.eval_functions import \
     show_latent_walk_gifs, \
     walk_over_question
 
-import os
 
 config = {
     'analyze_dataset': True,            # Plot positions of the desired datapoints
@@ -101,6 +105,7 @@ dataset = CustomDataset(
     load_to_ram=False,
     load_config=True
 )
+dataset_config = pickle.load(open(os.path.join(config['data_path'], 'config.p'), 'rb'))
 
 if config['num_samples'] is not None:
     if config['num_show_images'] > len(dataset):
@@ -132,7 +137,11 @@ if config['analyze_dataset']:
 
     trajectories = np.array([dataset.get_ground_truth(i) for i in indices])
 
-    analyze_dataset(trajectories, mode='points')
+    analyze_dataset(
+        trajectories,
+        window_size_x=dataset_config['window_size_x'],
+        window_size_y=dataset_config['window_size_y'],
+        mode='points')
 
 
 if config['show_solver_history']:

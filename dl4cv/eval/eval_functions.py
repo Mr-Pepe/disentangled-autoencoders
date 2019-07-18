@@ -11,12 +11,7 @@ from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from dl4cv.utils import read_csv, reparametrize
 
 
-def analyze_dataset(trajectories, mode='lines'):
-
-    x_max = trajectories[:, :, 0].max()+2
-    x_min = trajectories[:, :, 0].min()-2
-    y_max = trajectories[:, :, 1].max()+2
-    y_min = trajectories[:, :, 1].min()-2
+def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='lines'):
 
     plt.figure(figsize=(6, 6))
     if mode == 'lines':
@@ -28,8 +23,8 @@ def analyze_dataset(trajectories, mode='lines'):
     plt.title("Position")
     plt.xlabel("Position x")
     plt.ylabel("Position y")
-    plt.xlim(x_min, x_max)
-    plt.ylim(y_min, y_max)
+    plt.xlim(left=0, right=window_size_x)
+    plt.ylim(bottom=0, top=window_size_y)
     plt.show()
 
     n = trajectories.shape[0]

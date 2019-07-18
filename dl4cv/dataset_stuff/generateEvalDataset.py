@@ -1,47 +1,28 @@
 import os
 import pickle
 
-from dl4cv.utils import Config
 import numpy as np
 import torch
 from PIL import Image, ImageDraw
+
 from dl4cv.eval.eval_functions import analyze_dataset
 
-config = Config({
+
+eval_config = {
+    'dataset_config_path': '../../../datasets/ball/config.p',  # Path to train dataset config
     'save_dir_path': '../../../datasets/evalDataset',
-    'num_sequences_per_latent': 100,
-    'sequence_length': 5,
-    'window_size_x': 32,
-    'window_size_y': 32,
-    'ball_radius': 2,
-    't_frame': 1 / 30,
-    'eval_before_generating': False,  # Evaluate the dataset before generating it
-    'generate': True                # Generate the dataset
-})
+    'num_sequences': 100,
 
-# Define trajectory properties. Do this separately as some values need the config to already exist
-config.update({
-    'avoid_collisions': False,
-    'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start',
-                                                 #        'only_position'
+    'eval_before_generating': True,  # Evaluate the dataset before generating it
+    'generate': False,               # Generate the dataset
+}
 
-    'x_min': config.ball_radius,
-    'x_max': config.window_size_x - config.ball_radius,
-    'y_min': config.ball_radius,
-    'y_max': config.window_size_y - config.ball_radius,
-
-    'x_mean': config.window_size_x / 2,
-    'x_std':  config.window_size_x / 1,
-
-    'y_mean': config.window_size_y / 2,
-    'y_std':  config.window_size_y / 1,
-
-    'vx_std': 10,
-    'vy_std': 10,
-
-    'ax_std': 10,
-    'ay_std': 10
-})
+# Reuse old config
+config = pickle.load(open(eval_config['dataset_config_path'], 'rb'))
+config.save_dir_path = eval_config['save_dir_path']
+config.num_sequences = eval_config['num_sequences']
+config.eval_before_generating = eval_config['eval_before_generating']
+config.generate = eval_config['generate']
 
 
 # make save_dir_path absolute
@@ -129,9 +110,9 @@ def generate_data(c):
         screen = ImageDraw.Draw(img)
 
         # Initialize x,y,vx,vy,ax,ay
-        start_vars = [torch.zeros((c.num_sequences_per_latent,)) for _ in range(6)]
+        start_vars = [torch.zeros((c.num_sequences,)) for _ in range(6)]
 
-        collisions = np.ones((c.num_sequences_per_latent))
+        collisions = np.ones((c.num_sequences))
 
         # Generate Trajectories for all the sequences
         while collisions.any():
@@ -171,12 +152,12 @@ def generate_data(c):
                 print("{} collisions of {} sequences".format(collisions.sum(), c.num_sequences))
             else:
                 print("No collision avoidance... but we had {} in {} sequences".format(
-                    collisions.sum(), c.num_sequences_per_latent)
+                    collisions.sum(), c.num_sequences)
                 )
-                collisions = np.zeros((c.num_sequences_per_latent))
+                collisions = np.zeros((c.num_sequences))
 
         if config['eval_before_generating']:
-            trajectories = np.zeros((c.num_sequences_per_latent, c.sequence_length, 6))
+            trajectories = np.zeros((c.num_sequences, c.sequence_length, 6))
 
             trajectories[:, :, 0] = x
             trajectories[:, :, 1] = y
@@ -185,7 +166,12 @@ def generate_data(c):
             trajectories[:, :, 4] = np.repeat(start_vars[4].reshape(-1, 1), c.sequence_length, 1)
             trajectories[:, :, 5] = np.repeat(start_vars[5].reshape(-1, 1), c.sequence_length, 1)
 
-            analyze_dataset(trajectories, mode='points')
+            analyze_dataset(
+                trajectories,
+                window_size_x=config['window_size_x'],
+                window_size_y=config['window_size_y'],
+                mode='points'
+            )
 
         if config['generate']:
             # Save configuration
@@ -193,7 +179,7 @@ def generate_data(c):
                 pickle.dump(c, f)
 
             # Generate frames for the sequences
-            for i_sequence in range(c.num_sequences_per_latent):
+            for i_sequence in range(c.num_sequences):
 
                 save_path_sequence = os.path.join(
                     latent_path,
@@ -227,7 +213,7 @@ def generate_data(c):
 
                 if (i_sequence+1) % 100 == 0:
                     print("Generated sequence: %d of %d with length %d ..." % (
-                        i_sequence+1, c.num_sequences_per_latent, c.sequence_length))
+                        i_sequence+1, c.num_sequences, c.sequence_length))
 
 
 if __name__ == '__main__':

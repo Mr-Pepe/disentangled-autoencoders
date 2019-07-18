@@ -184,7 +184,12 @@ def generate_data(c):
         trajectories[:, :, 4] = np.repeat(ax.reshape(-1, 1), c.sequence_length, 1)
         trajectories[:, :, 5] = np.repeat(ay.reshape(-1, 1), c.sequence_length, 1)
 
-        analyze_dataset(trajectories, mode='points')
+        analyze_dataset(
+            trajectories,
+            window_size_x=config['window_size_x'],
+            window_size_y=config['window_size_y'],
+            mode='points'
+        )
 
     if config['generate']:
         # Save configuration
