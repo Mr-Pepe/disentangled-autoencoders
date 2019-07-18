@@ -16,6 +16,7 @@ config = Config({
     'ball_radius': 2,
     't_frame': 1 / 30,
     'eval_before_generating': True,  # Evaluate the dataset before generating it
+    'mode': 'lines',                # plot mode for evaluation 'lines' or 'points'
     'generate': True                # Generate the dataset
 })
 
@@ -184,7 +185,7 @@ def generate_data(c):
         trajectories[:, :, 4] = np.repeat(ax.reshape(-1, 1), c.sequence_length, 1)
         trajectories[:, :, 5] = np.repeat(ay.reshape(-1, 1), c.sequence_length, 1)
 
-        analyze_dataset(trajectories, mode='points')
+        analyze_dataset(trajectories, mode=config['mode'])
 
     if config['generate']:
         # Save configuration
