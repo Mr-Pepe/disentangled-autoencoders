@@ -1,3 +1,4 @@
+import glob
 import os
 import pickle
 
@@ -18,19 +19,21 @@ from dl4cv.eval.eval_functions import \
     print_traning_config, \
     show_correlation_after_physics, \
     show_latent_walk_gifs, \
-    walk_over_question
+    walk_over_question, \
+    eval_disentanglement
 
 
 config = {
     'analyze_dataset': True,            # Plot positions of the desired datapoints
-    'show_solver_history': True,        # Plot losses of the training
-    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
-    'show_model_output': True,          # Show the model output for the desired datapoints
-    'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
+    'show_solver_history': False,        # Plot losses of the training
+    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
+    'show_model_output': False,          # Show the model output for the desired datapoints
+    'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
     'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
-    'print_training_config': True,       # Print the config that was used for training the model
+    'print_training_config': False,       # Print the config that was used for training the model
     'latent_walk_gifs': False,
-    'walk_over_question': True,
+    'walk_over_question': False,
+    'eval_disentanglement': True,
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
@@ -203,3 +206,24 @@ if config['latent_walk_gifs']:
 if config['walk_over_question']:
     print("Walk over questions")
     walk_over_question(model, dataset)
+
+if config['eval_disentanglement']:
+    print("Evaluating disentanglement")
+    # load eval dataset to list
+    eval_datasets = [
+        CustomDataset(
+            path,
+            transform=transforms.Compose([
+                transforms.Grayscale(),
+                transforms.ToTensor()
+            ]),
+            len_inp_sequence=config['len_inp_sequence'],
+            len_out_sequence=config['len_out_sequence'],
+            load_ground_truth=True,
+            question=config['question'],
+            load_to_ram=False,
+            load_config=False,
+        )
+        for path in glob.glob(config['eval_data_path'] + '/*') if os.path.isdir(path)]
+
+    eval_disentanglement(model, eval_datasets, device, num_epochs=100)

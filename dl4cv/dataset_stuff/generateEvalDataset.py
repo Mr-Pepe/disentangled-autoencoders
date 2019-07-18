@@ -1,5 +1,6 @@
 import os
 import pickle
+import shutil
 
 import numpy as np
 import torch
@@ -86,7 +87,8 @@ def get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame, sequ
 
 def generate_data(c):
 
-    # x_mean = config.update
+    # Remove old dataset
+    shutil.rmtree(c.save_dir_path)
 
     if config['sample_mode'] == 'x_start, v_start, a_start':
         latent_names = ['px', 'py', 'vx', 'vy', 'ax', 'ay']
@@ -174,7 +176,7 @@ def generate_data(c):
 
         if config['generate']:
             # Save configuration
-            with open(os.path.join(c.save_dir_path, 'config.p'), 'wb') as f:
+            with open(os.path.join(latent_path, 'config.p'), 'wb') as f:
                 pickle.dump(c, f)
 
             # Generate frames for the sequences

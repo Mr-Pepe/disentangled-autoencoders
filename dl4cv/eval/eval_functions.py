@@ -1,14 +1,18 @@
 import copy
 import os
+import random
+
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
+
 import torch
 import torchvision.transforms as transforms
+
 from torchvision.utils import make_grid
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
-from dl4cv.utils import read_csv, reparametrize
+from dl4cv.utils import read_csv, reparametrize, EarlyStopping
 
 
 def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='lines'):
@@ -633,4 +637,84 @@ def walk_over_question(model, dataset):
     ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=500)
 
     plt.show()
+
+
+def eval_disentanglement(model, eval_datasets, device, num_epochs=50):
+    # initialize z_diffs and targets
+    z_diffs = []
+    targets = []
+
+    # iterate over every eval subset
+    for i_dataset, eval_dataset in enumerate(eval_datasets):
+        current_latent = eval_dataset.path.split('/')[-1]
+        print("Loading eval subset for latent {}".format(current_latent))
+
+        # load all samples in the subset
+        eval_data_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=50)
+
+        for i_batch, sample in enumerate(eval_data_loader):
+            x, _, _, _ = sample
+            x.to(device)
+
+            num_pairs = x.shape[0] // 2
+            z_diff_shape, _, _ = model.encode(x[0][None, :, :, :])
+            z_diff = torch.zeros_like(z_diff_shape)
+
+            # Compute latent difference z_diff for every pair of samples
+            for i_pair in range(0, x.shape[0], 2):
+                z1, _, _ = model.encode(x[i_pair][None, :, :, :])
+                z2, _, _ = model.encode(x[i_pair + 1][None, :, :, :])
+                z_diff += torch.abs(z1 - z2)
+
+            z_diff /= num_pairs
+            z_diffs.append(z_diff)
+            target = torch.tensor([i_dataset], dtype=torch.long)
+            targets.append(target.long())
+
+    # Shuffle training data
+    c = list(zip(z_diffs, targets))
+    random.shuffle(c)
+    z_diffs, targets = zip(*c)
+
+    # Linear Classifier
+    num_in_features = z_diff.shape[1]
+    num_out_features = len(eval_datasets)
+
+    classifier = torch.nn.Sequential(
+        torch.nn.Linear(num_in_features, num_out_features),
+        torch.nn.Softmax()
+    ).to(device).train()
+
+    optimizer = torch.optim.Adagrad(classifier.parameters(), lr=1e-2)
+    loss_criterion = torch.nn.NLLLoss()
+
+    es = EarlyStopping(patience=3)
+
+    for i_epoch in range(num_epochs):
+        print("Starting epoch {}".format(i_epoch + 1))
+        avg_loss = 0.
+        accuracy = 0.
+        for z_diff, target in zip(z_diffs, targets):
+            pred = classifier(z_diff)
+            loss = loss_criterion(pred, target)
+
+            classifier.zero_grad()
+            loss.backward(retain_graph=True)
+            optimizer.step()
+
+            avg_loss += loss.item()
+            _, indices = pred.max(dim=1)
+            if indices == target:
+                accuracy += 1
+
+        avg_loss /= len(z_diffs)
+        accuracy /= len(z_diffs)
+        print("Average loss: {}, accuracy: {}".format(avg_loss, accuracy))
+        if es.step(avg_loss):
+            print("Patience reached")
+            break
+        if i_epoch + 1 == num_epochs:
+            print("Not converged after {} epochs".format(num_epochs))
+
+    print("Final accuracy: {}".format(accuracy))
 
