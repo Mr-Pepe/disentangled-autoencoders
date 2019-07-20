@@ -88,7 +88,8 @@ def get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame, sequ
 def generate_data(c):
 
     # Remove old dataset
-    shutil.rmtree(c.save_dir_path)
+    if os.path.exists(c.save_dir_path):
+        shutil.rmtree(c.save_dir_path)
 
     if config['sample_mode'] == 'x_start, v_start, a_start':
         latent_names = ['px', 'py', 'vx', 'vy', 'ax', 'ay']

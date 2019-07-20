@@ -192,7 +192,8 @@ def generate_data(c):
 
     if config['generate']:
         # delete old dataset
-        shutil.rmtree(c.save_dir_path)
+        if os.path.exists(c.save_dir_path):
+            shutil.rmtree(c.save_dir_path)
 
         # Create folder
         os.makedirs(c.save_dir_path, exist_ok=True)
