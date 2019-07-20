@@ -13,7 +13,7 @@ from sklearn import linear_model
 from torchvision.utils import make_grid
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
-from dl4cv.utils import read_csv, reparametrize, EarlyStopping
+from dl4cv.utils import read_csv, reparametrize
 
 
 def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='lines'):
@@ -198,7 +198,6 @@ def show_model_output(model, dataset, num_rows):
                 diff = abs(y_pred[0] - y)
                 axes[2].imshow(to_pil(diff), cmap='gray')
 
-
         # Remove axis ticks
         for ax in axes.reshape(-1):
             ax.get_xaxis().set_visible(False)
@@ -273,7 +272,6 @@ def show_correlation(model, dataset, z, gt):
     plt.ylabel('Latent variables')
     plt.colorbar()
     plt.show()
-
 
     return correlations
 
