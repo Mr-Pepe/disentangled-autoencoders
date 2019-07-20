@@ -5,6 +5,7 @@ import shutil
 from dl4cv.utils import Config
 import numpy as np
 import torch
+
 from PIL import Image, ImageDraw
 from dl4cv.eval.eval_functions import analyze_dataset
 
@@ -24,9 +25,6 @@ config = Config({
 # Define trajectory properties. Do this separately as some values need the config to already exist
 config.update({
     'avoid_collisions': False,
-    'sample_mode': 'x_start, v_start, a_start',  # modes: 'x_start, v_start, a_start',
-                                                 #        'x_start, x_end, a_start',
-                                                 #        'only_position'
 
     'x_min': config.ball_radius,
     'x_max': config.window_size_x - config.ball_radius,
@@ -43,7 +41,9 @@ config.update({
     'vy_std': 0,
 
     'ax_std': 0,
-    'ay_std': 0
+    'ay_std': 0,
+
+    'latent_names': ['px', 'py'],
 })
 
 
@@ -121,47 +121,25 @@ def generate_data(c):
     while collisions.any():
         idx = collisions.nonzero()[0]
 
-        if config['sample_mode'] == 'x_start, x_end, a_start':
-            x_start[idx] = torch.normal(c.x_mean, torch.ones([idx.shape[0]]) * c.x_std)
-            y_start[idx] = torch.normal(c.y_mean, torch.ones([idx.shape[0]]) * c.y_std)
+        x_start[idx] = torch.rand_like(torch.Tensor(idx)) * (c.x_max - c.x_min) + c.x_min
+        y_start[idx] = torch.rand_like(torch.Tensor(idx)) * (c.y_max - c.y_min) + c.y_min
 
-            x_end[idx] = torch.normal(c.x_mean, torch.ones([idx.shape[0]]) * c.x_std)
-            y_end[idx] = torch.normal(c.y_mean, torch.ones([idx.shape[0]]) * c.y_std)
-
-            ax[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ax_std)
-            ay[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ay_std)
-
-            vx_start, vy_start = get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end)
-
-            x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, c.t_frame,
-                                            c.sequence_length)
-
-        elif config['sample_mode'] == 'x_start, v_start, a_start':
-
-            # x_start[idx] = torch.normal(c.x_mean, torch.ones([idx.shape[0]]) * c.x_std)
-            # y_start[idx] = torch.normal(c.y_mean, torch.ones([idx.shape[0]]) * c.y_std)
-
-            x_start[idx] = torch.rand_like(torch.Tensor(idx))*(c.x_max - c.x_min) + c.x_min
-            y_start[idx] = torch.rand_like(torch.Tensor(idx))*(c.y_max - c.y_min) + c.y_min
-
+        if c.vx_std != 0:
             vx_start[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vx_std)
+            c.latent_names.append('vx')
+        if c.vy_std != 0:
             vy_start[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vy_std)
+            c.latent_names.append('vy')
 
+        if c.ax_std != 0:
             ax[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ax_std)
+            c.latent_names.append('ax')
+        if c.ay_std != 0:
             ay[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ay_std)
+            c.latent_names.append('ay')
 
-            x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, c.t_frame,
-                                            c.sequence_length)
-
-        elif config['sample_mode'] == 'only_position':
-            x_start[idx] = torch.normal(c.x_mean, torch.ones([idx.shape[0]]) * c.x_std)
-            y_start[idx] = torch.normal(c.y_mean, torch.ones([idx.shape[0]]) * c.y_std)
-
-            x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, c.t_frame,
-                                            c.sequence_length)
-
-        else:
-            raise Exception("Invalid sample_mode: {}".format(config['sample_mode']))
+        x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, c.t_frame,
+                                        c.sequence_length)
 
         collisions = get_collisions(x, y, c.x_min, c.x_max, c.y_min, c.y_max)
 

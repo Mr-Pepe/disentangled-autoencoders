@@ -212,6 +212,7 @@ if config['walk_over_question']:
 if config['eval_disentanglement']:
     print("Evaluating disentanglement")
     # load eval dataset to list
+    paths = [os.path.join(config['eval_data_path'], path) for path in dataset_config.latent_names]
     eval_datasets = [
         CustomDataset(
             path,
@@ -226,7 +227,7 @@ if config['eval_disentanglement']:
             load_to_ram=False,
             load_config=False,
         )
-        for path in glob.glob(config['eval_data_path'] + '/*') if os.path.isdir(path)]
+        for path in paths]
 
     train_accuracy = eval_disentanglement(model, eval_datasets, device, num_epochs=100)
 
