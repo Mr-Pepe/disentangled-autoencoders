@@ -236,5 +236,5 @@ if config['eval_disentanglement']:
 
 if config['mutual_information_gap']:
     print("Computing mutual information gap")
-    mig = MIG(model, dataset, config['num_samples'])
+    mig = MIG(model, dataset, config['num_samples'], discrete=True)
     print("MIG score: {} (ranges from 0 to 1 with 1=completely disentangled)".format(mig))

@@ -688,31 +688,45 @@ def eval_disentanglement(model, eval_datasets, device, num_epochs=50):
     return train_accuracy
 
 
-def MIG(model, dataset, num_samples):
+def MIG(model, dataset, num_samples, discrete=True, bins=10):
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=num_samples, shuffle=True)
     x, _, _, ground_truth = next(iter(data_loader))
     z, _, _ = model.encode(x)
     z = z.detach().numpy()
     z_true = ground_truth[:, 0].numpy()
 
+    if discrete:
+        z_min = z.min(axis=0)
+        z_max = z.max(axis=0)
+        z_true_min = z_true.min(axis=0)
+        z_true_max = z_true.max(axis=0)
+        bins_arr = np.linspace(z_min, z_max, bins)
+        true_bins_arr = np.linspace(z_true_min, z_true_max, bins)
+
     num_codes = z.shape[1]
-    num_factors = z_true.shape[1]
+    num_factors = np.count_nonzero(z_true[0])  # Only use ground truth which are nonzero
 
     # Compute mutual info
     # https://github.com/google-research/disentanglement_lib/blob/master/disentanglement_lib/evaluation/metrics/utils.py
     m = np.zeros([num_codes, num_factors])
     for i in range(num_codes):
         for j in range(num_factors):
-            m[i, j] = mutual_information((z_true[:, j].reshape(-1, 1), z[:, i].reshape(-1, 1)), k=2)
-            # m[i, j] = mutual_info_score(z_true[:, j], z[:, i])
-            pass
+            if discrete:
+                z_discrete = np.digitize(z[:, i], bins_arr[:, i])
+                z_true_discrete = np.digitize(z_true[:, j], true_bins_arr[:, j])
+                m[i, j] = mutual_info_score(z_true_discrete, z_discrete)
+            else:
+                m[i, j] = mutual_information((z_true[:, j].reshape(-1, 1), z[:, i].reshape(-1, 1)), k=2)
 
     # Compute entropy
     # https://github.com/google-research/disentanglement_lib/blob/master/disentanglement_lib/evaluation/metrics/utils.py
     h = np.zeros(num_factors)
     for j in range(num_factors):
-        h[j] = entropy((z_true[:, j].reshape(-1, 1)), k=2)
-        # h[j] = mutual_info_score(z_true[:, j], z_true[:, j])
+        if discrete:
+            z_true_discrete = np.digitize(z_true[:, j], true_bins_arr[:, j])
+            h[j] = mutual_info_score(z_true_discrete, z_true_discrete)
+        else:
+            h[j] = entropy((z_true[:, j].reshape(-1, 1)), k=2)
 
     sorted_m = np.sort(m, axis=0)[::-1]
 
