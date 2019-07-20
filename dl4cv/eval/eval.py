@@ -20,7 +20,8 @@ from dl4cv.eval.eval_functions import \
     show_correlation_after_physics, \
     show_latent_walk_gifs, \
     walk_over_question, \
-    eval_disentanglement
+    eval_disentanglement, \
+    MIG
 
 
 config = {
@@ -33,7 +34,8 @@ config = {
     'print_training_config': False,       # Print the config that was used for training the model
     'latent_walk_gifs': False,
     'walk_over_question': False,
-    'eval_disentanglement': True,
+    'eval_disentanglement': False,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
+    'mutual_information_gap': True,     # Evaluate disentanglement according to the MIG score
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
@@ -226,4 +228,12 @@ if config['eval_disentanglement']:
         )
         for path in glob.glob(config['eval_data_path'] + '/*') if os.path.isdir(path)]
 
-    eval_disentanglement(model, eval_datasets, device, num_epochs=100)
+    train_accuracy = eval_disentanglement(model, eval_datasets, device, num_epochs=100)
+
+    print("Training set accuracy (metric for disentanglement): {:.4f}".format(train_accuracy))
+
+
+if config['mutual_information_gap']:
+    print("Computing mutual information gap")
+    mig = MIG(model, dataset, config['num_samples'])
+    print("MIG score: {} (ranges from 0 to 1 with 1=completely disentangled)".format(mig))

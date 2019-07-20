@@ -10,10 +10,11 @@ import torch
 import torchvision.transforms as transforms
 
 from sklearn import linear_model
+from sklearn.metrics import mutual_info_score
 from torchvision.utils import make_grid
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
-from dl4cv.utils import read_csv, reparametrize
+from dl4cv.utils import read_csv, reparametrize, mutual_information, entropy
 
 
 def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='lines'):
@@ -370,7 +371,6 @@ def show_latent_walk_gifs(model, mus, num_images_per_variable=20, question=False
                 im = axes[i_var].imshow(to_pil(output[0]), cmap='gray')
                 images[i_frame].append(im)
 
-
     # Remove axis ticks
     for ax in axes.reshape(-1):
         ax.get_xaxis().set_visible(False)
@@ -684,5 +684,38 @@ def eval_disentanglement(model, eval_datasets, device, num_epochs=50):
     model.fit(z_diffs, targets)
 
     train_accuracy = np.mean(model.predict(z_diffs) == targets)
-    print("Training set accuracy: {:.4f}".format(train_accuracy))
 
+    return train_accuracy
+
+
+def MIG(model, dataset, num_samples):
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=num_samples, shuffle=True)
+    x, _, _, ground_truth = next(iter(data_loader))
+    z, _, _ = model.encode(x)
+    z = z.detach().numpy()
+    z_true = ground_truth[:, 0].numpy()
+
+    num_codes = z.shape[1]
+    num_factors = z_true.shape[1]
+
+    # Compute mutual info
+    # https://github.com/google-research/disentanglement_lib/blob/master/disentanglement_lib/evaluation/metrics/utils.py
+    m = np.zeros([num_codes, num_factors])
+    for i in range(num_codes):
+        for j in range(num_factors):
+            m[i, j] = mutual_information((z_true[:, j].reshape(-1, 1), z[:, i].reshape(-1, 1)), k=2)
+            # m[i, j] = mutual_info_score(z_true[:, j], z[:, i])
+            pass
+
+    # Compute entropy
+    # https://github.com/google-research/disentanglement_lib/blob/master/disentanglement_lib/evaluation/metrics/utils.py
+    h = np.zeros(num_factors)
+    for j in range(num_factors):
+        h[j] = entropy((z_true[:, j].reshape(-1, 1)), k=2)
+        # h[j] = mutual_info_score(z_true[:, j], z_true[:, j])
+
+    sorted_m = np.sort(m, axis=0)[::-1]
+
+    mig = np.mean(np.divide(sorted_m[0, :] - sorted_m[1, :], h[:]))
+
+    return mig
