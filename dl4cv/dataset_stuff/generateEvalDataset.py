@@ -91,19 +91,10 @@ def generate_data(c):
     if os.path.exists(c.save_dir_path):
         shutil.rmtree(c.save_dir_path)
 
-    if config['sample_mode'] == 'x_start, v_start, a_start':
-        latent_names = ['px', 'py', 'vx', 'vy', 'ax', 'ay']
-        latent_means = [c.x_mean, c.y_mean, 0, 0, 0, 0]
-    elif config['sample_mode'] == 'only_position':
-        latent_names = ['px', 'py']
-        latent_means = [c.x_mean, c.y_mean]
-    else:
-        raise NotImplementedError("Invalid sample_mode: {}".format(config['sample_mode']))
+    for i_latent in range(len(c.latent_names)):
+        print("Generating subset where {} is constant".format(c.latent_names[i_latent]))
 
-    for i_latent in range(len(latent_names)):
-        print("Generating subset where {} is constant".format(latent_names[i_latent]))
-
-        latent_path = os.path.join(c.save_dir_path, latent_names[i_latent])
+        latent_path = os.path.join(c.save_dir_path, c.latent_names[i_latent])
 
         os.makedirs(latent_path, exist_ok=True)
 
@@ -123,24 +114,18 @@ def generate_data(c):
         while collisions.any():
             idx = collisions.nonzero()[0]
 
-            if config['sample_mode'] == 'x_start, v_start, a_start':
+            start_vars[0][idx] = torch.rand_like(torch.Tensor(idx)) * (c.x_max - c.x_min) + c.x_min
+            start_vars[1][idx] = torch.rand_like(torch.Tensor(idx)) * (c.y_max - c.y_min) + c.y_min
 
-                start_vars[0][idx] = torch.rand_like(torch.Tensor(idx))*(c.x_max - c.x_min) + c.x_min
-                start_vars[1][idx] = torch.rand_like(torch.Tensor(idx))*(c.y_max - c.y_min) + c.y_min
-
+            if c.vx_std != 0:
                 start_vars[2][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vx_std)
+            if c.vy_std != 0:
                 start_vars[3][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vy_std)
 
+            if c.ax_std != 0:
                 start_vars[4][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ax_std)
+            if c.ay_std != 0:
                 start_vars[5][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ay_std)
-
-            elif config['sample_mode'] == 'only_position':
-
-                start_vars[0][idx] = torch.normal(c.x_mean, torch.ones([idx.shape[0]]) * c.x_std)
-                start_vars[1][idx] = torch.normal(c.y_mean, torch.ones([idx.shape[0]]) * c.y_std)
-
-            else:
-                raise Exception("Invalid sample_mode: {}".format(config['sample_mode']))
 
             # Build pairs where one variable is always fixed for two consecutive sequences
             for i_pair in range(0, start_vars[i_latent].shape[0], 2):
