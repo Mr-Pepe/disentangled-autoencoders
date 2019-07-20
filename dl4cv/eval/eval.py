@@ -1,7 +1,13 @@
-from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+import glob
+import os
+import pickle
+
 import numpy as np
+
 import torch
 import torchvision.transforms as transforms
+
+from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from dl4cv.solver import Solver
 from dl4cv.eval.eval_functions import \
     analyze_dataset, \
@@ -13,20 +19,21 @@ from dl4cv.eval.eval_functions import \
     print_traning_config, \
     show_correlation_after_physics, \
     show_latent_walk_gifs, \
-    walk_over_question
+    walk_over_question, \
+    eval_disentanglement
 
-import os
 
 config = {
-    'analyze_dataset': True,            # Plot positions of the desired datapoints
-    'show_solver_history': True,        # Plot losses of the training
-    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
-    'show_model_output': True,          # Show the model output for the desired datapoints
-    'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
+    'analyze_dataset': False,            # Plot positions of the desired datapoints
+    'show_solver_history': False,        # Plot losses of the training
+    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
+    'show_model_output': False,          # Show the model output for the desired datapoints
+    'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
     'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
-    'print_training_config': True,       # Print the config that was used for training the model
+    'print_training_config': False,       # Print the config that was used for training the model
     'latent_walk_gifs': False,
-    'walk_over_question': True,
+    'walk_over_question': False,
+    'eval_disentanglement': True,
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
@@ -37,7 +44,7 @@ config = {
 
     'question': True,
 
-    'save_path': '../../saves/4_latents_150E',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/von_felipe',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
     'use_cuda': False,
@@ -101,6 +108,7 @@ dataset = CustomDataset(
     load_to_ram=False,
     load_config=True
 )
+dataset_config = pickle.load(open(os.path.join(config['data_path'], 'config.p'), 'rb'))
 
 if config['num_samples'] is not None:
     if config['num_show_images'] > len(dataset):
@@ -132,7 +140,11 @@ if config['analyze_dataset']:
 
     trajectories = np.array([dataset.get_ground_truth(i) for i in indices])
 
-    analyze_dataset(trajectories, mode='points')
+    analyze_dataset(
+        trajectories,
+        window_size_x=dataset_config['window_size_x'],
+        window_size_y=dataset_config['window_size_y'],
+        mode='points')
 
 
 if config['show_solver_history']:
@@ -194,3 +206,24 @@ if config['latent_walk_gifs']:
 if config['walk_over_question']:
     print("Walk over questions")
     walk_over_question(model, dataset)
+
+if config['eval_disentanglement']:
+    print("Evaluating disentanglement")
+    # load eval dataset to list
+    eval_datasets = [
+        CustomDataset(
+            path,
+            transform=transforms.Compose([
+                transforms.Grayscale(),
+                transforms.ToTensor()
+            ]),
+            len_inp_sequence=config['len_inp_sequence'],
+            len_out_sequence=config['len_out_sequence'],
+            load_ground_truth=True,
+            question=config['question'],
+            load_to_ram=False,
+            load_config=False,
+        )
+        for path in glob.glob(config['eval_data_path'] + '/*') if os.path.isdir(path)]
+
+    eval_disentanglement(model, eval_datasets, device, num_epochs=100)

@@ -1,22 +1,22 @@
 import copy
 import os
+import random
+
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
+
 import torch
 import torchvision.transforms as transforms
+
+from sklearn import linear_model
 from torchvision.utils import make_grid
 
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
-from dl4cv.utils import read_csv, reparametrize
+from dl4cv.utils import read_csv, reparametrize, EarlyStopping
 
 
-def analyze_dataset(trajectories, mode='lines'):
-
-    x_max = trajectories[:, :, 0].max()+2
-    x_min = trajectories[:, :, 0].min()-2
-    y_max = trajectories[:, :, 1].max()+2
-    y_min = trajectories[:, :, 1].min()-2
+def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='lines'):
 
     plt.figure(figsize=(6, 6))
     if mode == 'lines':
@@ -28,8 +28,8 @@ def analyze_dataset(trajectories, mode='lines'):
     plt.title("Position")
     plt.xlabel("Position x")
     plt.ylabel("Position y")
-    plt.xlim(x_min, x_max)
-    plt.ylim(y_min, y_max)
+    plt.xlim(left=0, right=window_size_x)
+    plt.ylim(bottom=0, top=window_size_y)
     plt.show()
 
     n = trajectories.shape[0]
@@ -638,4 +638,53 @@ def walk_over_question(model, dataset):
     ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=500)
 
     plt.show()
+
+
+def eval_disentanglement(model, eval_datasets, device, num_epochs=50):
+    # initialize z_diffs and targets
+    z_diffs = []
+    targets = []
+
+    # iterate over every eval subset
+    for i_dataset, eval_dataset in enumerate(eval_datasets):
+        current_latent = eval_dataset.path.split('/')[-1]
+        print("Loading eval subset for latent {}".format(current_latent))
+
+        # load all samples in the subset
+        eval_data_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=50)
+
+        for i_batch, sample in enumerate(eval_data_loader):
+            x, _, _, _ = sample
+            x.to(device)
+
+            num_pairs = x.shape[0] // 2
+            z_diff_shape, _, _ = model.encode(x[0][None, :, :, :])
+            z_diff = torch.zeros_like(z_diff_shape)
+
+            # Compute latent difference z_diff for every pair of samples
+            for i_pair in range(0, x.shape[0], 2):
+                z1, _, _ = model.encode(x[i_pair][None, :, :, :])
+                z2, _, _ = model.encode(x[i_pair + 1][None, :, :, :])
+                z_diff += torch.abs(z1 - z2)
+
+            z_diff /= num_pairs
+            z_diffs.append(z_diff.detach().numpy())
+            target = np.array([i_dataset], dtype=np.long)
+            targets.append(target)
+
+    # Shuffle training data
+    c = list(zip(z_diffs, targets))
+    random.shuffle(c)
+    z_diffs, targets = zip(*c)
+
+    z_diffs = np.array(z_diffs)[:, 0]
+    targets = np.array(targets)[:, 0]
+
+    # Linear classifier as in
+    # https://github.com/google-research/disentanglement_lib/blob/master/disentanglement_lib/evaluation/metrics/beta_vae.py
+    model = linear_model.LogisticRegression()
+    model.fit(z_diffs, targets)
+
+    train_accuracy = np.mean(model.predict(z_diffs) == targets)
+    print("Training set accuracy: {:.4f}".format(train_accuracy))
 

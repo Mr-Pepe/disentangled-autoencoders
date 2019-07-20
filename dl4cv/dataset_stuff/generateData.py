@@ -1,5 +1,6 @@
 import os
 import pickle
+import shutil
 
 from dl4cv.utils import Config
 import numpy as np
@@ -104,9 +105,6 @@ def get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame, sequ
 
 
 def generate_data(c):
-
-    os.makedirs(c.save_dir_path, exist_ok=True)
-
     t_end = (c.sequence_length - 1) * c.t_frame
 
     # create image to draw on
@@ -185,9 +183,20 @@ def generate_data(c):
         trajectories[:, :, 4] = np.repeat(ax.reshape(-1, 1), c.sequence_length, 1)
         trajectories[:, :, 5] = np.repeat(ay.reshape(-1, 1), c.sequence_length, 1)
 
-        analyze_dataset(trajectories, mode=config['mode'])
+        analyze_dataset(
+            trajectories,
+            window_size_x=config['window_size_x'],
+            window_size_y=config['window_size_y'],
+            mode=config['mode']
+        )
 
     if config['generate']:
+        # delete old dataset
+        shutil.rmtree(c.save_dir_path)
+
+        # Create folder
+        os.makedirs(c.save_dir_path, exist_ok=True)
+
         # Save configuration
         with open(os.path.join(c.save_dir_path, 'config.p'), 'wb') as f:
             pickle.dump(c, f)
