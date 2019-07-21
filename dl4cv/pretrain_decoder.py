@@ -1,18 +1,13 @@
-import datetime
 import os
-import time
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
-from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader, SubsetRandomSampler, SequentialSampler
 from torchvision import transforms
 
-from dl4cv.utils import time_left
 from dl4cv.models.models import OnlyDecoder
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+from dl4cv.solver_decoder import SolverDecoder
 
 
 config = {
@@ -39,7 +34,7 @@ config = {
     'z_dim_decoder': 2,
 
     # Logging
-    'save_after_epochs': 50,
+    'save_interval': 50,
     'tensorboard_log_dir': '../tensorboard_log/',
 }
 
@@ -112,146 +107,19 @@ val_data_loader = torch.utils.data.DataLoader(
 model = OnlyDecoder(config).to(device)
 
 optimizer = torch.optim.Adam(lr=config['lr'], params=model.parameters())
+solver = SolverDecoder()
 
+""" Perform training """
 
-""" Setup tensorboard """
-
-tensorboard_writer = SummaryWriter(os.path.join(tensorboard_path, 'train' + datetime.datetime.now().strftime("%Y%m%d%H%M%S")),
-                                           flush_secs=30)
-
-
-""" Start training """
-
-num_epochs = config['num_epochs']
-save_after_epochs = config['save_after_epochs']
-z_dim_decoder = config['z_dim_decoder']
-z_dim = z_dim_decoder - 1 if config['question'] else z_dim_decoder
-latent_names = dataset.config.latent_names
-
-save_path = os.path.join(save_path, 'train' + datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
-iter_per_epoch = len(train_data_loader)
-n_iters = num_epochs*iter_per_epoch
-i_iter = 0
-i_epoch = 0
-
-print("Iterations per epoch: {}".format(iter_per_epoch))
-
-t_start_training = time.time()
-
-for i_epoch in range(num_epochs):
-    print("Starting epoch {} / {}".format(i_epoch + 1, num_epochs))
-    t_start_epoch = time.time()
-    i_epoch += 1
-
-    avg_train_loss = 0
-
-    # Do training loop
-    model.train()
-    for i_batch, batch in enumerate(train_data_loader):
-        i_iter += 1
-
-        _, y, q, z = batch
-
-        # z is the first frame of ground truth
-        z = z[:, 0].float()
-        latent_dim = z.shape[1]
-
-        # Fill zeros in z with random normals
-        z[:, len(latent_names):] = torch.randn((z.shape[0], z.shape[1] - len(latent_names)))
-
-        if z_dim > latent_dim:
-            # Concatenate random normals to z
-            diff = z_dim - latent_dim
-            z = torch.cat((z, torch.randn((z.shape[0], diff))), dim=1)
-        elif z_dim < latent_dim:
-            # Use only first few z as latent input
-            z = z[:, :z_dim]
-
-        z = z.to(device)
-        y = y.to(device)
-        q = q.to(device)
-        if q[0] > 0:
-            z = torch.cat((z, q.view(-1, 1)), dim=1)
-
-        # Forward pass
-        y_pred = model(z)
-
-        # Compute loss
-        loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
-
-        # Backpropagate and update weights
-        model.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        avg_train_loss += loss.item()
-
-        tensorboard_writer.add_scalar('train_loss', loss.item(), i_iter)
-
-    # Do eval loop
-    print("\nValidate model after epoch {} / {}".format(i_epoch + 1, num_epochs))
-
-    # Add average train loss to loss history
-    avg_train_loss /= iter_per_epoch
-
-    # Set model to evaluation mode
-    model.eval()
-
-    num_val_batches = 0
-    val_loss = 0
-
-    for i_batch, batch in enumerate(val_data_loader):
-        num_val_batches += 1
-
-        _, y, q, z = batch
-
-        # z is the first frame of ground truth
-        z = z[:, 0].float()
-        latent_dim = z.shape[1]
-
-        # Fill zeros in z with random normals
-        z[:, len(latent_names):] = torch.randn((z.shape[0], z.shape[1] - len(latent_names)))
-
-        if z_dim > latent_dim:
-            # Concatenate random normals to z
-            diff = z_dim - latent_dim
-            z = torch.cat((z, torch.randn((z.shape[0], diff))), dim=1)
-        elif z_dim < latent_dim:
-            # Use only first few z as latent input
-            z = z[:, :z_dim]
-
-        z = z.to(device)
-        y = y.to(device)
-        q = q.to(device)
-        if q[0] > 0:
-            z = torch.cat((z, q.view(-1, 1)), dim=1)
-
-        # Forward pass
-        y_pred = model(z)
-
-        # Compute loss
-        loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
-
-        val_loss += loss.item()
-
-    val_loss /= num_val_batches
-
-    tensorboard_writer.add_scalar('Avg train loss', avg_train_loss, i_iter)
-    tensorboard_writer.add_scalar('val loss', val_loss, i_iter)
-
-    print('Avg Train Loss: ' + "{0:.6f}".format(avg_train_loss) +
-          '   Val loss: ' + "{0:.6f}".format(val_loss) +
-          "   - " + str(int((time.time() - t_start_epoch) * 1000)) + "ms" +
-          "   time left: {}\n".format(time_left(t_start_training, n_iters, i_iter)))
-
-    # Save model and solver
-    if save_after_epochs is not None and (i_epoch % save_after_epochs == 0):
-        os.makedirs(save_path, exist_ok=True)
-        model.save(save_path + '/model' + str(i_epoch))
-        model.to(device)
-
-# Save model and solver after training
-os.makedirs(save_path, exist_ok=True)
-model.save(save_path + '/model' + str(i_epoch))
-
-print('FINISH.')
+if __name__ == "__main__":
+    solver.train(model=model,
+                 train_config=config,
+                 dataset_config=dataset.config,
+                 tensorboard_path=config['tensorboard_log_dir'],
+                 optim=optimizer,
+                 num_epochs=config['num_epochs'],
+                 train_loader=train_data_loader,
+                 val_loader=val_data_loader,
+                 save_after_epochs=config['save_interval'],
+                 save_path=config['save_path'],
+                 device=device)
