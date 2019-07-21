@@ -29,6 +29,7 @@ config = {
     'lr': 1e-3,
     'num_epochs': 1000,
     'batch_size': 64,
+    'z_scale_factor': 1/30,
 
     # Model configs
     'z_dim_decoder': 2,
@@ -122,4 +123,5 @@ if __name__ == "__main__":
                  val_loader=val_data_loader,
                  save_after_epochs=config['save_interval'],
                  save_path=config['save_path'],
-                 device=device)
+                 device=device,
+                 z_scale_factor=config['z_scale_factor'])

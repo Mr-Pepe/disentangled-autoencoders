@@ -38,6 +38,7 @@ class SolverDecoder(object):
             save_after_epochs=None,
             save_path='../saves/train',
             device='cpu',
+            z_scale_factor=1.,
     ):
 
         self.train_config = train_config
@@ -86,6 +87,9 @@ class SolverDecoder(object):
                 # z is the first frame of ground truth
                 z = z[:, 0].float()
                 latent_dim = z.shape[1]
+
+                # Rescale values of z to be in a "KL-conform" range
+                z /= z_scale_factor
 
                 # Fill zeros in z with random normals
                 z[:, len(latent_names):] = torch.randn((z.shape[0], z.shape[1] - len(latent_names)))
@@ -140,6 +144,9 @@ class SolverDecoder(object):
                 # z is the first frame of ground truth
                 z = z[:, 0].float()
                 latent_dim = z.shape[1]
+
+                # Rescale values of z to be in a "KL-conform" range
+                z /= z_scale_factor
 
                 # Fill zeros in z with random normals
                 z[:, len(latent_names):] = torch.randn((z.shape[0], z.shape[1] - len(latent_names)))
