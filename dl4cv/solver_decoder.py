@@ -5,9 +5,10 @@ import time
 import torch
 
 from dl4cv.utils import kl_divergence, time_left
-from dl4cv.eval.eval_functions import generate_img_figure_for_tensorboardx
 import matplotlib.pyplot as plt
 import numpy as np
+
+import torchvision.transforms as transforms
 import torch.nn.functional as F
 
 from tensorboardX import SummaryWriter
@@ -39,6 +40,7 @@ class SolverDecoder(object):
             save_path='../saves/train',
             device='cpu',
             z_scale_factor=1.,
+            overfit=False,
     ):
 
         self.train_config = train_config
@@ -89,7 +91,7 @@ class SolverDecoder(object):
                 latent_dim = z.shape[1]
 
                 # Rescale values of z to be in a "KL-conform" range
-                z /= z_scale_factor
+                z *= z_scale_factor
 
                 # Fill zeros in z with random normals
                 z[:, len(latent_names):] = torch.randn((z.shape[0], z.shape[1] - len(latent_names)))
@@ -112,7 +114,8 @@ class SolverDecoder(object):
                 y_pred = model(z)
 
                 # Compute loss
-                loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
+                # loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
+                loss = F.smooth_l1_loss(y_pred, y)
 
                 # Backpropagate and update weights
                 model.zero_grad()
@@ -146,7 +149,7 @@ class SolverDecoder(object):
                 latent_dim = z.shape[1]
 
                 # Rescale values of z to be in a "KL-conform" range
-                z /= z_scale_factor
+                z *= z_scale_factor
 
                 # Fill zeros in z with random normals
                 z[:, len(latent_names):] = torch.randn((z.shape[0], z.shape[1] - len(latent_names)))
@@ -169,9 +172,29 @@ class SolverDecoder(object):
                 y_pred = model(z)
 
                 # Compute loss
-                loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
+                # loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
+                loss = F.smooth_l1_loss(y_pred, y)
 
                 val_loss += loss.item()
+
+                if save_after_epochs is not None and (self.epoch % save_after_epochs == 0) and overfit:
+                    to_pil = transforms.ToPILImage()
+                    f, axes = plt.subplots(1, 3)
+
+                    y = y.detach().cpu()
+                    y_pred = y_pred.detach().cpu()
+
+                    # Plot ground truth
+                    axes[0].imshow(to_pil(y[0]), cmap='gray')
+
+                    # Plot prediction
+                    axes[1].imshow(to_pil(y_pred[0]), cmap='gray')
+
+                    # Plot Deviation
+                    diff = abs(y_pred[0] - y[0])
+                    axes[2].imshow(to_pil(diff), cmap='gray')
+
+                    plt.show()
 
             val_loss /= num_val_batches
 

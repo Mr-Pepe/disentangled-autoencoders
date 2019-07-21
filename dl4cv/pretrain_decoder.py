@@ -13,7 +13,7 @@ from dl4cv.solver_decoder import SolverDecoder
 config = {
     'use_cuda': True,
     'load_to_ram': False,
-    'do_overfitting': False,
+    'do_overfitting': True,
     'num_workers': 4,
     'save_path': '../saves',
 
@@ -26,7 +26,7 @@ config = {
     'question': False,
 
     # Hyperparameter
-    'lr': 1e-3,
+    'lr': 1e-2,
     'num_epochs': 1000,
     'batch_size': 64,
     'z_scale_factor': 1/30,
@@ -124,4 +124,5 @@ if __name__ == "__main__":
                  save_after_epochs=config['save_interval'],
                  save_path=config['save_path'],
                  device=device,
-                 z_scale_factor=config['z_scale_factor'])
+                 z_scale_factor=config['z_scale_factor'],
+                 overfit=config['do_overfitting'])
