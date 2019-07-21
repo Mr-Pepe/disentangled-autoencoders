@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, SubsetRandomSampler, SequentialSampler
 from torchvision import transforms
 
 from dl4cv.utils import time_left
-from dl4cv.models.models import View
+from dl4cv.models.models import OnlyDecoder
 from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 
 
@@ -26,7 +26,7 @@ config = {
     'data_path': '../../datasets/ball',
     'num_train': 4096,
     'num_val': 512,
-    'len_inp_sequence': 1,
+    'len_inp_sequence': 0,
     'len_out_sequence': 1,
     'question': False,
 
@@ -109,23 +109,9 @@ val_data_loader = torch.utils.data.DataLoader(
 
 """ Build model """
 
-decoder = nn.Sequential(
-    nn.Linear(config['z_dim_decoder'], 256),    # B, 256
-    nn.ReLU(True),
-    nn.Linear(256, 32 * 4 * 4),                 # B, 512
-    nn.ReLU(True),
-    View((-1, 32, 4, 4)),                       # B,  32,  4,  4
-    nn.Upsample(scale_factor=2),
-    nn.ConvTranspose2d(32, 32, 3, 1, 1),        # B,  32,  8,  8
-    nn.ReLU(True),
-    nn.Upsample(scale_factor=2),
-    nn.ConvTranspose2d(32, 32, 3, 1, 1),        # B,  32, 16, 16
-    nn.ReLU(True),
-    nn.Upsample(scale_factor=2),
-    nn.ConvTranspose2d(32, config['len_out_sequence'], 3, 1, 1),
-)
+model = OnlyDecoder(config).to(device)
 
-optimizer = torch.optim.Adam(lr=config['lr'], params=decoder.parameters())
+optimizer = torch.optim.Adam(lr=config['lr'], params=model.parameters())
 
 
 """ Setup tensorboard """
@@ -160,7 +146,7 @@ for i_epoch in range(num_epochs):
     avg_train_loss = 0
 
     # Do training loop
-    decoder.train()
+    model.train()
     for i_batch, batch in enumerate(train_data_loader):
         i_iter += 1
 
@@ -182,20 +168,19 @@ for i_epoch in range(num_epochs):
             z = z[:, :z_dim]
 
         z = z.to(device)
-
         y = y.to(device)
+        q = q.to(device)
         if q[0] > 0:
-            q = q.to(device)
             z = torch.cat((z, q.view(-1, 1)), dim=1)
 
         # Forward pass
-        y_pred = decoder(z)
+        y_pred = model(z)
 
         # Compute loss
         loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
 
         # Backpropagate and update weights
-        decoder.zero_grad()
+        model.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -210,7 +195,7 @@ for i_epoch in range(num_epochs):
     avg_train_loss /= iter_per_epoch
 
     # Set model to evaluation mode
-    decoder.eval()
+    model.eval()
 
     num_val_batches = 0
     val_loss = 0
@@ -236,14 +221,13 @@ for i_epoch in range(num_epochs):
             z = z[:, :z_dim]
 
         z = z.to(device)
-
         y = y.to(device)
+        q = q.to(device)
         if q[0] > 0:
-            q = q.to(device)
             z = torch.cat((z, q.view(-1, 1)), dim=1)
 
         # Forward pass
-        y_pred = decoder(z)
+        y_pred = model(z)
 
         # Compute loss
         loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
@@ -263,11 +247,11 @@ for i_epoch in range(num_epochs):
     # Save model and solver
     if save_after_epochs is not None and (i_epoch % save_after_epochs == 0):
         os.makedirs(save_path, exist_ok=True)
-        decoder.save(save_path + '/model' + str(i_epoch))
-        decoder.to(device)
+        model.save(save_path + '/model' + str(i_epoch))
+        model.to(device)
 
 # Save model and solver after training
 os.makedirs(save_path, exist_ok=True)
-decoder.save(save_path + '/model' + str(i_epoch))
+model.save(save_path + '/model' + str(i_epoch))
 
 print('FINISH.')

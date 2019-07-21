@@ -129,3 +129,29 @@ def kaiming_init(m):
         m.weight.data.fill_(1)
         if m.bias is not None:
             m.bias.data.fill_(0)
+
+
+class OnlyDecoder(BaseModel):
+    def __init__(self, c):
+        super(OnlyDecoder, self).__init__()
+        self.config = c
+
+        self.decoder = nn.Sequential(
+            nn.Linear(c['z_dim_decoder'], 32 * 4 * 4),  # B, 256
+            nn.ReLU(True),
+            View((-1, 32, 4, 4)),  # B,  32,  4,  4
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(32, 16, 3, 1, 1),  # B,  32,  8,  8
+            nn.ReLU(True),
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(16, 8, 3, 1, 1),  # B,  32, 16, 16
+            nn.ReLU(True),
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(8, 4, 3, 1, 1),  # B,  32, 32, 32
+            nn.ReLU(True),
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(4, c['len_out_sequence'], 3, 1, 1),
+        )
+
+    def forward(self, x):
+        return self.decoder(x)
