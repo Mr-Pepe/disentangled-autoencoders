@@ -12,14 +12,14 @@ from dl4cv.eval.eval_functions import analyze_dataset
 config = Config({
     'save_dir_path': '../../../datasets/ball',
     'num_sequences': 4096+512,
-    'sequence_length': 5,
-    'window_size_x': 32,
-    'window_size_y': 32,
+    'sequence_length': 1,
+    'window_size_x': 64,
+    'window_size_y': 64,
     'ball_radius': 2,
     't_frame': 1 / 30,
-    'eval_before_generating': True,  # Evaluate the dataset before generating it
+    'eval_before_generating': False,  # Evaluate the dataset before generating it
     'mode': 'lines',                # plot mode for evaluation 'lines' or 'points'
-    'generate': True                # Generate the dataset
+    'generate': True,                # Generate the dataset
 })
 
 # Define trajectory properties. Do this separately as some values need the config to already exist
