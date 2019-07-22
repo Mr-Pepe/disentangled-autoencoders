@@ -25,28 +25,28 @@ from dl4cv.eval.eval_functions import \
 
 
 config = {
-    'analyze_dataset': False,            # Plot positions of the desired datapoints
-    'show_solver_history': False,        # Plot losses of the training
-    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
-    'show_model_output': False,          # Show the model output for the desired datapoints
+    'analyze_dataset': False,            # Plot positions of the desired data-points
+    'show_solver_history': True,        # Plot losses of the training
+    'show_latent_variables': False,      # Show the latent variables for the desired data-points
+    'show_model_output': False,          # Show the model output for the desired data-points
     'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
-    'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
-    'print_training_config': False,       # Print the config that was used for training the model
+    'latent_variable_slideshow': False,  # Create a slide-show varying over all latent variables
+    'print_training_config': False,      # Print the config that was used for training the model
     'latent_walk_gifs': False,
     'walk_over_question': False,
     'eval_disentanglement': False,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
-    'mutual_information_gap': True,     # Evaluate disentanglement according to the MIG score
+    'mutual_information_gap': False,     # Evaluate disentanglement according to the MIG score
 
     'data_path': '../../../datasets/ball',  # Path to directory of the image folder
     'eval_data_path': '../../../datasets/evalDataset',
-    'len_inp_sequence': 15,
+    'len_inp_sequence': 0,
     'len_out_sequence': 1,
     'num_samples': 500,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
     'question': True,
 
-    'save_path': '../../saves/von_felipe',  # Path to the directory where the model and solver are saved
+    'save_path': '../../saves/temp',  # Path to the directory where the model and solver are saved
     'epoch': None,                                  # Use last model and solver if epoch is none
 
     'use_cuda': False,

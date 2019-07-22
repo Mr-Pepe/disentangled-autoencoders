@@ -14,7 +14,7 @@ eval_config = {
     'save_dir_path': '../../../datasets/evalDataset',
     'num_sequences': 1000,
 
-    'eval_before_generating': True,  # Evaluate the dataset before generating it
+    'eval_before_generating': False,  # Evaluate the dataset before generating it
     'generate': True,               # Generate the dataset
 }
 
@@ -97,8 +97,6 @@ def generate_data(c):
         latent_path = os.path.join(c.save_dir_path, c.latent_names[i_latent])
 
         os.makedirs(latent_path, exist_ok=True)
-
-        t_end = (c.sequence_length - 1) * c.t_frame
 
         # create image to draw on
         img = Image.new(mode="L", size=(c.window_size_x, c.window_size_y))

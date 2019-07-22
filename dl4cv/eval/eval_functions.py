@@ -733,3 +733,59 @@ def MIG(model, dataset, num_samples, discrete=True, bins=10):
     mig = np.mean(np.divide(sorted_m[0, :] - sorted_m[1, :], h[:]))
 
     return mig
+
+
+def eval_decoder(model, dataset, train_config, num_samples):
+    data_loader = torch.utils.data.DataLoader(dataset, shuffle=True, batch_size=1)
+    plt.interactive(False)
+
+    num_cols = 3
+
+    latent_names = dataset.config.latent_names
+    z_dim_decoder = train_config['z_dim_decoder']
+    z_dim = z_dim_decoder - 1 if train_config['question'] else z_dim_decoder
+
+    to_pil = transforms.ToPILImage()
+
+    plt.rcParams.update({'font.size': 8})
+
+    for i_sample in range(num_samples):
+        x, y, q, z = next(iter(data_loader))
+
+        # z is the first frame of ground truth
+        z = z[:, 0].float()
+        latent_dim = z.shape[1]
+
+        # Fill zeros in z with random normals
+        z[:, len(latent_names):] = torch.randn((z.shape[0], z.shape[1] - len(latent_names)))
+
+        if z_dim > latent_dim:
+            # Concatenate random normals to z
+            diff = z_dim - latent_dim
+            z = torch.cat((z, torch.randn((z.shape[0], diff))), dim=1)
+        elif z_dim < latent_dim:
+            # Use only first few z as latent input
+            z = z[:, :z_dim]
+
+        if q[0] > 0:
+            z = torch.cat((z, q.view(-1, 1)), dim=1)
+
+        # Forward pass
+        y_pred = model.decode(z)
+
+        print(y_pred.max(), y.max())
+
+        f, axes = plt.subplots(1, num_cols)
+        f.suptitle("\nSample {}".format(i_sample), fontsize=16)
+
+        # Plot ground truth
+        axes[0].imshow(to_pil(y[0]), cmap='gray')
+
+        # Plot prediction
+        axes[1].imshow(to_pil(y_pred[0]), cmap='gray')
+
+        # Plot Deviation
+        diff = abs(y_pred[0] - y[0])
+        axes[2].imshow(to_pil(diff), cmap='gray')
+
+        plt.show()

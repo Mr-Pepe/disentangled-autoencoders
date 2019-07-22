@@ -90,7 +90,7 @@ class CustomDataset(Dataset):
         if not self.load_to_ram:
             sequence['images'] = [self.transform(pil_loader(img)) for img in self.sequences[seq_path]['images']]
 
-        x = torch.cat(sequence['images'][:self.len_inp_sequence])
+        x = torch.cat(sequence['images'][:self.len_inp_sequence]) if self.len_inp_sequence > 0 else 0
 
         if self.question:
             target_idx = np.random.randint(low=0, high=len(sequence['images']) - self.len_out_sequence - 1)
