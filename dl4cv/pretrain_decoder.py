@@ -26,10 +26,11 @@ config = {
     'question': False,
 
     # Hyperparameter
-    'lr': 1e-2,
+    'lr': 5e-4,
     'num_epochs': 1000,
     'batch_size': 64,
     'z_scale_factor': 1/30,
+    'loss_weight_ball': 4.,
 
     # Model configs
     'z_dim_decoder': 2,
@@ -125,4 +126,5 @@ if __name__ == "__main__":
                  save_path=config['save_path'],
                  device=device,
                  z_scale_factor=config['z_scale_factor'],
-                 overfit=config['do_overfitting'])
+                 overfit=config['do_overfitting'],
+                 loss_weight_ball=config['loss_weight_ball'])

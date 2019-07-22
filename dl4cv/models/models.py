@@ -137,21 +137,29 @@ class OnlyDecoder(BaseModel):
         self.config = c
 
         self.decoder = nn.Sequential(
-            nn.Linear(c['z_dim_decoder'], 32 * 4 * 4),  # B, 256
+            nn.Linear(c['z_dim_decoder'], 256),  # B, 256
+            View((-1, 256, 1, 1)),  # B, 256,  1,  1
             nn.ReLU(True),
-            View((-1, 32, 4, 4)),  # B,  32,  4,  4
-            nn.Upsample(scale_factor=2),
-            nn.Conv2d(32, 16, 3, 1, 1),  # B,  32,  8,  8
+            nn.ConvTranspose2d(256, 64, 4),  # B,  64,  4,  4
             nn.ReLU(True),
-            nn.Upsample(scale_factor=2),
-            nn.Conv2d(16, 8, 3, 1, 1),  # B,  32, 16, 16
+            nn.ConvTranspose2d(64, 64, 4, 2, 1),  # B,  64,  8,  8
             nn.ReLU(True),
-            nn.Upsample(scale_factor=2),
-            nn.Conv2d(8, 4, 3, 1, 1),  # B,  32, 32, 32
+            nn.ConvTranspose2d(64, 32, 4, 2, 1),  # B,  32, 16, 16
             nn.ReLU(True),
-            nn.Upsample(scale_factor=2),
-            nn.Conv2d(4, c['len_out_sequence'], 3, 1, 1),
+            nn.ConvTranspose2d(32, 32, 4, 2, 1),  # B,  32, 32, 32
+            nn.ReLU(True),
+            nn.ConvTranspose2d(32, c['len_out_sequence'], 4, 2, 1),  # B, nc, 64, 64
         )
 
+        self.weight_init()
+
+    def weight_init(self):
+        for block in self._modules:
+            for m in self._modules[block]:
+                kaiming_init(m)
+
+    def decode(self, z):
+        return self.decoder(z)
+
     def forward(self, x):
-        return self.decoder(x)
+        return self.decode(x)

@@ -23,7 +23,7 @@ config = {
     'data_path': '../../datasets/ball',   # Path to the parent directory of the image folder
     'load_data_to_ram': False,
     'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': False,             # Set overfit or regular training
+    'do_overfitting': True,             # Set overfit or regular training
     'num_train_regular':    4096,       # Number of training samples for regular training
     'num_val_regular':      512,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
@@ -46,9 +46,9 @@ config = {
 
     # Model parameters
     'z_dim_encoder': 4,
-    'z_dim_decoder': 4,
+    'z_dim_decoder': 5,
     'use_physics': False,
-    'use_question': False,
+    'use_question': True,
 
     # Logging
     'log_interval': 20,           # Number of mini-batches after which to print training loss

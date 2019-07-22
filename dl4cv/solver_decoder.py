@@ -41,6 +41,7 @@ class SolverDecoder(object):
             device='cpu',
             z_scale_factor=1.,
             overfit=False,
+            loss_weight_ball=1.
     ):
 
         self.train_config = train_config
@@ -114,8 +115,16 @@ class SolverDecoder(object):
                 y_pred = model(z)
 
                 # Compute loss
-                # loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
-                loss = F.smooth_l1_loss(y_pred, y)
+                # loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='none')
+                loss = F.smooth_l1_loss(y_pred, y, reduction='none')
+
+                # If using Loss weighting, create a weighting mask
+                if loss_weight_ball != 1.:
+                    loss_weight_mask = torch.where(y > 1e-3, y * loss_weight_ball, torch.ones_like(y))
+                    loss = loss * loss_weight_mask
+                    loss = loss.mean() / loss_weight_mask.mean()
+                else:
+                    loss = loss.mean()
 
                 # Backpropagate and update weights
                 model.zero_grad()
@@ -172,8 +181,16 @@ class SolverDecoder(object):
                 y_pred = model(z)
 
                 # Compute loss
-                # loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='sum').div(y.shape[0])
-                loss = F.smooth_l1_loss(y_pred, y)
+                # loss = F.binary_cross_entropy_with_logits(y_pred, y, reduction='none')
+                loss = F.smooth_l1_loss(y_pred, y, reduction='none')
+
+                # If using Loss weighting, create a weighting mask
+                if loss_weight_ball != 1.:
+                    loss_weight_mask = torch.where(y > 1e-3, y * loss_weight_ball, torch.ones_like(y))
+                    loss = loss * loss_weight_mask
+                    loss = loss.mean() / loss_weight_mask.mean()
+                else:
+                    loss = loss.mean()
 
                 val_loss += loss.item()
 
