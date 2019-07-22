@@ -10,16 +10,16 @@ from PIL import Image, ImageDraw
 from dl4cv.eval.eval_functions import analyze_dataset
 
 config = Config({
-    'save_dir_path': '../../../datasets/ball',
-    'num_sequences': 4096+512,
-    'sequence_length': 1,
+    'save_dir_path': '../../../datasets/ball_px_py_vx_vy_ax_ay',
+    'num_sequences': 4096+128,
+    'sequence_length': 15,
     'window_size_x': 64,
     'window_size_y': 64,
     'ball_radius': 2,
     't_frame': 1 / 30,
-    'eval_before_generating': False,  # Evaluate the dataset before generating it
-    'mode': 'lines',                # plot mode for evaluation 'lines' or 'points'
-    'generate': True,                # Generate the dataset
+    'eval_before_generating': True,  # Evaluate the dataset before generating it
+    'mode': 'points',                # plot mode for evaluation 'lines' or 'points'
+    'generate': True                # Generate the dataset
 })
 
 # Define trajectory properties. Do this separately as some values need the config to already exist
@@ -31,17 +31,16 @@ config.update({
     'y_min': config.ball_radius,
     'y_max': config.window_size_y - config.ball_radius,
 
-    'x_mean': config.window_size_x / 2,
-    'x_std':  config.window_size_x / 1,
+    'x_min_sampling': config.window_size_x/5,
+    'x_max_sampling': config.window_size_x - config.window_size_x/5,
+    'y_min_sampling': config.window_size_y/4,
+    'y_max_sampling': config.window_size_y - config.window_size_y/4,
 
-    'y_mean': config.window_size_y / 2,
-    'y_std':  config.window_size_y / 1,
+    'vx_limit': 25,
+    'vy_limit': 35,
 
-    'vx_std': 0,
-    'vy_std': 0,
-
-    'ax_std': 0,
-    'ay_std': 0,
+    'ax_limit': 50,
+    'ay_limit': 70,
 
     'latent_names': ['px', 'py'],
 })
@@ -121,21 +120,35 @@ def generate_data(c):
     while collisions.any():
         idx = collisions.nonzero()[0]
 
-        x_start[idx] = torch.rand_like(torch.Tensor(idx)) * (c.x_max - c.x_min) + c.x_min
-        y_start[idx] = torch.rand_like(torch.Tensor(idx)) * (c.y_max - c.y_min) + c.y_min
+        x_start[idx] = torch.rand_like(torch.Tensor(idx)) * (c.x_max_sampling - c.x_min_sampling) + c.x_min_sampling
+        y_start[idx] = torch.rand_like(torch.Tensor(idx)) * (c.y_max_sampling - c.y_min_sampling) + c.y_min_sampling
 
-        if c.vx_std != 0:
-            vx_start[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vx_std)
+        if c.vx_limit != 0:
+            vx_start[idx] = torch.rand_like(torch.Tensor(idx)) * c.vx_limit/2 - c.vx_limit
+            torch.manual_seed(1)
+            indices = torch.rand_like(vx_start) > 0.5
+            vx_start[indices] = torch.rand_like(torch.Tensor(vx_start[indices])) * c.vx_limit / 2 + c.vx_limit / 2
             c.latent_names.append('vx')
-        if c.vy_std != 0:
-            vy_start[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vy_std)
-            c.latent_names.append('vy')
 
-        if c.ax_std != 0:
-            ax[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ax_std)
+        if c.vy_limit != 0:
+            vy_start[idx] = torch.rand_like(torch.Tensor(idx)) * c.vy_limit / 2 - c.vy_limit
+            c.latent_names.append('vy')
+            torch.manual_seed(2)
+            indices = torch.rand_like(vy_start) > 0.5
+            vy_start[indices] = torch.rand_like(torch.Tensor(vy_start[indices])) * c.vy_limit / 2 + c.vy_limit / 2
+
+        if c.ax_limit != 0:
+            ax[idx] = torch.rand_like(torch.Tensor(idx)) * c.ax_limit / 2 - c.ax_limit
+            torch.manual_seed(3)
+            indices = torch.rand_like(ax) > 0.5
+            ax[indices] = torch.rand_like(torch.Tensor(ax[indices])) * c.ax_limit / 2 + c.ax_limit / 2
             c.latent_names.append('ax')
-        if c.ay_std != 0:
-            ay[idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ay_std)
+
+        if c.ay_limit != 0:
+            ay[idx] = torch.rand_like(torch.Tensor(idx)) * c.ay_limit / 2 - c.ay_limit
+            torch.manual_seed(4)
+            indices = torch.rand_like(ay) > 0.5
+            ay[indices] = torch.rand_like(torch.Tensor(ay[indices])) * c.ay_limit / 2 + c.ay_limit / 2
             c.latent_names.append('ay')
 
         x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, c.t_frame,
