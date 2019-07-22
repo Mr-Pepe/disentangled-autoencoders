@@ -129,7 +129,7 @@ class Solver(object):
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
                           " - Time/iter: " + str(int((time.time()-t_start_iter)*1000)) + "ms")
 
-                    plot_grad_flow(model.named_parameters())
+                    # plot_grad_flow(model.named_parameters())
 
                 mus = mu.mean(dim=0).tolist()
                 vars = logvar.exp().mean(dim=0).tolist()
