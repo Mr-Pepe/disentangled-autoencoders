@@ -3,7 +3,7 @@ from dl4cv.eval.eval import eval
 from dl4cv.utils import Config
 
 TRAIN = True
-EVAL = True
+EVAL = False
 
 SAVE_PATH = '../saves/Question_AE'
 DATA_PATH = '../../datasets/ball_px_py_vx_vy_ax_ay'
@@ -14,8 +14,8 @@ config = Config({
 
     # Training continuation
     'continue_training':   False,      # Specify whether to continue training with an existing model and solver
-    'model_path': '../saves/train20190717115133/model630',
-    'solver_path': '../saves/train20190717115133/solver630',
+    'model_path': '../saves/Question_AE/model60',
+    'solver_path': '../saves/Question_AE/solver60',
 
     # Data
     'data_path': DATA_PATH,   # Path to the parent directory of the image folder
@@ -32,7 +32,7 @@ config = Config({
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 50,                  # Number of epochs to train
+    'num_epochs': 250,                  # Number of epochs to train
     'batch_size': 64,
     'learning_rate': 5e-4,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
@@ -44,9 +44,9 @@ config = Config({
 
     # Model parameters
     'z_dim_encoder': 6,
-    'z_dim_decoder': 6,
+    'z_dim_decoder': 7,
     'use_physics': False,
-    'use_question': False,
+    'use_question': True,
 
     # Logging
     'log_interval': 20,           # Number of mini-batches after which to print training loss
@@ -75,7 +75,7 @@ config = Config({
 
     'question': True,
 
-    'epoch': 10,                                  # Use last model and solver if epoch is none
+    'epoch': None,                                  # Use last model and solver if epoch is none
 })
 
 
