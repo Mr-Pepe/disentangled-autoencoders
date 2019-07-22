@@ -40,43 +40,38 @@ class VariationalAutoEncoder(BaseModel):
         self.use_physics = use_physics
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(len_in_sequence, 32, 4, 2, 1),  # B,  32, 16, 16
+            nn.Conv2d(len_in_sequence, 32, 4, 2, 1),  # 32x32
+            SkipConv(32, 32),               # 16x16
+            SkipConv(32, 32),               # 8x8
+            SkipConv(32, 32),               # 4x4
+            Flatten(),
+            nn.Linear(4*4*32, 256),
             nn.ReLU(True),
-            nn.Conv2d(32, 32, 4, 2, 1),  # B,  32,  8,  8
-            nn.ReLU(True),
-            nn.Conv2d(32, 32, 4, 2, 1),  # B,  32,  4,  4
-            nn.ReLU(True),
-            View((-1, 32 * 4 * 4)),  # B, 512
-            nn.Linear(32 * 4 * 4, 256),  # B, 256
-            nn.ReLU(True),
-            # nn.Linear(256, 256),  # B, 256
-            # nn.ReLU(True),
             nn.Linear(256, z_dim_encoder * 2),  # B, z_dim*2
         )
         self.decoder = nn.Sequential(
             nn.Linear(z_dim_decoder, 256),  # B, 256
             nn.ReLU(True),
-            # nn.Linear(256, 256),  # B, 256
-            # nn.ReLU(True),
-            nn.Linear(256, 32 * 4 * 4),  # B, 512
+            nn.Linear(256, 512),  # B, 256
             nn.ReLU(True),
             View((-1, 32, 4, 4)),  # B,  32,  4,  4
+            SkipUpConv(32, 32), # 8x8
+            SkipUpConv(32, 32), # 16x16
+            SkipUpConv(32, 32), # 32x32
             nn.Upsample(scale_factor=2),
-            nn.ConvTranspose2d(32, 32, 3, 1, 1),  # B,  32,  8,  8
-            nn.ReLU(True),
-            nn.Upsample(scale_factor=2),
-            nn.ConvTranspose2d(32, 32, 3, 1, 1),  # B,  32, 16, 16
-            nn.ReLU(True),
-            nn.Upsample(scale_factor=2),
-            nn.ConvTranspose2d(32, len_out_sequence, 3, 1, 1),
+            nn.Conv2d(32, len_out_sequence, 3, 1, 1),
         )
+
+        if self.use_physics:
+            self.physics_layer = PhysicsLayer(dt=1. / 30.)
 
         self.weight_init()
 
     def weight_init(self):
         for block in self._modules:
-            for m in self._modules[block]:
-                kaiming_init(m)
+            if block != 'physics_layer':
+                for m in self._modules[block]:
+                    kaiming_init(m)
 
     def forward(self, x, q=-1):
         z_encoder, mu, logvar = self.encode(x)
@@ -90,11 +85,14 @@ class VariationalAutoEncoder(BaseModel):
     def bottleneck(self, z_encoder, q):
         if torch.any(q != -1):
             if self.use_physics:
-                z_decoder = self.physics_layer(z_encoder, q)
+                z_decoder = self.physics_layer(z_encoder, q.view(-1))
             else:
                 z_decoder = torch.cat((z_encoder, q.view(-1, 1)), dim=1)
         else:
-            z_decoder = z_encoder
+            if self.use_physics:
+                z_decoder = self.physics_layer(z_encoder, torch.ones((z_encoder.shape[0]), device=next(self.parameters()).device))
+            else:
+                z_decoder = z_encoder
 
         return z_decoder
 
@@ -119,6 +117,10 @@ class View(nn.Module):
     def forward(self, tensor):
         return tensor.view(self.size)
 
+class Flatten(torch.nn.Module):
+    def forward(self, x):
+        batch_size = x.shape[0]
+        return x.view(batch_size, -1)
 
 def kaiming_init(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
@@ -131,35 +133,45 @@ def kaiming_init(m):
             m.bias.data.fill_(0)
 
 
-class OnlyDecoder(BaseModel):
-    def __init__(self, c):
-        super(OnlyDecoder, self).__init__()
-        self.config = c
-
-        self.decoder = nn.Sequential(
-            nn.Linear(c['z_dim_decoder'], 256),  # B, 256
-            View((-1, 256, 1, 1)),  # B, 256,  1,  1
-            nn.ReLU(True),
-            nn.ConvTranspose2d(256, 64, 4),  # B,  64,  4,  4
-            nn.ReLU(True),
-            nn.ConvTranspose2d(64, 64, 4, 2, 1),  # B,  64,  8,  8
-            nn.ReLU(True),
-            nn.ConvTranspose2d(64, 32, 4, 2, 1),  # B,  32, 16, 16
-            nn.ReLU(True),
-            nn.ConvTranspose2d(32, 32, 4, 2, 1),  # B,  32, 32, 32
-            nn.ReLU(True),
-            nn.ConvTranspose2d(32, c['len_out_sequence'], 4, 2, 1),  # B, nc, 64, 64
-        )
-
-        self.weight_init()
-
-    def weight_init(self):
-        for block in self._modules:
-            for m in self._modules[block]:
-                kaiming_init(m)
-
-    def decode(self, z):
-        return self.decoder(z)
+class SkipConv(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(SkipConv, self).__init__()
+        self.down_sample = nn.AvgPool2d(2, 2)
+        self.conv = nn.Conv2d(in_channels, out_channels, 4, 2, 1)
+        self.relu = nn.ReLU(True)
 
     def forward(self, x):
-        return self.decode(x)
+        return self.relu(self.down_sample(x) + self.conv(x))
+
+
+class SkipUpConv(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(SkipUpConv, self).__init__()
+        self.up_sample = nn.Upsample(scale_factor=2)
+        self.conv = nn.Conv2d(in_channels, out_channels, 3, 1, 1)
+        self.relu = nn.ReLU(True)
+
+    def forward(self, x):
+        out = self.up_sample(x)
+        return self.relu(out + self.conv(out))
+
+class PhysicsLayer(nn.Module):
+    def __init__(self, dt=1./30):
+        super(PhysicsLayer, self).__init__()
+        self.dt = torch.nn.Parameter(torch.tensor([dt]))
+        self.dt.requires_grad = False
+
+    def forward(self, z, q):
+        """
+            x.shape: [batch, 6, 1, 1]
+            return shape: [batch, 2, 1, 1]
+        """
+        dt = self.dt * q
+        d2 = 0.5 * dt.pow(2.)
+        zero = torch.zeros_like(dt)
+        one = torch.ones_like(dt)
+
+        res_x = (z * torch.stack((one, zero, dt, zero, d2, zero), dim=1)).sum(dim=1)
+        res_y = (z * torch.stack((zero, one, zero, dt, zero, d2), dim=1)[:, :z.shape[1]]).sum(dim=1)
+
+        return torch.cat((res_x, res_y)).view(-1, 2)

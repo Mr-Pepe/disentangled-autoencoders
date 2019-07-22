@@ -74,7 +74,7 @@ class CustomDataset(Dataset):
         if len(self.sequence_paths) == 0:
             raise Exception('Length of the dataset is 0. Make sure the dataset exists and path is correct')
 
-    def __getitem__(self, index):
+    def __getitem__(self, index, full_sample=False):
         """
         Gets a sequence of image frames starting from index
         Returns:
@@ -92,6 +92,9 @@ class CustomDataset(Dataset):
 
         x = torch.cat(sequence['images'][:self.len_inp_sequence]) if self.len_inp_sequence > 0 else 0
 
+        if full_sample:
+            full_sequence = torch.cat(sequence['images'])
+
         if self.question:
             target_idx = np.random.randint(low=0, high=len(sequence['images']) - self.len_out_sequence - 1)
             y = torch.cat(sequence['images'][target_idx:target_idx + self.len_out_sequence]) if self.len_out_sequence > 0 else 0
@@ -107,7 +110,10 @@ class CustomDataset(Dataset):
         else:
             ground_truth = 0
 
-        return x, y, question, ground_truth
+        if full_sample:
+            return x, y, question, ground_truth, full_sequence
+        else:
+            return x, y, question, ground_truth
 
     def get_ground_truth(self, index):
         return np.load(self.sequences[self.sequence_paths[index]]['ground_truth'])

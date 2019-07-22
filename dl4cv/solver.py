@@ -60,7 +60,10 @@ class Solver(object):
         train_loss_avg = 0
 
         # Path to save model and solver
-        save_path = os.path.join(save_path, 'train' + datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+        if save_path.split('/')[-1] == 'saves':
+            save_path = os.path.join(save_path, 'train' + datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+        else:
+            save_path = os.path.join(save_path)
 
         tensorboard_writer = SummaryWriter(os.path.join(tensorboard_path, 'train' + datetime.datetime.now().strftime("%Y%m%d%H%M%S")),
                                            flush_secs=30)
@@ -126,7 +129,7 @@ class Solver(object):
                           "   Avg train loss: " + "{0:.6f}".format(train_loss_avg) +
                           " - Time/iter: " + str(int((time.time()-t_start_iter)*1000)) + "ms")
 
-                    # plot_grad_flow(model.named_parameters())
+                    plot_grad_flow(model.named_parameters())
 
                 mus = mu.mean(dim=0).tolist()
                 vars = logvar.exp().mean(dim=0).tolist()
@@ -272,7 +275,7 @@ def plot_grad_flow(named_parameters):
     plt.hlines(0, 0, len(ave_grads) + 1, lw=2, color="k")
     plt.xticks(range(0, len(ave_grads), 1), layers, rotation="vertical")
     plt.xlim(left=0, right=len(ave_grads))
-    plt.ylim(bottom=-0.001, top=0.02)  # zoom in on the lower gradient regions
+    plt.ylim(bottom=-0.001, top=max([tensor.cpu() for tensor in ave_grads]))  # zoom in on the lower gradient regions
     plt.xlabel("Layers")
     plt.ylabel("average gradient")
     plt.title("Gradient flow")

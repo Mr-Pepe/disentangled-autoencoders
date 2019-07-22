@@ -152,15 +152,16 @@ def show_latent_variables(model, dataset, show=True):
     return z, mu
 
 
-def show_model_output(model, dataset, num_rows):
+def show_model_output(model, dataset, indices, num_rows):
     plt.interactive(False)
 
     num_cols = 3
 
     plt.rcParams.update({'font.size': 8})
 
-    for i_sample, sample in enumerate(dataset):
-        x, y, question, meta = sample
+    for i_sample, index in enumerate(indices):
+        sample = dataset.__getitem__(index, True)
+        x, y, question, _, full_sequence = sample
         if question != -1:
             y_pred, latent_stuff = model(
                 torch.unsqueeze(x, 0), torch.unsqueeze(question, 0)
@@ -190,7 +191,14 @@ def show_model_output(model, dataset, num_rows):
         else:
             for i_frame in range(num_rows):
                 # Plot ground truth
-                axes[0].imshow(to_pil(y), cmap='gray')
+                if question != -1:
+                    im = torch.zeros_like(full_sequence[0])
+                    if question > 0:
+                        im += full_sequence[:question.int()].sum(dim=0).clamp(0, 0.5)
+                    im = (im + full_sequence[question.int()]).clamp(0, 1)
+                    axes[0].imshow(to_pil(im), cmap='gray')
+                else:
+                    axes[0].imshow(to_pil(y), cmap='gray')
 
                 # Plot prediction
                 axes[1].imshow(to_pil(y_pred[0]), cmap='gray')
@@ -622,6 +630,7 @@ def walk_over_question(model, dataset):
     f, axes = plt.subplots(1, 2)
     for q in questions:
         pred, _ = model(x, torch.tensor([q], dtype=torch.float32))
+        pred = torch.sigmoid(pred)
         im = axes[0].imshow(to_pil(pred[0]), cmap='gray')
         gt = axes[1].imshow(to_pil(x[0, q]), cmap='gray')
         images.append([im, gt])
