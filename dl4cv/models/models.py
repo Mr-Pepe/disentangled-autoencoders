@@ -83,6 +83,7 @@ class VariationalAutoEncoder(BaseModel):
         return y, (mu, logvar)
 
     def bottleneck(self, z_encoder, q):
+        q = q.to(next(self.parameters()).device)
         if torch.any(q != -1):
             if self.use_physics:
                 z_decoder = self.physics_layer(z_encoder, q.view(-1))
