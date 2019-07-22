@@ -5,8 +5,8 @@ from dl4cv.utils import Config
 TRAIN = True
 EVAL = True
 
-SAVE_PATH = '../saves/AE_with_physics_layer'
-DATA_PATH = '../../datasets/ball_px_py_vx_vy_ax_ay'
+SAVE_PATH = '../../saves/AE_with_physics_layer'
+DATA_PATH = '../../../datasets/ball_px_py_vx_vy_ax_ay'
 
 config = Config({
 
@@ -54,7 +54,7 @@ config = Config({
     'save_interval': 10,         # Number of epochs after which to save model and solver
     'save_path': SAVE_PATH,
     'log_reconstructed_images': False,  # Show a reconstructed sample after every epoch
-    'tensorboard_log_dir': '../tensorboard_log/',
+    'tensorboard_log_dir': '../../tensorboard_log/',
 
 
     ######### EVAL ##########################
