@@ -10,55 +10,6 @@ from dl4cv.dataset_stuff.dataset_utils import CustomDataset
 from dl4cv.models.models import VariationalAutoEncoder
 from dl4cv.solver import Solver
 
-config = {
-
-    'use_cuda': True,
-
-    # Training continuation
-    'continue_training':   False,      # Specify whether to continue training with an existing model and solver
-    'model_path': '../saves/train20190617165601/model10',
-    'solver_path': '../saves/train20190617165601/solver10',
-
-    # Data
-    'data_path': '../../datasets/ball',   # Path to the parent directory of the image folder
-    'load_data_to_ram': False,
-    'dt': 1/30,                         # Frame rate at which the dataset got generated
-    'do_overfitting': True,             # Set overfit or regular training
-    'num_train_regular':    4096,       # Number of training samples for regular training
-    'num_val_regular':      512,        # Number of validation samples for regular training
-    'num_train_overfit':    256,        # Number of training samples for overfitting test runs
-    'len_inp_sequence': 1,              # Length of training sequence
-    'len_out_sequence': 1,              # Number of generated images
-
-    'num_workers': 4,                   # Number of workers for data loading
-
-    # Hyper parameters
-    'max_train_time_s': None,
-    'num_epochs': 15000,                  # Number of epochs to train
-    'batch_size': 64,
-    'learning_rate': 5e-4,
-    'betas': (0.9, 0.999),              # Beta coefficients for ADAM
-    'target_var': 1,                 # Target variance for the kl loss
-    'C_offset': 0,
-    'C_max': 20,
-    'C_stop_iter': 1e5,
-    'gamma': 100,
-
-    # Model parameters
-    'z_dim_encoder': 4,
-    'z_dim_decoder': 5,
-    'use_physics': False,
-    'use_question': True,
-
-    # Logging
-    'log_interval': 20,           # Number of mini-batches after which to print training loss
-    'save_interval': 10,         # Number of epochs after which to save model and solver
-    'save_path': '../saves',
-    'log_reconstructed_images': False,  # Show a reconstructed sample after every epoch
-    'tensorboard_log_dir': '../tensorboard_log/'
-}
-
-
 def train(config):
     """ Make paths absolute """
 
