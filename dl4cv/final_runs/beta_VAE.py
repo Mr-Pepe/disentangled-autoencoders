@@ -41,7 +41,7 @@ config = Config({
     'C_max': 100,
     'C_stop_iter': 5e4,
     'gamma': 0,
-    'beta': 0,
+    'beta': 1,
 
     # Model parameters
     'z_dim_encoder': 6,

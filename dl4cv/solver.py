@@ -43,7 +43,8 @@ class Solver(object):
             C_max=20,
             C_stop_iter=1e5,
             gamma=100,
-            log_reconstructed_images=True
+            log_reconstructed_images=True,
+            beta=0
     ):
 
         self.train_config = train_config
@@ -110,7 +111,7 @@ class Solver(object):
 
                 C = torch.clamp(self.C_offset + self.C_max / self.C_stop_iter * i_iter, 0, self.C_max.data[0])
 
-                loss = reconstruction_loss + self.gamma * (total_kl_divergence-C).abs()
+                loss = reconstruction_loss + self.gamma * (total_kl_divergence-C).abs() + beta * total_kl_divergence
 
                 # Backpropagate and update weights
                 model.zero_grad()

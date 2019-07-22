@@ -145,7 +145,8 @@ def train(config):
                  C_stop_iter=config['C_stop_iter'],
                  gamma=config['gamma'],
                  target_var=config['target_var'],
-                 log_reconstructed_images=config['log_reconstructed_images'])
+                 log_reconstructed_images=config['log_reconstructed_images'],
+                 beta=config['beta'])
 
 
 if __name__ == "__main__":
