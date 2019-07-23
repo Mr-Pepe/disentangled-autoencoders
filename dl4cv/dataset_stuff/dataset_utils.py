@@ -74,7 +74,7 @@ class CustomDataset(Dataset):
         if len(self.sequence_paths) == 0:
             raise Exception('Length of the dataset is 0. Make sure the dataset exists and path is correct')
 
-    def __getitem__(self, index, full_sample=False):
+    def __getitem__(self, index):
         """
         Gets a sequence of image frames starting from index
         Returns:
@@ -83,6 +83,12 @@ class CustomDataset(Dataset):
             y: torch.tensor, shape [batch, channels, width, height]
             one image frame, the one to be predicted
         """
+        get_full_sequence = False
+
+        if type(index) == type(tuple()):
+            get_full_sequence = index[1] != 0
+            index = index[0]
+
         seq_path = self.sequence_paths[index]
 
         sequence = copy.deepcopy(self.sequences[seq_path])
@@ -92,8 +98,8 @@ class CustomDataset(Dataset):
 
         x = torch.cat(sequence['images'][:self.len_inp_sequence]) if self.len_inp_sequence > 0 else 0
 
-        if full_sample:
-            full_sequence = torch.cat(sequence['images'])
+        if get_full_sequence:
+            full_sequence = torch.cat(sequence['images'][:])
 
         if self.question:
             target_idx = np.random.randint(low=0, high=len(sequence['images']) - self.len_out_sequence - 1)
@@ -110,7 +116,7 @@ class CustomDataset(Dataset):
         else:
             ground_truth = 0
 
-        if full_sample:
+        if get_full_sequence:
             return x, y, question, ground_truth, full_sequence
         else:
             return x, y, question, ground_truth

@@ -31,6 +31,7 @@ def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='line
     plt.ylabel("Position y")
     plt.xlim(left=0, right=window_size_x)
     plt.ylim(bottom=0, top=window_size_y)
+    plt.savefig('../dataset_plot.svg', format='svg', dpi=1000)
     plt.show()
 
     n = trajectories.shape[0]
@@ -622,18 +623,39 @@ def generate_img_figure_for_tensorboardx(target, prediction, question):
 
 def walk_over_question(model, dataset):
     to_pil = transforms.ToPILImage()
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
-    x, _, ques, _ = next(iter(dataloader))
-    questions = torch.arange(x.shape[1])
+    # dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
+    x, _, ques, _, full_sequence = dataset.__getitem__((2135, 1))
+    questions = torch.arange(full_sequence.shape[0])
+
+    sum_pred = torch.zeros_like(torch.unsqueeze(x[0], 0))
+    sum_gt = torch.zeros_like(torch.unsqueeze(x[0], 0))
 
     images = []
     f, axes = plt.subplots(1, 2)
     for q in questions:
-        pred, _ = model(x, torch.tensor([q], dtype=torch.float32))
+        pred, _ = model(torch.unsqueeze(x, 0), torch.tensor([q], dtype=torch.float32))
         pred = torch.sigmoid(pred)
-        im = axes[0].imshow(to_pil(pred[0]), cmap='gray')
-        gt = axes[1].imshow(to_pil(x[0, q]), cmap='gray')
+        pred[pred > 0.5] = 1
+        pred[pred < 0.5] = 0
+
+        gt_im = torch.unsqueeze(full_sequence[q], 0)
+        gt_im[gt_im > 0.5] = 1
+        gt_im[gt_im < 0.5] = 0
+
+        im = axes[0].imshow(to_pil((sum_pred + pred[0]).clamp(0, 1)), cmap='gray')
+        gt = axes[1].imshow(to_pil((sum_gt + gt_im).clamp(0, 1)), cmap='gray')
+        # plt.show()
+
+        sum_gt += torch.unsqueeze(full_sequence[q], 0)
+        gif_gt = sum_gt.clamp(0, 1)
+        sum_gt = sum_gt.clamp(0, 0.5)
+        sum_pred += pred[0]
+        gif_pred = sum_pred.clamp(0, 1)
+        sum_pred = sum_pred.clamp(0, 0.5)
+
         images.append([im, gt])
+
+
 
     # Remove axis ticks
     for ax in axes.reshape(-1):
@@ -642,7 +664,13 @@ def walk_over_question(model, dataset):
 
     f.tight_layout()
 
-    ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=500)
+    axes[0].imshow(to_pil(gif_pred), cmap='gray')
+    axes[0].set_title('Prediction')
+    axes[1].imshow(to_pil(gif_gt), cmap='gray')
+    axes[1].set_title('Ground truth')
+    # plt.savefig('../trajectories.pdf', format='pdf', dpi=1000)
+
+    # ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=500)
 
     plt.show()
 
