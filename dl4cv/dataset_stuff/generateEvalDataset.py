@@ -10,15 +10,19 @@ from dl4cv.eval.eval_functions import analyze_dataset
 
 
 eval_config = {
-    'dataset_config_path': '../../../datasets/ball/config.p',  # Path to train dataset config
+    'dataset_config_path': '../../../datasets/ball_px_py_vx_vy_ax_ay/config.p',  # Path to train dataset config
     'save_dir_path': '../../../datasets/evalDataset',
-    'num_sequences': 1000,
+    'num_sequences': 2048 + 512,
 
     'eval_before_generating': False,  # Evaluate the dataset before generating it
     'generate': True,               # Generate the dataset
+    'batch_size': 16
 }
 
-assert eval_config['num_sequences'] % 2 == 0  # We need to build pairs, select an even number of sequences
+num_sequences = eval_config['num_sequences']
+batch_size = eval_config['batch_size']
+
+assert num_sequences % (2 * batch_size) == 0  # We need to build pairs, select an even number of sequences
 
 # Reuse old config
 config = pickle.load(open(eval_config['dataset_config_path'], 'rb'))
@@ -26,6 +30,7 @@ config.save_dir_path = eval_config['save_dir_path']
 config.num_sequences = eval_config['num_sequences']
 config.eval_before_generating = eval_config['eval_before_generating']
 config.generate = eval_config['generate']
+config.batch_size = eval_config['batch_size']
 
 
 # make save_dir_path absolute
@@ -115,19 +120,37 @@ def generate_data(c):
             start_vars[0][idx] = torch.rand_like(torch.Tensor(idx)) * (c.x_max - c.x_min) + c.x_min
             start_vars[1][idx] = torch.rand_like(torch.Tensor(idx)) * (c.y_max - c.y_min) + c.y_min
 
-            if c.vx_std != 0:
-                start_vars[2][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vx_std)
-            if c.vy_std != 0:
-                start_vars[3][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.vy_std)
+            if c.vx_limit != 0:
+                start_vars[2][idx] = torch.rand_like(torch.Tensor(idx)) * c.vx_limit / 2 - c.vx_limit
+                torch.manual_seed(1)
+                indices = torch.rand_like(start_vars[2]) > 0.5
+                start_vars[2][indices] = torch.rand_like(torch.Tensor(start_vars[2][indices])) * c.vx_limit / 2 + c.vx_limit / 2
+                c.latent_names.append('vx')
 
-            if c.ax_std != 0:
-                start_vars[4][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ax_std)
-            if c.ay_std != 0:
-                start_vars[5][idx] = torch.normal(0, torch.ones([idx.shape[0]]) * c.ay_std)
+            if c.vy_limit != 0:
+                start_vars[3][idx] = torch.rand_like(torch.Tensor(idx)) * c.vy_limit / 2 - c.vy_limit
+                c.latent_names.append('vy')
+                torch.manual_seed(2)
+                indices = torch.rand_like(start_vars[3]) > 0.5
+                start_vars[3][indices] = torch.rand_like(torch.Tensor(start_vars[3][indices])) * c.vy_limit / 2 + c.vy_limit / 2
 
-            # Build pairs where one variable is always fixed for two consecutive sequences
-            for i_pair in range(0, start_vars[i_latent].shape[0], 2):
-                start_vars[i_latent][i_pair + 1] = start_vars[i_latent][i_pair]
+            if c.ax_limit != 0:
+                start_vars[4][idx] = torch.rand_like(torch.Tensor(idx)) * c.ax_limit / 2 - c.ax_limit
+                torch.manual_seed(3)
+                indices = torch.rand_like(start_vars[4]) > 0.5
+                start_vars[4][indices] = torch.rand_like(torch.Tensor(start_vars[4][indices])) * c.ax_limit / 2 + c.ax_limit / 2
+                c.latent_names.append('ax')
+
+            if c.ay_limit != 0:
+                start_vars[5][idx] = torch.rand_like(torch.Tensor(idx)) * c.ay_limit / 2 - c.ay_limit
+                torch.manual_seed(4)
+                indices = torch.rand_like(start_vars[5]) > 0.5
+                start_vars[5][indices] = torch.rand_like(torch.Tensor(start_vars[5][indices])) * c.ay_limit / 2 + c.ay_limit / 2
+                c.latent_names.append('ay')
+
+            # Build batch pairs where one variable is always fixed for two consecutive batches
+            for i_pair in range(0, num_sequences, (2 * batch_size)):
+                start_vars[i_latent][i_pair + batch_size: i_pair + 2 * batch_size] = start_vars[i_latent][i_pair: i_pair + batch_size]
 
             x, y, vx, vy = get_trajectories(*start_vars, c.t_frame, c.sequence_length)
 
@@ -155,7 +178,7 @@ def generate_data(c):
                 trajectories,
                 window_size_x=config['window_size_x'],
                 window_size_y=config['window_size_y'],
-                mode='points'
+                mode='lines'
             )
 
         if config['generate']:
