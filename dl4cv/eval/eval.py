@@ -65,14 +65,6 @@ def eval(config):
         device = torch.device("cpu")
         torch.set_default_tensor_type('torch.FloatTensor')
 
-
-    # make all paths absolute
-    file_dir = os.path.dirname(os.path.realpath(__file__))
-
-    config['data_path'] = os.path.join(file_dir, config['data_path'])
-    config['eval_data_path'] = os.path.join(file_dir, config['eval_data_path'])
-    config['save_path'] = os.path.join(file_dir, config['save_path'])
-
     z = None
     mu = None
 
