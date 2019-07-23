@@ -56,6 +56,8 @@ def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='line
     plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
     plt.xlabel('Ground truth variables')
     plt.ylabel('Ground truth variables')
+    plt.xticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
+    plt.yticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
     plt.colorbar()
     plt.gca().xaxis.tick_top()
     plt.gca().xaxis.set_label_position('top')
@@ -176,7 +178,8 @@ def show_model_output(model, dataset, indices, num_rows):
         to_pil = transforms.ToPILImage()
 
         f, axes = plt.subplots(num_rows, num_cols)
-        f.suptitle("\nSample {}, question: {}".format(i_sample, question), fontsize=16)
+        # f.suptitle("\nSample {}, question: {}".format(i_sample, question), fontsize=16)
+        f.suptitle("\nQuestion: {}".format(question), fontsize=16)
 
         if num_rows > 1:
             for i_frame in range(num_rows):
@@ -195,7 +198,8 @@ def show_model_output(model, dataset, indices, num_rows):
                 if question != -1:
                     im = torch.zeros_like(full_sequence[0])
                     if question > 0:
-                        im += full_sequence[:question.int()].sum(dim=0).clamp(0, 0.5)
+                        im += full_sequence.sum(dim=0).clamp(0, 0.5)
+                        # im += full_sequence[:question.int()].sum(dim=0).clamp(0, 0.5)
                     im = (im + full_sequence[question.int()]).clamp(0, 1)
                     axes[0].imshow(to_pil(im), cmap='gray')
                 else:
@@ -261,6 +265,7 @@ def show_correlation(model, dataset, z, gt):
     plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
     plt.xlabel('Ground truth variables')
     plt.ylabel('Latent variables')
+    plt.xticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
     plt.colorbar()
     plt.show()
 
@@ -685,25 +690,22 @@ def eval_disentanglement(model, eval_datasets, device, num_epochs=50):
         current_latent = eval_dataset.path.split('/')[-1]
         print("Loading eval subset for latent {}".format(current_latent))
 
+        c = eval_dataset.config
+
         # load all samples in the subset
-        eval_data_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=50)
+        eval_data_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=2 * c.batch_size)
 
         for i_batch, sample in enumerate(eval_data_loader):
             x, _, _, _ = sample
             x.to(device)
 
-            num_pairs = x.shape[0] // 2
-            z_diff_shape, _, _ = model.encode(x[0][None, :, :, :])
-            z_diff = torch.zeros_like(z_diff_shape)
+            z1, _, _ = model.encode(x[:c.batch_size])
+            z2, _, _ = model.encode(x[c.batch_size:])
 
-            # Compute latent difference z_diff for every pair of samples
-            for i_pair in range(0, x.shape[0], 2):
-                z1, _, _ = model.encode(x[i_pair][None, :, :, :])
-                z2, _, _ = model.encode(x[i_pair + 1][None, :, :, :])
-                z_diff += torch.abs(z1 - z2)
-
-            z_diff /= num_pairs
+            z_diff = torch.abs(z1 - z2)
+            z_diff = torch.mean(z_diff, dim=0)
             z_diffs.append(z_diff.detach().numpy())
+
             target = np.array([i_dataset], dtype=np.long)
             targets.append(target)
 
@@ -712,17 +714,22 @@ def eval_disentanglement(model, eval_datasets, device, num_epochs=50):
     random.shuffle(c)
     z_diffs, targets = zip(*c)
 
-    z_diffs = np.array(z_diffs)[:, 0]
-    targets = np.array(targets)[:, 0]
+    split_idx = int(0.8 * len(z_diffs))
 
-    # Linear classifier as in
-    # https://github.com/google-research/disentanglement_lib/blob/master/disentanglement_lib/evaluation/metrics/beta_vae.py
+    z_diffs_train = np.array(z_diffs)[:split_idx]
+    targets_train = np.array(targets)[:split_idx, 0]
+    z_diffs_test = np.array(z_diffs)[split_idx:]
+    targets_test = np.array(targets)[split_idx:, 0]
+
+    # Linear classifier
     model = linear_model.LogisticRegression()
-    model.fit(z_diffs, targets)
+    model.fit(z_diffs_train, targets_train)
 
-    train_accuracy = np.mean(model.predict(z_diffs) == targets)
+    train_accuracy = np.mean(model.predict(z_diffs_train) == targets_train)
+    test_accuracy = np.mean(model.predict(z_diffs_test) == targets_test)
 
-    return train_accuracy
+    print("Train accuracy (metric for disentanglement): {:.4f}".format(train_accuracy))
+    print("Test accuracy (metric for disentanglement): {:.4f}".format(test_accuracy))
 
 
 def MIG(model, dataset, num_samples, discrete=True, bins=10):
@@ -769,7 +776,7 @@ def MIG(model, dataset, num_samples, discrete=True, bins=10):
 
     mig = np.mean(np.divide(sorted_m[0, :] - sorted_m[1, :], h[:]))
 
-    return mig
+    print("MIG score: {} (ranges from 0 to 1 with 1=completely disentangled)".format(mig))
 
 
 def eval_decoder(model, dataset, train_config, num_samples):

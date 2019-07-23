@@ -143,7 +143,7 @@ def eval(config):
             trajectories,
             window_size_x=dataset_config['window_size_x'],
             window_size_y=dataset_config['window_size_y'],
-            mode='points')
+            mode='lines')
 
 
     if config['show_solver_history']:
@@ -222,19 +222,15 @@ def eval(config):
                 load_ground_truth=True,
                 question=config['use_question'],
                 load_to_ram=False,
-                load_config=False,
+                load_config=True,
             )
             for path in paths]
 
-        train_accuracy = eval_disentanglement(model, eval_datasets, device, num_epochs=100)
-
-        print("Training set accuracy (metric for disentanglement): {:.4f}".format(train_accuracy))
-
+        eval_disentanglement(model, eval_datasets, device, num_epochs=100)
 
     if config['mutual_information_gap']:
         print("Computing mutual information gap")
-        mig = MIG(model, dataset, config['num_samples'], discrete=True)
-        print("MIG score: {} (ranges from 0 to 1 with 1=completely disentangled)".format(mig))
+        MIG(model, dataset, config['num_samples'], discrete=True)
 
 
 if __name__ == '__main__':
