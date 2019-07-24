@@ -338,7 +338,7 @@ def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence)
         plt.show()
 
 
-def show_latent_walk_gifs(model, mus, num_images_per_variable=20, question=False, len_out_sequence=1):
+def show_latent_walk_gifs(model, mus, num_images_per_variable=40, question=False, len_out_sequence=1, create_flipbook=False):
 
     # mus contains that were obtained on a dataset. The random walk is performed between the min and max value of mu for
     # each variable
@@ -353,8 +353,10 @@ def show_latent_walk_gifs(model, mus, num_images_per_variable=20, question=False
 
     if len_out_sequence > 1:
         images = []
+        pil_images = []
     else:
         images = [[] for i in range(num_images_per_variable)]
+        pil_images = [[] for i in range(num_images_per_variable)]
 
     for i_var in range(len(mean_mu)):
         # Do a walk over latent variable i
@@ -384,6 +386,7 @@ def show_latent_walk_gifs(model, mus, num_images_per_variable=20, question=False
             else:
                 im = axes[i_var].imshow(to_pil(output[0]), cmap='gray')
                 images[i_frame].append(im)
+                pil_images[i_frame].append(to_pil(output[0]))
 
     # Remove axis ticks
     for ax in axes.reshape(-1):
@@ -395,6 +398,31 @@ def show_latent_walk_gifs(model, mus, num_images_per_variable=20, question=False
     ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=100)
 
     plt.show()
+
+    if create_flipbook:
+        values = np.linspace(min_mu, max_mu, num_images_per_variable)
+
+        for i_frame, pil_img in enumerate(pil_images):
+            f, axes = plt.subplots(len(mean_mu), 1, figsize=(5, 10))
+            figure_title = "Frame {}\nAnnealed VAE".format(i_frame)
+            plt.text(0.5, 1.40, figure_title,
+                     horizontalalignment='center',
+                     fontsize=12,
+                     transform=axes[0].transAxes)
+
+            for i_ax in range(len(pil_img)):
+                axes[i_ax].imshow(pil_img[i_ax], cmap='gray')
+
+            # Remove axis ticks
+            for i_ax, ax in enumerate(axes.reshape(-1)):
+                ax.text(x=70, y=35, s='Value: {:.2f}'.format(values[i_frame, i_ax]), fontdict={'fontsize': 8})
+                ax.get_xaxis().set_visible(False)
+                ax.get_yaxis().set_tick_params(which='both', length=0, labelleft=False)
+
+            f.tight_layout()
+
+            plt.savefig("Annealed VAE Frame {}.png".format(i_frame))
+            plt.show()
 
     pass
 
@@ -629,7 +657,7 @@ def generate_img_figure_for_tensorboardx(target, prediction, question):
 def walk_over_question(model, dataset):
     to_pil = transforms.ToPILImage()
     # dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
-    x, _, ques, _, full_sequence = dataset.__getitem__((2135, 1))
+    x, _, ques, _, full_sequence = dataset.__getitem__((2149, 1))
     questions = torch.arange(full_sequence.shape[0])
 
     sum_pred = torch.zeros_like(torch.unsqueeze(x[0], 0))
