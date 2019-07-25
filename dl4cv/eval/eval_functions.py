@@ -78,7 +78,7 @@ def show_solver_history(solver):
     posterior_mu = np.array(solver.history['posterior_mu'])
     posterior_var = np.array(solver.history['posterior_var'])
 
-    plt.plot(reconstruction_loss, label='Reconstruction loss')
+    plt.plot(moving_average(reconstruction_loss[100:], 100), label='Reconstruction loss')
     plt.xlabel("Iterations")
     plt.ylabel("Reconstruction loss")
     plt.show()
@@ -338,7 +338,7 @@ def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence)
         plt.show()
 
 
-def show_latent_walk_gifs(model, mus, num_images_per_variable=40, question=False, len_out_sequence=1, create_flipbook=False):
+def show_latent_walk_gifs(model, mus, num_images_per_variable=60, question=False, len_out_sequence=1, create_flipbook=False):
 
     # mus contains that were obtained on a dataset. The random walk is performed between the min and max value of mu for
     # each variable
@@ -389,14 +389,15 @@ def show_latent_walk_gifs(model, mus, num_images_per_variable=40, question=False
                 pil_images[i_frame].append(to_pil(output[0]))
 
     # Remove axis ticks
-    for ax in axes.reshape(-1):
+    for i_ax, ax in enumerate(axes.reshape(-1)):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_tick_params(which='both', length=0, labelleft=False)
+        ax.set_title('Variable {}'.format(i_ax))
 
     f.tight_layout()
 
-    ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=100)
-
+    ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=1000/60)
+    ani.save('gifs/animation.gif', writer='imagemagick', fps=60)
     plt.show()
 
     if create_flipbook:
@@ -657,7 +658,7 @@ def generate_img_figure_for_tensorboardx(target, prediction, question):
 def walk_over_question(model, dataset):
     to_pil = transforms.ToPILImage()
     # dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
-    x, _, ques, _, full_sequence = dataset.__getitem__((2149, 1))
+    x, _, ques, _, full_sequence = dataset.__getitem__((2137, 1))
     questions = torch.arange(full_sequence.shape[0])
 
     sum_pred = torch.zeros_like(torch.unsqueeze(x[0], 0))

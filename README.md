@@ -1,3 +1,3 @@
-Push changes to remote repository
-Pull changes from remote repository to remote machine
-Run pip install . 
+Beta VAE
+
+![Alt text](dl4cv/final_runs/gifs/beta_vae.gif) 
