@@ -2,6 +2,7 @@ import copy
 import os
 import random
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
@@ -13,11 +14,14 @@ from sklearn import linear_model
 from sklearn.metrics import mutual_info_score
 from torchvision.utils import make_grid
 
-from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+from dl4cv.dataset.utils import CustomDataset
 from dl4cv.utils import read_csv, reparametrize, mutual_information, entropy
 
 
 def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='lines'):
+
+    mpl.rcParams['axes.titlesize'] = 'large'
+    mpl.rcParams['axes.labelsize'] = 'large'
 
     plt.figure(figsize=(6, 6))
     if mode == 'lines':
@@ -27,11 +31,10 @@ def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='line
         plt.scatter(trajectories[:, :, 0].reshape(-1), trajectories[:, :, 1].reshape(-1), s=0.2)
 
     plt.title("Position")
-    plt.xlabel("Position x")
-    plt.ylabel("Position y")
+    plt.xlabel("x")
+    plt.ylabel("y")
     plt.xlim(left=0, right=window_size_x)
     plt.ylim(bottom=0, top=window_size_y)
-    plt.savefig('../dataset_plot.svg', format='svg', dpi=1000)
     plt.show()
 
     n = trajectories.shape[0]
@@ -54,13 +57,13 @@ def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='line
     correlations = np.abs(correlations)
 
     plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
-    plt.xlabel('Ground truth variables')
-    plt.ylabel('Ground truth variables')
+    plt.title('Variable intercorrelation')
     plt.xticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
     plt.yticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
     plt.colorbar()
     plt.gca().xaxis.tick_top()
     plt.gca().xaxis.set_label_position('top')
+    plt.gcf().tight_layout()
     plt.show()
 
 
@@ -397,7 +400,7 @@ def show_latent_walk_gifs(model, mus, num_images_per_variable=60, question=False
     f.tight_layout()
 
     ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=1000/60)
-    ani.save('gifs/animation.gif', writer='imagemagick', fps=60)
+    # ani.save('gifs/question_AE.gif', writer='imagemagick', fps=60)
     plt.show()
 
     if create_flipbook:

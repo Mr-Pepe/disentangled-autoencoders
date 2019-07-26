@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 
-from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+from dl4cv.dataset.utils import CustomDataset
 from dl4cv.solver import Solver
 from dl4cv.eval.eval_functions import \
     analyze_dataset, \

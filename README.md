@@ -5,6 +5,19 @@ of single images or image sequences in an unsupervised manner. It also contains 
 for this purpose. Evaluation functions give qualitative and quantitative feedback on the quality of 
 disentanglement.
 
+## Usage
+
+Clone the repository and install the project and its dependencies.
+
+    git clone https://github.com/Mr-Pepe/dl4cv
+    cd dl4cv
+    pip install -r requirements.txt
+    pip install .
+  
+You can generate the dataset by running
+    
+    python dl4cv/dataset/generateData.py
+
 
 ## Walks over latent variables
 
@@ -16,13 +29,13 @@ one latent variable on the generated output image.
 
 ### Question Autoencoder
 
-![Alt text](dl4cv/final_runs/gifs/question_AE.gif) 
+![Alt text](dl4cv/doc/gifs/question_AE.gif) 
 
 ### Beta VAE
 
-![Alt text](dl4cv/final_runs/gifs/beta_vae.gif) 
+![Alt text](dl4cv/doc/gifs/beta_vae.gif) 
 
 
 ### Annealed VAE
 
-![Alt text](dl4cv/final_runs/gifs/annealed_VAE.gif)
+![Alt text](dl4cv/doc/gifs/annealed_VAE.gif)
