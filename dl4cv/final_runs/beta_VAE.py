@@ -32,7 +32,7 @@ config = Config({
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 250,                  # Number of epochs to train
+    'num_epochs': 600,                  # Number of epochs to train
     'batch_size': 64,
     'learning_rate': 5e-4,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM

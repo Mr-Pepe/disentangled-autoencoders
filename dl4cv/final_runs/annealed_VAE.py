@@ -32,14 +32,14 @@ config = Config({
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 2000,                  # Number of epochs to train
+    'num_epochs': 8000,                # Number of epochs to train
     'batch_size': 64,
     'learning_rate': 5e-4,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
-    'target_var': 1,                 # Target variance for the kl loss
+    'target_var': 1,                    # Target variance for the kl loss
     'C_offset': 0,
-    'C_max': 100,
-    'C_stop_iter': 1e5,
+    'C_max': 150,
+    'C_stop_iter': 4e5,
     'gamma': 100,
     'beta': 0,
 
