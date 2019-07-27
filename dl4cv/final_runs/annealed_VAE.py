@@ -22,8 +22,8 @@ config = Config({
     'load_data_to_ram': False,
     'dt': 1,                            # Frame rate at which the dataset got generated
     'do_overfitting': False,            # Set overfit or regular training
-    'num_train_regular':    4096,       # Number of training samples for regular training
-    'num_val_regular':      128,        # Number of validation samples for regular training
+    'num_train_regular':    8192,       # Number of training samples for regular training
+    'num_val_regular':      512,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 5,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images

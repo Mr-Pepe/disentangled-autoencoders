@@ -11,14 +11,14 @@ from dl4cv.eval.eval_functions import analyze_dataset
 
 config = Config({
     'save_dir_path': '../../../datasets/ball_px_py_vx_vy_ax_ay',
-    'num_sequences': 4096+128,
+    'num_sequences': 8192+512,
     'sequence_length': 15,
     'window_size_x': 64,
     'window_size_y': 64,
     'ball_radius': 2,
     't_frame': 1 / 30,
     'eval_before_generating': True,  # Evaluate the dataset before generating it
-    'mode': 'points',                # plot mode for evaluation 'lines' or 'points'
+    'mode': 'lines',                # plot mode for evaluation 'lines' or 'points'
     'generate': True                # Generate the dataset
 })
 
