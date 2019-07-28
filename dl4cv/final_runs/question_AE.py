@@ -6,6 +6,7 @@ import argparse
 
 SAVE_PATH = '../../saves/Question_AE'
 DATA_PATH = '../../../datasets/ball'
+EVAL_DATA_PATH = '../../../datasets/evalDataset'
 
 config = Config({
 
@@ -18,6 +19,7 @@ config = Config({
 
     # Data
     'data_path': DATA_PATH,   # Path to the parent directory of the image folder
+    'eval_data_path': EVAL_DATA_PATH,
     'load_data_to_ram': False,
     'dt': 1,                            # Frame rate at which the dataset got generated
     'do_overfitting': False,            # Set overfit or regular training
@@ -63,12 +65,12 @@ config = Config({
     'show_latent_variables': True,      # Show the latent variables for the desired datapoints
     'show_model_output': True,          # Show the model output for the desired datapoints
     'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
-    'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
-    'print_training_config': False,       # Print the config that was used for training the model
-    'latent_walk_gifs': False,
-    'walk_over_question': False,
-    'eval_disentanglement': False,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
-    'mutual_information_gap': False,     # Evaluate disentanglement according to the MIG score
+    'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
+    'print_training_config': True,       # Print the config that was used for training the model
+    'latent_walk_gifs': True,
+    'walk_over_question': True,
+    'eval_disentanglement': True,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
+    'mutual_information_gap': True,     # Evaluate disentanglement according to the MIG score
 
     'num_samples': 2000,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True

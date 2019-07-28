@@ -10,7 +10,7 @@ from dl4cv.eval.eval_functions import analyze_dataset
 
 
 eval_config = {
-    'dataset_config_path': '../../../datasets/ball_px_py_vx_vy_ax_ay/config.p',  # Path to train dataset config
+    'dataset_config_path': '../../../datasets/ball/config.p',  # Path to train dataset config
     'save_dir_path': '../../../datasets/evalDataset',
     'num_sequences': 2048 + 512,
 
@@ -28,14 +28,14 @@ assert num_sequences % (2 * batch_size) == 0  # We need to build pairs, select a
 config = pickle.load(open(eval_config['dataset_config_path'], 'rb'))
 config.save_dir_path = eval_config['save_dir_path']
 config.num_sequences = eval_config['num_sequences']
-config.eval_before_generating = eval_config['eval_before_generating']
+config.eval_before_saving = eval_config['eval_before_generating']
 config.generate = eval_config['generate']
 config.batch_size = eval_config['batch_size']
 
 
 # make save_dir_path absolute
-file_dir = os.path.dirname(os.path.realpath(__file__))
-config['save_dir_path'] = os.path.join(file_dir, config['save_dir_path'])
+# file_dir = os.path.dirname(os.path.realpath(__file__))
+# config['save_dir_path'] = os.path.join(file_dir, config['save_dir_path'])
 
 
 def equation_of_motion(x_0, y_0, vx_0, vy_0, ax, ay, t):
@@ -83,8 +83,8 @@ def get_initial_velocities(x_start, x_end, y_start, y_end, ax, ay, t_end):
     return vx_0, vy_0
 
 
-def get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame, sequence_length):
-    t = torch.arange(sequence_length).float() * t_frame
+def get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, t_frame, len_sequence):
+    t = torch.arange(len_sequence).float() * t_frame
     t = torch.ones(x_start.shape[0], 1) * t.view(1, -1)
 
     return equation_of_motion(x_start, y_start, vx_start, vy_start, ax, ay, t)
@@ -113,46 +113,38 @@ def generate_data(c):
 
         collisions = np.ones((c.num_sequences))
 
+        i_run = 0
+
         # Generate Trajectories for all the sequences
         while collisions.any():
+            i_run += 1
+
             idx = collisions.nonzero()[0]
 
             start_vars[0][idx] = torch.rand_like(torch.Tensor(idx)) * (c.x_max - c.x_min) + c.x_min
             start_vars[1][idx] = torch.rand_like(torch.Tensor(idx)) * (c.y_max - c.y_min) + c.y_min
 
             if c.vx_limit != 0:
-                start_vars[2][idx] = torch.rand_like(torch.Tensor(idx)) * c.vx_limit / 2 - c.vx_limit
-                torch.manual_seed(1)
-                indices = torch.rand_like(start_vars[2]) > 0.5
-                start_vars[2][indices] = torch.rand_like(torch.Tensor(start_vars[2][indices])) * c.vx_limit / 2 + c.vx_limit / 2
+                start_vars[2][idx] = sample_near_limit(idx, c.vx_limit, c.fraction, i_run*c.seed)
                 c.latent_names.append('vx')
 
             if c.vy_limit != 0:
-                start_vars[3][idx] = torch.rand_like(torch.Tensor(idx)) * c.vy_limit / 2 - c.vy_limit
+                start_vars[3][idx] = sample_near_limit(idx, c.vy_limit, c.fraction, (i_run + 1)*c.seed)
                 c.latent_names.append('vy')
-                torch.manual_seed(2)
-                indices = torch.rand_like(start_vars[3]) > 0.5
-                start_vars[3][indices] = torch.rand_like(torch.Tensor(start_vars[3][indices])) * c.vy_limit / 2 + c.vy_limit / 2
 
             if c.ax_limit != 0:
-                start_vars[4][idx] = torch.rand_like(torch.Tensor(idx)) * c.ax_limit / 2 - c.ax_limit
-                torch.manual_seed(3)
-                indices = torch.rand_like(start_vars[4]) > 0.5
-                start_vars[4][indices] = torch.rand_like(torch.Tensor(start_vars[4][indices])) * c.ax_limit / 2 + c.ax_limit / 2
+                start_vars[4][idx] = sample_near_limit(idx, c.ax_limit, c.fraction, (i_run + 2)*c.seed)
                 c.latent_names.append('ax')
 
             if c.ay_limit != 0:
-                start_vars[5][idx] = torch.rand_like(torch.Tensor(idx)) * c.ay_limit / 2 - c.ay_limit
-                torch.manual_seed(4)
-                indices = torch.rand_like(start_vars[5]) > 0.5
-                start_vars[5][indices] = torch.rand_like(torch.Tensor(start_vars[5][indices])) * c.ay_limit / 2 + c.ay_limit / 2
+                start_vars[5][idx] = sample_near_limit(idx, c.ay_limit, c.fraction, (i_run+3)*c.seed)
                 c.latent_names.append('ay')
 
             # Build batch pairs where one variable is always fixed for two consecutive batches
             for i_pair in range(0, num_sequences, (2 * batch_size)):
                 start_vars[i_latent][i_pair + batch_size: i_pair + 2 * batch_size] = start_vars[i_latent][i_pair: i_pair + batch_size]
 
-            x, y, vx, vy = get_trajectories(*start_vars, c.t_frame, c.sequence_length)
+            x, y, vx, vy = get_trajectories(*start_vars, c.t_frame, c.len_sequence)
 
             collisions = get_collisions(x, y, c.x_min, c.x_max, c.y_min, c.y_max)
 
@@ -164,24 +156,24 @@ def generate_data(c):
                 )
                 collisions = np.zeros((c.num_sequences))
 
-        if config['eval_before_generating']:
-            trajectories = np.zeros((c.num_sequences, c.sequence_length, 6))
+        if config.eval_before_saving:
+            trajectories = np.zeros((c.num_sequences, c.len_sequence, 6))
 
             trajectories[:, :, 0] = x
             trajectories[:, :, 1] = y
             trajectories[:, :, 2] = vx
             trajectories[:, :, 3] = vy
-            trajectories[:, :, 4] = np.repeat(start_vars[4].reshape(-1, 1), c.sequence_length, 1)
-            trajectories[:, :, 5] = np.repeat(start_vars[5].reshape(-1, 1), c.sequence_length, 1)
+            trajectories[:, :, 4] = np.repeat(start_vars[4].reshape(-1, 1), c.len_sequence, 1)
+            trajectories[:, :, 5] = np.repeat(start_vars[5].reshape(-1, 1), c.len_sequence, 1)
 
             analyze_dataset(
                 trajectories,
-                window_size_x=config['window_size_x'],
-                window_size_y=config['window_size_y'],
+                window_size_x=config.window_size_x,
+                window_size_y=config.window_size_y,
                 mode='lines'
             )
 
-        if config['generate']:
+        if config.save:
             # Save configuration
             with open(os.path.join(latent_path, 'config.p'), 'wb') as f:
                 pickle.dump(c, f)
@@ -196,9 +188,9 @@ def generate_data(c):
 
                 os.makedirs(save_path_sequence, exist_ok=True)
 
-                ground_truth = np.zeros((c.sequence_length, 6))
+                ground_truth = np.zeros((c.len_sequence, 6))
 
-                for i_frame in range(c.sequence_length):
+                for i_frame in range(c.len_sequence):
 
                     save_path_frame = os.path.join(
                         save_path_sequence,
@@ -221,7 +213,18 @@ def generate_data(c):
 
                 if (i_sequence+1) % 100 == 0:
                     print("Generated sequence: %d of %d with length %d ..." % (
-                        i_sequence+1, c.num_sequences, c.sequence_length))
+                        i_sequence+1, c.num_sequences, c.len_sequence))
+
+
+def sample_near_limit(idx, limit, fraction, seed):
+    # Use this function to only sample from the lowest highest fraction of the sample range
+
+    values = torch.rand_like(torch.Tensor(idx)) * limit * fraction - limit
+    torch.manual_seed(seed)
+    indices = torch.rand_like(values) >= 0.5
+    values[indices] = torch.rand_like(values[indices]) * limit * fraction + limit - limit * fraction
+
+    return values
 
 
 if __name__ == '__main__':

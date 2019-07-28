@@ -14,21 +14,18 @@ Clone the repository and install the project and its dependencies.
     pip install -r requirements.txt
     pip install .
   
-You can generate the dataset by running
+You can generate the training and evaluation dataset by running
     
-    python generateData.py
+    python generateDataset.py
+    python generateEvalDataset.py
 
 in the dataset directory.
 
-The models can be trained with, e.g.,
+The models can be trained and evaluated with, e.g.,
 
-    python question_AE.py --train true
+    python question_AE.py --train true --eval true
     
 inside the final_runs directory.
-
-The trained models can be evaluated with, e.g.,
-
-    python question_AE.py --eval true
 
 
 ## Results

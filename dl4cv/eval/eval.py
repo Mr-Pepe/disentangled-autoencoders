@@ -14,7 +14,6 @@ from dl4cv.eval.eval_functions import \
     show_latent_variables, \
     show_model_output, \
     show_correlation, \
-    latent_variable_slideshow, \
     print_traning_config, \
     show_correlation_after_physics, \
     show_latent_walk_gifs, \
@@ -35,7 +34,6 @@ def evaluate(config):
 
     z = None
     mu = None
-
 
     def get_model_solver_paths(save_path, epoch):
         print("Getting model and solver paths")
@@ -97,7 +95,6 @@ def evaluate(config):
     model = torch.load(model_path, map_location=device)
     model.eval()
 
-
     if config['analyze_dataset']:
         print("Analysing dataset")
         if config['num_samples'] is not None:
@@ -113,26 +110,21 @@ def evaluate(config):
             window_size_y=dataset_config.window_size_y,
             mode='lines')
 
-
     if config['show_solver_history']:
         print("Showing solver history")
         show_solver_history(solver)
 
-
     if config['print_training_config']:
         print_traning_config(solver)
-
 
     if config['show_latent_variables']:
         print("Using {} samples to show latent variables".format(config['num_samples']))
         z, mu = show_latent_variables(model, dataset_list)
 
-
     if config['show_model_output']:
         print("Showing model output")
         indices = np.linspace(0, len(dataset) - 1, config['num_show_images'], dtype=int).tolist()
         show_model_output(model, dataset, indices, dataset.len_out_sequence)
-
 
     if config['eval_correlation']:
         print("Evaluating correlation")
@@ -146,12 +138,6 @@ def evaluate(config):
             show_correlation_after_physics(model, dataset_list)
         else:
             print("Model without physics layer")
-
-
-    if config['latent_variable_slideshow']:
-        print("Creating slideshow")
-        latent_variable_slideshow(model, dataset_list)
-
 
     if config['latent_walk_gifs']:
         print("Creating GIFs for walks over latent variables")

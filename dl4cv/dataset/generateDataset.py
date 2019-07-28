@@ -13,10 +13,10 @@ from dl4cv.utils import str2bool
 
 def generate_data(c):
 
-    x_min = c.ball_radius
-    x_max = c.window_size_x - c.ball_radius
-    y_min = c.ball_radius
-    y_max = c.window_size_y - c.ball_radius
+    c.x_min = c.ball_radius
+    c.x_max = c.window_size_x - c.ball_radius
+    c.y_min = c.ball_radius
+    c.y_max = c.window_size_y - c.ball_radius
 
     c.latent_names = ['px', 'py']
 
@@ -43,24 +43,28 @@ def generate_data(c):
 
         if c.vx_limit != 0:
             vx_start[idx] = sample_near_limit(idx, c.vx_limit, c.fraction, i_run*c.seed)
-            c.latent_names.append('vx')
+            if 'vx' not in c.latent_names:
+                c.latent_names.append('vx')
 
         if c.vy_limit != 0:
             vy_start[idx] = sample_near_limit(idx, c.vy_limit, c.fraction, (i_run + 1)*c.seed)
-            c.latent_names.append('vy')
+            if 'vy' not in c.latent_names:
+                c.latent_names.append('vy')
 
         if c.ax_limit != 0:
             ax[idx] = sample_near_limit(idx, c.ax_limit, c.fraction, (i_run + 2)*c.seed)
-            c.latent_names.append('ax')
+            if 'ax' not in c.latent_names:
+                c.latent_names.append('ax')
 
         if c.ay_limit != 0:
             ay[idx] = sample_near_limit(idx, c.ay_limit, c.fraction, (i_run+3)*c.seed)
-            c.latent_names.append('ay')
+            if 'ay' not in c.latent_names:
+                c.latent_names.append('ay')
 
         x, y, vx, vy = get_trajectories(x_start, y_start, vx_start, vy_start, ax, ay, c.t_frame,
                                         c.len_sequence)
 
-        collisions = get_collisions(x, y, x_min, x_max, y_min, y_max)
+        collisions = get_collisions(x, y, c.x_min, c.x_max, c.y_min, c.y_max)
 
         if c.avoid_collisions:
             print("{} collisions of {} sequences".format(collisions.sum(), c.num_sequences))
@@ -146,6 +150,7 @@ def sample_near_limit(idx, limit, fraction, seed):
     values[indices] = torch.rand_like(values[indices]) * limit * fraction + limit - limit * fraction
 
     return values
+
 
 def get_collisions(x, y, x_min, x_max, y_min, y_max):
     collisions = np.zeros((x.shape[0]))
