@@ -2,6 +2,7 @@ import copy
 import os
 import random
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
@@ -13,11 +14,14 @@ from sklearn import linear_model
 from sklearn.metrics import mutual_info_score
 from torchvision.utils import make_grid
 
-from dl4cv.dataset_stuff.dataset_utils import CustomDataset
+from dl4cv.dataset.utils import CustomDataset
 from dl4cv.utils import read_csv, reparametrize, mutual_information, entropy
 
 
 def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='lines'):
+
+    mpl.rcParams['axes.titlesize'] = 'large'
+    mpl.rcParams['axes.labelsize'] = 'large'
 
     plt.figure(figsize=(6, 6))
     if mode == 'lines':
@@ -27,11 +31,10 @@ def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='line
         plt.scatter(trajectories[:, :, 0].reshape(-1), trajectories[:, :, 1].reshape(-1), s=0.2)
 
     plt.title("Position")
-    plt.xlabel("Position x")
-    plt.ylabel("Position y")
+    plt.xlabel("x")
+    plt.ylabel("y")
     plt.xlim(left=0, right=window_size_x)
     plt.ylim(bottom=0, top=window_size_y)
-    plt.savefig('../dataset_plot.svg', format='svg', dpi=1000)
     plt.show()
 
     n = trajectories.shape[0]
@@ -54,13 +57,13 @@ def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='line
     correlations = np.abs(correlations)
 
     plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
-    plt.xlabel('Ground truth variables')
-    plt.ylabel('Ground truth variables')
+    plt.title('Variable intercorrelation')
     plt.xticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
     plt.yticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
     plt.colorbar()
     plt.gca().xaxis.tick_top()
     plt.gca().xaxis.set_label_position('top')
+    plt.gcf().tight_layout()
     plt.show()
 
 
@@ -163,7 +166,7 @@ def show_model_output(model, dataset, indices, num_rows):
     plt.rcParams.update({'font.size': 8})
 
     for i_sample, index in enumerate(indices):
-        sample = dataset.__getitem__(index, True)
+        sample = dataset.__getitem__((index, True))
         x, y, question, _, full_sequence = sample
         if question != -1:
             y_pred, latent_stuff = model(
@@ -197,9 +200,15 @@ def show_model_output(model, dataset, indices, num_rows):
                 # Plot ground truth
                 if question != -1:
                     im = torch.zeros_like(full_sequence[0])
+
                     if question > 0:
-                        im += full_sequence.sum(dim=0).clamp(0, 0.5)
-                        # im += full_sequence[:question.int()].sum(dim=0).clamp(0, 0.5)
+                        for tmp_im in full_sequence[:question.int()]:
+                            tmp_im[tmp_im > 0.5] = 1
+                            tmp_im[tmp_im < 0.5] = 0
+                            im += tmp_im
+
+                        im = im.clamp(0, 0.5)
+
                     im = (im + full_sequence[question.int()]).clamp(0, 1)
                     axes[0].imshow(to_pil(im), cmap='gray')
                 else:
@@ -397,7 +406,7 @@ def show_latent_walk_gifs(model, mus, num_images_per_variable=60, question=False
     f.tight_layout()
 
     ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=1000/60)
-    ani.save('gifs/animation.gif', writer='imagemagick', fps=60)
+    # ani.save('gifs/question_AE.gif', writer='imagemagick', fps=60)
     plt.show()
 
     if create_flipbook:
@@ -479,78 +488,6 @@ class IndexTracker(object):
         self.im.set_data(self.imgs[self.ind])
         self.ax.set_title('Step {} of {}'.format(self.ind, self.num_imgs), rotation=0, size=14)
         self.im.axes.figure.canvas.draw()
-
-
-def latent_variable_slideshow(model, dataset):
-    encoder = model.encoder
-    decoder = model.decoder
-
-    # Set question to be a fixed value in the future
-    question = torch.tensor([10], dtype=torch.float32)[:, None, None, None]
-
-    # Init the min and max Values for the latent variables
-    min_latents = torch.tensor([1000] * model.z_dim_encoder, dtype=torch.float32)[None, :, None, None]
-    max_latents = torch.tensor([-1000] * model.z_dim_encoder, dtype=torch.float32)[None, :, None, None]
-    all_latents = torch.zeros_like(min_latents)
-
-    # Compute the min and max Values for the latent variables
-    for i_sample, sample in enumerate(dataset):
-        x, _, _, _ = sample
-
-        z_params = encoder(torch.unsqueeze(x, 0))
-
-        # get mu and std of the sample
-        mu = z_params[:, :model.z_dim_encoder]
-        logvar = z_params[:, model.z_dim_encoder:]
-        std = logvar.div(2).exp()
-
-        min_latents = torch.min(min_latents, mu - 3 * std)
-        max_latents = torch.max(min_latents, mu + 3 * std)
-        all_latents = torch.cat((all_latents, mu), dim=0)
-
-    # Detach min, max and all latents so they don't require gradients
-    min_latents = min_latents.detach()
-    max_latents = max_latents.detach()
-    all_latents = all_latents.detach()
-
-    # Create linspaces to interpolate over
-    lin_spaces = torch.tensor(np.linspace(start=min_latents, stop=max_latents, num=20))  # shape: [20, 1, 6, 1, 1]
-
-    # Use the mean of all latents over the whole dataset as reference
-    mean_latents = all_latents.mean(dim=0).unsqueeze(dim=0)  # shape: [1, 6, 1, 1]
-
-    # Generate output images
-    all_results = []
-    for i_lin_space, lin_space in enumerate(lin_spaces):
-        print("Step {} in lin_space".format(i_lin_space + 1))
-        output_lin_step = []
-        for i_latent_var in range(model.z_dim_encoder):
-            print("Decoding with latent variable {} of {} according to lin_space".format(
-                i_latent_var + 1, model.z_dim_encoder))
-            latents = copy.deepcopy(mean_latents)
-            latents[:, i_latent_var] = lin_space[:, i_latent_var]
-
-            # Concatenate question to latents for decoding
-            z = torch.cat((latents, question), dim=1)
-
-            output_lin_step.append(decoder(z)[0])  # shape [i, 1, 32, 32]
-
-        output_lin_step = torch.stack(output_lin_step)  # shape [6, 1, 32, 32]
-        output_lin_step = make_grid(output_lin_step, nrow=model.z_dim_encoder, padding=0)  # shape [3, 32, 192]
-
-        # Concatenate the outputs of every lin_space
-        all_results.append(output_lin_step)  # shape [i, 3, 32, 192]
-
-    all_results = torch.stack(all_results)  # shape [20, 3, 32, 192]
-
-    # Plot the results
-    fig, ax = plt.subplots(1, 1)
-
-    imgs = all_results.detach().transpose(1, 2).transpose(2, 3)  # shape [20, 32, 192, 3]
-    tracker = IndexTracker(ax, imgs)
-
-    fig.canvas.mpl_connect('scroll_event', tracker.onscroll)
-    plt.show()
 
 
 def print_traning_config(solver):
@@ -658,7 +595,7 @@ def generate_img_figure_for_tensorboardx(target, prediction, question):
 def walk_over_question(model, dataset):
     to_pil = transforms.ToPILImage()
     # dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
-    x, _, ques, _, full_sequence = dataset.__getitem__((2137, 1))
+    x, _, ques, _, full_sequence = dataset.__getitem__((5, 1))
     questions = torch.arange(full_sequence.shape[0])
 
     sum_pred = torch.zeros_like(torch.unsqueeze(x[0], 0))
@@ -669,8 +606,8 @@ def walk_over_question(model, dataset):
     for q in questions:
         pred, _ = model(torch.unsqueeze(x, 0), torch.tensor([q], dtype=torch.float32))
         pred = torch.sigmoid(pred)
-        pred[pred > 0.5] = 1
-        pred[pred < 0.5] = 0
+        # pred[pred > 0.5] = 1
+        # pred[pred < 0.5] = 0
 
         gt_im = torch.unsqueeze(full_sequence[q], 0)
         gt_im[gt_im > 0.5] = 1
@@ -689,8 +626,6 @@ def walk_over_question(model, dataset):
 
         images.append([im, gt])
 
-
-
     # Remove axis ticks
     for ax in axes.reshape(-1):
         ax.get_xaxis().set_visible(False)
@@ -704,7 +639,7 @@ def walk_over_question(model, dataset):
     axes[1].set_title('Ground truth')
     # plt.savefig('../trajectories.pdf', format='pdf', dpi=1000)
 
-    # ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=500)
+    ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=500)
 
     plt.show()
 

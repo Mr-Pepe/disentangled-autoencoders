@@ -1,12 +1,12 @@
 from dl4cv.train import train
-from dl4cv.eval.eval import eval
-from dl4cv.utils import Config
+from dl4cv.eval.eval import evaluate
+from dl4cv.utils import Config, str2bool
 
-TRAIN = True
-EVAL = True
+import argparse
 
 SAVE_PATH = '../../saves/AE_with_physics_layer'
-DATA_PATH = '../../../datasets/ball_px_py_vx_vy_ax_ay'
+DATA_PATH = '../../../datasets/ball'
+EVAL_DATA_PATH = '../../../datasets/evalDataset'
 
 config = Config({
 
@@ -14,16 +14,17 @@ config = Config({
 
     # Training continuation
     'continue_training':   False,      # Specify whether to continue training with an existing model and solver
-    'model_path': '../saves/train20190717115133/model630',
-    'solver_path': '../saves/train20190717115133/solver630',
+    'model_path': '../saves/Question_AE/model60',
+    'solver_path': '../saves/Question_AE/solver60',
 
     # Data
     'data_path': DATA_PATH,   # Path to the parent directory of the image folder
+    'eval_data_path': EVAL_DATA_PATH,
     'load_data_to_ram': False,
     'dt': 1,                            # Frame rate at which the dataset got generated
     'do_overfitting': False,            # Set overfit or regular training
-    'num_train_regular':    4096,       # Number of training samples for regular training
-    'num_val_regular':      128,        # Number of validation samples for regular training
+    'num_train_regular':    8192,       # Number of training samples for regular training
+    'num_val_regular':      512,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 5,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
@@ -32,7 +33,7 @@ config = Config({
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 50,                  # Number of epochs to train
+    'num_epochs': 600,                  # Number of epochs to train
     'batch_size': 64,
     'learning_rate': 1e-4,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
@@ -64,32 +65,35 @@ config = Config({
     'show_latent_variables': True,      # Show the latent variables for the desired datapoints
     'show_model_output': True,          # Show the model output for the desired datapoints
     'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
-    'latent_variable_slideshow': False,   # Create a slideshow varying over all latent variables
-    'print_training_config': False,       # Print the config that was used for training the model
-    'latent_walk_gifs': False,
-    'walk_over_question': False,
-    'eval_disentanglement': False,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
-    'mutual_information_gap': False,     # Evaluate disentanglement according to the MIG score
+    'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
+    'print_training_config': True,       # Print the config that was used for training the model
+    'latent_walk_gifs': True,
+    'walk_over_question': True,
+    'eval_disentanglement': True,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
+    'mutual_information_gap': True,     # Evaluate disentanglement according to the MIG score
 
     'num_samples': 2000,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
     'question': True,
 
-    'epoch': 10,                                  # Use last model and solver if epoch is none
+    'epoch': None,                                  # Use last model and solver if epoch is none
 })
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
 
+    parser.add_argument('--train', default=True, type=str2bool, help='Train model')
+    parser.add_argument('--eval', default=False, type=str2bool, help='Evaluate model')
 
-if TRAIN:
-    train(config)
+    args = parser.parse_args()
 
-config.update({
-    'save_path': '../' + SAVE_PATH,
-    'eval_data_path': '',
-    'data_path': '../' + DATA_PATH,
-    'use_cuda': False
-})
+    if args.train:
+        train(config)
 
-if EVAL:
-    eval(config)
+    config.update({
+        'use_cuda': False
+    })
+
+    if args.eval:
+        evaluate(vars(config))

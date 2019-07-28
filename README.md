@@ -5,24 +5,44 @@ of single images or image sequences in an unsupervised manner. It also contains 
 for this purpose. Evaluation functions give qualitative and quantitative feedback on the quality of 
 disentanglement.
 
+## Usage
 
-## Walks over latent variables
+Clone the repository and install the project and its dependencies.
+
+    git clone https://github.com/Mr-Pepe/dl4cv
+    cd dl4cv
+    pip install -r requirements.txt
+    pip install .
+  
+You can generate the training and evaluation dataset by running
+    
+    python generateDataset.py
+    python generateEvalDataset.py
+
+in the dataset directory.
+
+The models can be trained and evaluated with, e.g.,
+
+    python question_AE.py --train true --eval true
+    
+inside the final_runs directory.
+
+
+## Results
 
 A sample of 2000 sequences was used to calculate the latent encoding for the three architectures.
-While holding five of the six variables constant at the mean of the observed values for one model, one latent 
-variable is sampled between its observed minimum and maximum value. This shows the influence of 
-one latent variable on the generated output image.
+Afterwards, walks over the latent variables were performed one by one.
 
 
 ### Question Autoencoder
 
-![Alt text](dl4cv/final_runs/gifs/question_AE.gif) 
+![Alt text](doc/gifs/question_AE.gif) 
 
 ### Beta VAE
 
-![Alt text](dl4cv/final_runs/gifs/beta_vae.gif) 
+![Alt text](doc/gifs/beta_vae.gif) 
 
 
 ### Annealed VAE
 
-![Alt text](dl4cv/final_runs/gifs/annealed_VAE.gif)
+![Alt text](doc/gifs/annealed_VAE.gif)

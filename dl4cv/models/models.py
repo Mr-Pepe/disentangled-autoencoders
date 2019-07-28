@@ -55,9 +55,9 @@ class VariationalAutoEncoder(BaseModel):
             nn.Linear(256, 512),  # B, 256
             nn.ReLU(True),
             View((-1, 32, 4, 4)),  # B,  32,  4,  4
-            SkipUpConv(32, 32), # 8x8
-            SkipUpConv(32, 32), # 16x16
-            SkipUpConv(32, 32), # 32x32
+            SkipUpConv(32, 32),  # 8x8
+            SkipUpConv(32, 32),  # 16x16
+            SkipUpConv(32, 32),  # 32x32
             nn.Upsample(scale_factor=2),
             nn.Conv2d(32, len_out_sequence, 3, 1, 1),
         )
@@ -91,7 +91,8 @@ class VariationalAutoEncoder(BaseModel):
                 z_decoder = torch.cat((z_encoder, q.view(-1, 1)), dim=1)
         else:
             if self.use_physics:
-                z_decoder = self.physics_layer(z_encoder, torch.ones((z_encoder.shape[0]), device=next(self.parameters()).device))
+                z_decoder = self.physics_layer(z_encoder, torch.ones((z_encoder.shape[0]),
+                                                                     device=next(self.parameters()).device))
             else:
                 z_decoder = z_encoder
 
@@ -118,10 +119,12 @@ class View(nn.Module):
     def forward(self, tensor):
         return tensor.view(self.size)
 
+
 class Flatten(torch.nn.Module):
     def forward(self, x):
         batch_size = x.shape[0]
         return x.view(batch_size, -1)
+
 
 def kaiming_init(m):
     if isinstance(m, (nn.Linear, nn.Conv2d)):
@@ -155,6 +158,7 @@ class SkipUpConv(nn.Module):
     def forward(self, x):
         out = self.up_sample(x)
         return self.relu(out + self.conv(out))
+
 
 class PhysicsLayer(nn.Module):
     def __init__(self, dt=1./30):
