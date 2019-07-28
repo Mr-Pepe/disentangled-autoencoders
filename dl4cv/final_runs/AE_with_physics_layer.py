@@ -1,5 +1,5 @@
 from dl4cv.train import train
-from dl4cv.eval.eval import eval
+from dl4cv.eval.eval import evaluate
 from dl4cv.utils import Config
 
 TRAIN = True
@@ -92,4 +92,4 @@ config.update({
 })
 
 if EVAL:
-    eval(config)
+    evaluate(config)

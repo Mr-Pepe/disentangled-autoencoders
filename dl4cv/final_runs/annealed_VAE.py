@@ -1,12 +1,11 @@
 from dl4cv.train import train
-from dl4cv.eval.eval import eval
-from dl4cv.utils import Config
+from dl4cv.eval.eval import evaluate
+from dl4cv.utils import Config, str2bool
 
-TRAIN = True
-EVAL = False
+import argparse
 
 SAVE_PATH = '../../saves/Annealed_VAE'
-DATA_PATH = '../../../datasets/ball_px_py_vx_vy_ax_ay'
+DATA_PATH = '../../../datasets/ball'
 
 config = Config({
 
@@ -79,17 +78,20 @@ config = Config({
     'epoch': None,                                  # Use last model and solver if epoch is none
 })
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
 
+    parser.add_argument('--train', default=False, type=str2bool, help='Train model')
+    parser.add_argument('--eval', default=False, type=str2bool, help='Evaluate model')
 
-if TRAIN:
-    train(config)
+    args = parser.parse_args()
 
-config.update({
-    'save_path': '../' + SAVE_PATH,
-    'eval_data_path': '',
-    'data_path': '../' + DATA_PATH,
-    'use_cuda': False
-})
+    if args.train:
+        train(config)
 
-if EVAL:
-    eval(config)
+    config.update({
+        'use_cuda': False
+    })
+
+    if args.eval:
+        evaluate(vars(config))

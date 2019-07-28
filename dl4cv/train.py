@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 from torchvision import transforms
 
 from dl4cv.dataset.utils import CustomDataset
-from dl4cv.models import VariationalAutoEncoder
+from dl4cv.models.models import VariationalAutoEncoder
 from dl4cv.solver import Solver
 
 

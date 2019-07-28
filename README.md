@@ -16,15 +16,25 @@ Clone the repository and install the project and its dependencies.
   
 You can generate the dataset by running
     
-    python dl4cv/dataset/generateData.py
+    python generateData.py
+
+in the dataset directory.
+
+The models can be trained with, e.g.,
+
+    python question_AE.py --train true
+    
+inside the final_runs directory.
+
+The trained models can be evaluated with, e.g.,
+
+    python question_AE.py --eval true
 
 
-## Walks over latent variables
+## Results
 
 A sample of 2000 sequences was used to calculate the latent encoding for the three architectures.
-While holding five of the six variables constant at the mean of the observed values for one model, one latent 
-variable is sampled between its observed minimum and maximum value. This shows the influence of 
-one latent variable on the generated output image.
+Afterwards, walks over the latent variables were performed one by one.
 
 
 ### Question Autoencoder

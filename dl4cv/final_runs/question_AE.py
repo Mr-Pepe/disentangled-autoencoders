@@ -1,9 +1,8 @@
 from dl4cv.train import train
-from dl4cv.eval.eval import eval
-from dl4cv.utils import Config
+from dl4cv.eval.eval import evaluate
+from dl4cv.utils import Config, str2bool
 
-TRAIN = True
-EVAL = False
+import argparse
 
 SAVE_PATH = '../../saves/Question_AE'
 DATA_PATH = '../../../datasets/ball'
@@ -80,12 +79,19 @@ config = Config({
 })
 
 if __name__ == '__main__':
-    if TRAIN:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--train', default=False, type=str2bool, help='Train model')
+    parser.add_argument('--eval', default=False, type=str2bool, help='Evaluate model')
+
+    args = parser.parse_args()
+
+    if args.train:
         train(config)
 
     config.update({
         'use_cuda': False
     })
 
-    if EVAL:
-        eval(config)
+    if args.eval:
+        evaluate(vars(config))

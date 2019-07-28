@@ -166,7 +166,7 @@ def show_model_output(model, dataset, indices, num_rows):
     plt.rcParams.update({'font.size': 8})
 
     for i_sample, index in enumerate(indices):
-        sample = dataset.__getitem__(index, True)
+        sample = dataset.__getitem__((index, True))
         x, y, question, _, full_sequence = sample
         if question != -1:
             y_pred, latent_stuff = model(

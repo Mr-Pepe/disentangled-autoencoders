@@ -6,6 +6,7 @@ setup(
    packages=[
       'dl4cv',
       'dl4cv.eval',
-      'dl4cv.dataset'
+      'dl4cv.dataset',
+      'dl4cv.models'
    ]
 )

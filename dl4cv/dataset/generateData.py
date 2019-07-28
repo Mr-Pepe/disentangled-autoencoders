@@ -193,7 +193,7 @@ def equation_of_motion(x_0, y_0, vx_0, vy_0, ax, ay, t):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='toy Beta-VAE')
+    parser = argparse.ArgumentParser()
 
     # General settings
     parser.add_argument('--save_dir_path', default='../../../datasets/ball', type=str, help='Save path for the dataset')
