@@ -196,9 +196,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='toy Beta-VAE')
 
     # General settings
-    parser.add_argument('--save_dir_path', default='../../datasets/ball', type=str, help='Save path for the dataset')
+    parser.add_argument('--save_dir_path', default='../../../datasets/ball', type=str, help='Save path for the dataset')
     parser.add_argument('--seed', default=1, type=int, help='Random seed')
-    parser.add_argument('--num_sequences', default=4224, type=int, help='Number of sequences to be generated')
+    parser.add_argument('--num_sequences', default=8192+512, type=int, help='Number of sequences to be generated')
     parser.add_argument('--len_sequence', default=15, type=int, help='Length of sequences to be generated')
     parser.add_argument('--window_size_x', default=64, type=int, help='Window size in x direction in pixels')
     parser.add_argument('--window_size_y', default=64, type=int, help='Window size in y direction in pixels')
@@ -219,7 +219,6 @@ if __name__ == '__main__':
     parser.add_argument('--ax_limit', default=50, type=int, help='Min/Max acceleration in x direction to sample')
     parser.add_argument('--ay_limit', default=30, type=int, help='Min/Max acceleration in y direction to sample')
     parser.add_argument('--fraction', default=0.75, type=float, help='Fraction of the limit from which to sample')
-
 
     config = parser.parse_args()
 

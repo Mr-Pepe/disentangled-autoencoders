@@ -1,14 +1,12 @@
-import os
-
 import torch
-import torch.nn as nn
 
 from torch.utils.data import DataLoader, SequentialSampler, SubsetRandomSampler
 from torchvision import transforms
 
 from dl4cv.dataset.utils import CustomDataset
-from dl4cv.models.models import VariationalAutoEncoder
+from dl4cv.models import VariationalAutoEncoder
 from dl4cv.solver import Solver
+
 
 def train(config):
 
@@ -138,7 +136,3 @@ def train(config):
                  target_var=config['target_var'],
                  log_reconstructed_images=config['log_reconstructed_images'],
                  beta=config['beta'])
-
-
-if __name__ == "__main__":
-    train(config)

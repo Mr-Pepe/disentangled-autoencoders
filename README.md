@@ -29,13 +29,13 @@ one latent variable on the generated output image.
 
 ### Question Autoencoder
 
-![Alt text](dl4cv/doc/gifs/question_AE.gif) 
+![Alt text](doc/gifs/question_AE.gif) 
 
 ### Beta VAE
 
-![Alt text](dl4cv/doc/gifs/beta_vae.gif) 
+![Alt text](doc/gifs/beta_vae.gif) 
 
 
 ### Annealed VAE
 
-![Alt text](dl4cv/doc/gifs/annealed_VAE.gif)
+![Alt text](doc/gifs/annealed_VAE.gif)

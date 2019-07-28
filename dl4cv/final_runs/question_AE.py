@@ -6,7 +6,7 @@ TRAIN = True
 EVAL = False
 
 SAVE_PATH = '../../saves/Question_AE'
-DATA_PATH = '../../../datasets/ball_px_py_vx_vy_ax_ay'
+DATA_PATH = '../../../datasets/ball'
 
 config = Config({
 
@@ -79,17 +79,13 @@ config = Config({
     'epoch': None,                                  # Use last model and solver if epoch is none
 })
 
+if __name__ == '__main__':
+    if TRAIN:
+        train(config)
 
+    config.update({
+        'use_cuda': False
+    })
 
-if TRAIN:
-    train(config)
-
-config.update({
-    'save_path': '../' + SAVE_PATH,
-    'eval_data_path': '',
-    'data_path': '../' + DATA_PATH,
-    'use_cuda': False
-})
-
-if EVAL:
-    eval(config)
+    if EVAL:
+        eval(config)
