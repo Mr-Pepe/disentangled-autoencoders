@@ -22,8 +22,8 @@ config = Config({
     'load_data_to_ram': False,
     'dt': 1,                            # Frame rate at which the dataset got generated
     'do_overfitting': False,            # Set overfit or regular training
-    'num_train_regular':    4096,       # Number of training samples for regular training
-    'num_val_regular':      128,        # Number of validation samples for regular training
+    'num_train_regular':    8192,       # Number of training samples for regular training
+    'num_val_regular':      512,        # Number of validation samples for regular training
     'num_train_overfit':    256,        # Number of training samples for overfitting test runs
     'len_inp_sequence': 5,              # Length of training sequence
     'len_out_sequence': 1,              # Number of generated images
@@ -32,14 +32,14 @@ config = Config({
 
     # Hyper parameters
     'max_train_time_s': None,
-    'num_epochs': 2000,                  # Number of epochs to train
+    'num_epochs': 8000,                # Number of epochs to train
     'batch_size': 64,
     'learning_rate': 5e-4,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
-    'target_var': 1,                 # Target variance for the kl loss
+    'target_var': 1,                    # Target variance for the kl loss
     'C_offset': 0,
-    'C_max': 100,
-    'C_stop_iter': 1e5,
+    'C_max': 150,
+    'C_stop_iter': 4e5,
     'gamma': 100,
     'beta': 0,
 
