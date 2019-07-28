@@ -4,7 +4,7 @@ from dl4cv.utils import Config, str2bool
 
 import argparse
 
-SAVE_PATH = '../../saves/AE_with_physics_layer'
+SAVE_PATH = '../../saves/AE_with_physics_and_question'
 DATA_PATH = '../../../datasets/ball'
 EVAL_DATA_PATH = '../../../datasets/evalDataset'
 
@@ -48,7 +48,7 @@ config = Config({
     'z_dim_encoder': 6,
     'z_dim_decoder': 2,
     'use_physics': True,
-    'use_question': False,
+    'use_question': True,
 
     # Logging
     'log_interval': 20,           # Number of mini-batches after which to print training loss
