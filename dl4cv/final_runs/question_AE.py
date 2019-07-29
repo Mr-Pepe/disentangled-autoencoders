@@ -72,7 +72,7 @@ config = Config({
     'eval_disentanglement': True,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
     'mutual_information_gap': True,     # Evaluate disentanglement according to the MIG score
 
-    'num_samples': 2000,                # Use the whole dataset if none for latent variables
+    'num_samples': 2000,               # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
     'question': True,
