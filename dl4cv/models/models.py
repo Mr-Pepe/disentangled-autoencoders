@@ -63,7 +63,7 @@ class VariationalAutoEncoder(BaseModel):
         )
 
         if self.use_physics:
-            self.physics_layer = PhysicsLayer(dt=1. / 30.)
+            self.physics_layer = PhysicsLayer(dt=1. / 10.)
 
         self.weight_init()
 
@@ -164,14 +164,17 @@ class SkipUpConv(nn.Module):
 
 
 class PhysicsLayer(nn.Module):
-    def __init__(self, dt=1./30):
+    def __init__(self, dt=1./10):
         super(PhysicsLayer, self).__init__()
+        self.dt = torch.nn.Parameter(torch.tensor([dt]))
+        self.dt.requires_grad = False
 
     def forward(self, z, q):
         """
             x.shape: [batch, 6, 1, 1]
             return shape: [batch, 2, 1, 1]
         """
+        q *= self.dt
 
         out = torch.zeros_like(z[:, :2])
 

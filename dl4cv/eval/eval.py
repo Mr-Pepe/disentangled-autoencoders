@@ -134,10 +134,10 @@ def evaluate(config):
 
         show_correlation(model, dataset_list, z, ground_truth)
 
-        if model.use_physics:
-            show_correlation_after_physics(model, dataset_list)
-        else:
-            print("Model without physics layer")
+        # if model.use_physics:
+        #     show_correlation_after_physics(model, dataset_list)
+        # else:
+        #     print("Model without physics layer")
 
     if config['latent_walk_gifs']:
         print("Creating GIFs for walks over latent variables")

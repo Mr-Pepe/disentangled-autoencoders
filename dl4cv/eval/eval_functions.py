@@ -379,7 +379,7 @@ def show_latent_walk_gifs(model, mus, num_images_per_variable=60, question=False
             images_this_frame = []
 
             if question:
-                z_decoder = model.bottleneck(z_encoder.view(1, -1), torch.tensor(0.).view(-1))
+                z_decoder = model.bottleneck(z_encoder.view(1, -1), torch.tensor(10.).view(-1))
             else:
                 z_decoder = model.bottleneck(z_encoder, torch.tensor(-1.))
 
