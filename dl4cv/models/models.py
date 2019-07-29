@@ -103,7 +103,10 @@ class VariationalAutoEncoder(BaseModel):
         mu = z_params[:, :self.z_dim_encoder]
         logvar = z_params[:, self.z_dim_encoder:]
 
-        z_encoder = utils.reparametrize(mu, logvar)
+        if self.use_physics:
+            z_encoder = mu
+        else:
+            z_encoder = utils.reparametrize(mu, logvar)
 
         return z_encoder, mu, logvar
 
@@ -163,20 +166,16 @@ class SkipUpConv(nn.Module):
 class PhysicsLayer(nn.Module):
     def __init__(self, dt=1./30):
         super(PhysicsLayer, self).__init__()
-        self.dt = torch.nn.Parameter(torch.tensor([dt]))
-        self.dt.requires_grad = False
 
     def forward(self, z, q):
         """
             x.shape: [batch, 6, 1, 1]
             return shape: [batch, 2, 1, 1]
         """
-        dt = self.dt * q
-        d2 = 0.5 * dt.pow(2.)
-        zero = torch.zeros_like(dt)
-        one = torch.ones_like(dt)
 
-        res_x = (z * torch.stack((one, zero, dt, zero, d2, zero), dim=1)).sum(dim=1)
-        res_y = (z * torch.stack((zero, one, zero, dt, zero, d2), dim=1)[:, :z.shape[1]]).sum(dim=1)
+        out = torch.zeros_like(z[:, :2])
 
-        return torch.cat((res_x, res_y)).view(-1, 2)
+        out[:, 0] = z[:, 0] + z[:, 2] * q + z[:, 4] * 0.5 * q.pow(2.)
+        out[:, 1] = z[:, 1] + z[:, 3] * q + z[:, 5] * 0.5 * q.pow(2.)
+
+        return out
