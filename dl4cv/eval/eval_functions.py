@@ -12,10 +12,8 @@ import torchvision.transforms as transforms
 
 from sklearn import linear_model
 from sklearn.metrics import mutual_info_score
-from torchvision.utils import make_grid
 
-from dl4cv.dataset.utils import CustomDataset
-from dl4cv.utils import read_csv, reparametrize, mutual_information, entropy
+from dl4cv.utils import reparametrize, mutual_information, entropy
 
 
 def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='lines'):
@@ -58,8 +56,8 @@ def analyze_dataset(trajectories, window_size_x=32, window_size_y=32, mode='line
 
     plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
     plt.title('Variable intercorrelation')
-    plt.xticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
-    plt.yticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
+    plt.xticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'), fontsize=14)
+    plt.yticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'), fontsize=14)
     plt.colorbar()
     plt.gca().xaxis.tick_top()
     plt.gca().xaxis.set_label_position('top')
@@ -110,6 +108,7 @@ def show_solver_history(solver):
     plt.legend()
     plt.show()
 
+
 def show_latent_variables(model, dataset, show=True):
     mu = 0
     std = 0
@@ -144,14 +143,20 @@ def show_latent_variables(model, dataset, show=True):
 
     if show:
         ax = plt.subplot(2, 1, 1)
-        ax.set_title("Mu")
+        ax.set_title("Mu", fontsize=18)
         for i in range(mu.shape[1]):
             plt.scatter(np.ones((mu.shape[0])) * (i + 1), mu.view(mu.shape[0], mu.shape[1]).detach().numpy()[:, i])
 
+        ax.tick_params(axis='both', which='major', labelsize=14)
+
         ax = plt.subplot(2, 1, 2)
-        ax.set_title("Std")
+        ax.set_title("Std", fontsize=18)
         for i in range(std.shape[1]):
             plt.scatter(np.ones((std.shape[0])) * (i + 1), std.view(std.shape[0], std.shape[1]).detach().numpy()[:, i])
+
+        ax.tick_params(axis='both', which='major', labelsize=14)
+
+        plt.subplots_adjust(hspace=0.45)
 
         plt.show()
 
@@ -272,12 +277,13 @@ def show_correlation(model, dataset, z, gt):
     correlations = np.abs(correlations)
 
     plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
-    plt.xlabel('Ground truth variables')
-    plt.ylabel('Latent variables')
-    plt.xticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'))
-    plt.colorbar()
+    plt.xlabel('Ground truth variables', fontsize=18)
+    plt.ylabel('Latent variables', fontsize=18)
+    plt.xticks(np.arange(6), ('px', 'py', 'vx', 'vy', 'ax', 'ay'), fontsize=14)
+    plt.yticks(fontsize=14)
+    cbar = plt.colorbar()
+    cbar.ax.tick_params(labelsize=14)
     plt.show()
-
 
     correlations = np.zeros((z.shape[1], z.shape[1]))
 
@@ -292,59 +298,15 @@ def show_correlation(model, dataset, z, gt):
     correlations = np.abs(correlations)
 
     plt.imshow(correlations, cmap='hot', interpolation='nearest', vmin=0, vmax=1)
-    plt.xlabel('Latent variables')
-    plt.ylabel('Latent variables')
-    plt.colorbar()
+    plt.xlabel('Latent variables', fontsize=18)
+    plt.ylabel('Latent variables', fontsize=18)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    cbar = plt.colorbar()
+    cbar.ax.tick_params(labelsize=14)
     plt.show()
 
     return correlations
-
-
-def eval_correlation(model, variables, path, len_inp_sequence, len_out_sequence):
-    transform = transforms.Compose([
-        transforms.Grayscale(),
-        transforms.ToTensor()
-    ])
-
-    encoder = model.encoder
-
-    for i_var, var in enumerate(variables):
-        eval_path = os.path.join(path, var)
-        dataset = CustomDataset(
-            path=eval_path,
-            transform=transform,
-            len_inp_sequence=len_inp_sequence,
-            len_out_sequence=len_out_sequence,
-            load_ground_truth=False,
-            load_to_ram=False,
-            only_input=True
-        )
-
-        data_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
-            batch_size=len(dataset)
-        )
-
-        linspace = np.array(read_csv(os.path.join(eval_path, 'linspace.csv')))
-
-        x, _, _, _ = next(iter(data_loader))
-        z_t = _get_z(encoder, x, z_dim=model.z_dim_encoder)
-
-        f, axes = plt.subplots(len(variables), 1, figsize=(10, 10))
-
-        for i_z, z in enumerate(z_t):
-            m, c = _regression_line(linspace, z)
-            axes[i_z].plot(linspace, z)
-            axes[i_z].plot(linspace, m*linspace + c, label='Regression line')
-            axes[i_z].set_ylabel("latent %d" % i_z)
-            axes[i_z].set_ylim([-3, 3])
-
-        axes[0].legend(loc='upper left')
-        axes[-1].set_xlabel(var, fontsize=16)
-
-        f.tight_layout()
-
-        plt.show()
 
 
 def show_latent_walk_gifs(model, mus, num_images_per_variable=60, question=False, len_out_sequence=1, create_flipbook=False):
@@ -459,35 +421,6 @@ def moving_average(a, n=3):
     ret = np.cumsum(a, dtype=float)
     ret[n:] = ret[n:] - ret[:-n]
     return ret[n - 1:] / n
-
-
-class IndexTracker(object):
-    def __init__(self, ax, imgs):
-        self.ax = ax
-
-        # Remove axis ticks
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_tick_params(which='both', length=0, labelleft=False)
-
-        self.imgs = imgs
-        self.num_imgs = imgs.shape[0]
-        self.ind = 0
-
-        self.im = ax.imshow(self.imgs[self.ind])
-        self.update()
-
-    def onscroll(self, event):
-        print("%s %s" % (event.button, event.step))
-        if event.button == 'up':
-            self.ind = (self.ind + 1) % self.num_imgs
-        else:
-            self.ind = (self.ind - 1) % self.num_imgs
-        self.update()
-
-    def update(self):
-        self.im.set_data(self.imgs[self.ind])
-        self.ax.set_title('Step {} of {}'.format(self.ind, self.num_imgs), rotation=0, size=14)
-        self.im.axes.figure.canvas.draw()
 
 
 def print_traning_config(solver):
@@ -634,9 +567,9 @@ def walk_over_question(model, dataset):
     f.tight_layout()
 
     axes[0].imshow(to_pil(gif_pred), cmap='gray')
-    axes[0].set_title('Prediction')
+    axes[0].set_title('Prediction', fontsize=18)
     axes[1].imshow(to_pil(gif_gt), cmap='gray')
-    axes[1].set_title('Ground truth')
+    axes[1].set_title('Ground truth', fontsize=18)
     # plt.savefig('../trajectories.pdf', format='pdf', dpi=1000)
 
     ani = animation.ArtistAnimation(f, images, blit=True, repeat=True, interval=500)
@@ -741,59 +674,3 @@ def MIG(model, dataset, num_samples, discrete=True, bins=10):
     mig = np.mean(np.divide(sorted_m[0, :] - sorted_m[1, :], h[:]))
 
     print("MIG score: {} (ranges from 0 to 1 with 1=completely disentangled)".format(mig))
-
-
-def eval_decoder(model, dataset, train_config, num_samples):
-    data_loader = torch.utils.data.DataLoader(dataset, shuffle=True, batch_size=1)
-    plt.interactive(False)
-
-    num_cols = 3
-
-    latent_names = dataset.config.latent_names
-    z_dim_decoder = train_config['z_dim_decoder']
-    z_dim = z_dim_decoder - 1 if train_config['question'] else z_dim_decoder
-
-    to_pil = transforms.ToPILImage()
-
-    plt.rcParams.update({'font.size': 8})
-
-    for i_sample in range(num_samples):
-        x, y, q, z = next(iter(data_loader))
-
-        # z is the first frame of ground truth
-        z = z[:, 0].float()
-        latent_dim = z.shape[1]
-
-        # Fill zeros in z with random normals
-        z[:, len(latent_names):] = torch.randn((z.shape[0], z.shape[1] - len(latent_names)))
-
-        if z_dim > latent_dim:
-            # Concatenate random normals to z
-            diff = z_dim - latent_dim
-            z = torch.cat((z, torch.randn((z.shape[0], diff))), dim=1)
-        elif z_dim < latent_dim:
-            # Use only first few z as latent input
-            z = z[:, :z_dim]
-
-        if q[0] > 0:
-            z = torch.cat((z, q.view(-1, 1)), dim=1)
-
-        # Forward pass
-        y_pred = model.decode(z)
-
-        print(y_pred.max(), y.max())
-
-        f, axes = plt.subplots(1, num_cols)
-        f.suptitle("\nSample {}".format(i_sample), fontsize=16)
-
-        # Plot ground truth
-        axes[0].imshow(to_pil(y[0]), cmap='gray')
-
-        # Plot prediction
-        axes[1].imshow(to_pil(y_pred[0]), cmap='gray')
-
-        # Plot Deviation
-        diff = abs(y_pred[0] - y[0])
-        axes[2].imshow(to_pil(diff), cmap='gray')
-
-        plt.show()
