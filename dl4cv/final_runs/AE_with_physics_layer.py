@@ -35,7 +35,7 @@ config = Config({
     'max_train_time_s': None,
     'num_epochs': 600,                  # Number of epochs to train
     'batch_size': 64,
-    'learning_rate': 1e-4,
+    'learning_rate': 5e-4,
     'betas': (0.9, 0.999),              # Beta coefficients for ADAM
     'target_var': 1,                 # Target variance for the kl loss
     'C_offset': 100,
@@ -83,7 +83,7 @@ config = Config({
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--train', default=True, type=str2bool, help='Train model')
+    parser.add_argument('--train', default=False, type=str2bool, help='Train model')
     parser.add_argument('--eval', default=False, type=str2bool, help='Evaluate model')
 
     args = parser.parse_args()
