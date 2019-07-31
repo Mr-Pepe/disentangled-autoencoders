@@ -219,11 +219,11 @@ if __name__ == '__main__':
     parser.add_argument('--x_max_sampling', default=64 - 64/5, type=float, help='Maximum x value to sample')
     parser.add_argument('--y_min_sampling', default=64/4, type=float, help='Minimum y value to sample')
     parser.add_argument('--y_max_sampling', default=64 - 64/4, type=float, help='Maximum y value to sample')
-    parser.add_argument('--vx_limit', default=25, type=int, help='Min/Max velocity in x direction to sample')
-    parser.add_argument('--vy_limit', default=35, type=int, help='Min/Max velocity in y direction to sample')
-    parser.add_argument('--ax_limit', default=50, type=int, help='Min/Max acceleration in x direction to sample')
-    parser.add_argument('--ay_limit', default=30, type=int, help='Min/Max acceleration in y direction to sample')
-    parser.add_argument('--fraction', default=0.75, type=float, help='Fraction of the limit from which to sample')
+    parser.add_argument('--vx_limit', default=15, type=int, help='Min/Max velocity in x direction to sample')
+    parser.add_argument('--vy_limit', default=20, type=int, help='Min/Max velocity in y direction to sample')
+    parser.add_argument('--ax_limit', default=60, type=int, help='Min/Max acceleration in x direction to sample')
+    parser.add_argument('--ay_limit', default=60, type=int, help='Min/Max acceleration in y direction to sample')
+    parser.add_argument('--fraction', default=0.3, type=float, help='Fraction of the limit from which to sample')
 
     config = parser.parse_args()
 

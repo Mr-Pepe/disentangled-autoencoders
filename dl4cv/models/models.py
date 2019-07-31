@@ -104,7 +104,7 @@ class VariationalAutoEncoder(BaseModel):
         logvar = z_params[:, self.z_dim_encoder:]
 
         if self.use_physics:
-            z_encoder = mu
+            z_encoder = utils.reparametrize(mu, logvar)
         else:
             z_encoder = utils.reparametrize(mu, logvar)
 
