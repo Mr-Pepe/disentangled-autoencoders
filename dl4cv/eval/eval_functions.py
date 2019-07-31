@@ -249,11 +249,15 @@ def show_model_output(model, dataset, indices, num_rows):
         plt.show(block=True)
 
 
-def show_correlation(model, dataset, z, gt):
+def show_correlation(model, dataset, solver, z, gt):
     z = z.view(z.shape[0], -1).numpy()
 
     gt = np.array(gt)
-    gt = gt[:, 0, :]
+    if 'use_physics' in solver.train_config.keys() and solver.train_config['use_physics'] and not solver.train_config['use_question']:
+        t = solver.train_config['len_inp_sequence'] - 1
+        gt = gt[:, t, :]  # for physics without question, we need to evaluate frame t
+    else:
+        gt = gt[:, 0, :]
 
     z_mean = z.mean(axis=0)
     gt_mean = gt.mean(axis=0)

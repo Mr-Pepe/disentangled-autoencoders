@@ -132,7 +132,7 @@ def evaluate(config):
         if z is None:
             z, mu = show_latent_variables(model, dataset_list, show=False)
 
-        show_correlation(model, dataset_list, z, ground_truth)
+        show_correlation(model, dataset_list, solver, z, ground_truth)
 
         # if model.use_physics:
         #     show_correlation_after_physics(model, dataset_list)
