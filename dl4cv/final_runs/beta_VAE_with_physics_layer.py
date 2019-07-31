@@ -4,7 +4,7 @@ from dl4cv.utils import Config, str2bool
 
 import argparse
 
-SAVE_PATH = '../../saves/beta_question_physics_new_dataset'
+SAVE_PATH = '../../saves/beta_VAE_with_physics_layer'
 DATA_PATH = '../../../datasets/ball'
 EVAL_DATA_PATH = '../../../datasets/evalDataset'
 
@@ -14,8 +14,8 @@ config = Config({
 
     # Training continuation
     'continue_training':   False,      # Specify whether to continue training with an existing model and solver
-    'model_path': '../../saves/AE_with_physics_and_question/model20',
-    'solver_path': '../../saves/AE_with_physics_and_question/solver20',
+    'model_path': '../saves/Question_AE/model60',
+    'solver_path': '../saves/Question_AE/solver60',
 
     # Data
     'data_path': DATA_PATH,   # Path to the parent directory of the image folder
@@ -48,7 +48,7 @@ config = Config({
     'z_dim_encoder': 6,
     'z_dim_decoder': 2,
     'use_physics': True,
-    'use_question': True,
+    'use_question': False,
 
     # Logging
     'log_interval': 20,           # Number of mini-batches after which to print training loss
@@ -61,18 +61,18 @@ config = Config({
     ######### EVAL ##########################
 
     'analyze_dataset': False,            # Plot positions of the desired datapoints
-    'show_solver_history': False,        # Plot losses of the training
-    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
-    'show_model_output': False,          # Show the model output for the desired datapoints
-    'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
-    'print_training_config': False,       # Print the config that was used for training the model
+    'show_solver_history': True,        # Plot losses of the training
+    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
+    'show_model_output': True,          # Show the model output for the desired datapoints
+    'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
+    'print_training_config': True,       # Print the config that was used for training the model
     'latent_walk_gifs': True,
     'walk_over_question': True,
-    'eval_disentanglement': True,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
-    'mutual_information_gap': True,     # Evaluate disentanglement according to the MIG score
+    'eval_disentanglement': False,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
+    'mutual_information_gap': False,     # Evaluate disentanglement according to the MIG score
 
     'num_samples': 2000,                # Use the whole dataset if none for latent variables
-    'num_show_images': 5,              # Number of outputs to show when show_model_output is True
+    'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
     'question': True,
 
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--train', default=False, type=str2bool, help='Train model')
-    parser.add_argument('--eval', default=True, type=str2bool, help='Evaluate model')
+    parser.add_argument('--eval', default=False, type=str2bool, help='Evaluate model')
 
     args = parser.parse_args()
 

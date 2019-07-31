@@ -52,7 +52,7 @@ config = Config({
 
     # Logging
     'log_interval': 20,           # Number of mini-batches after which to print training loss
-    'save_interval': 10,         # Number of epochs after which to save model and solver
+    'save_interval': 50,         # Number of epochs after which to save model and solver
     'save_path': SAVE_PATH,
     'log_reconstructed_images': False,  # Show a reconstructed sample after every epoch
     'tensorboard_log_dir': '../../tensorboard_log/',

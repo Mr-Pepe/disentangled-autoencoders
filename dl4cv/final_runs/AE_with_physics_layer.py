@@ -52,7 +52,7 @@ config = Config({
 
     # Logging
     'log_interval': 20,           # Number of mini-batches after which to print training loss
-    'save_interval': 10,         # Number of epochs after which to save model and solver
+    'save_interval': 50,         # Number of epochs after which to save model and solver
     'save_path': SAVE_PATH,
     'log_reconstructed_images': False,  # Show a reconstructed sample after every epoch
     'tensorboard_log_dir': '../../tensorboard_log/',
@@ -65,7 +65,6 @@ config = Config({
     'show_latent_variables': True,      # Show the latent variables for the desired datapoints
     'show_model_output': True,          # Show the model output for the desired datapoints
     'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
-    'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
     'print_training_config': True,       # Print the config that was used for training the model
     'latent_walk_gifs': True,
     'walk_over_question': True,
