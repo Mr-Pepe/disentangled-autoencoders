@@ -33,7 +33,7 @@ inside the final_runs directory. The evaluation can be run straight away using t
 A sample of 2000 sequences was used to calculate the latent encoding for the three architectures.
 Afterwards, walks over the latent variables were performed one by one.
 
-Please refer to the report for more information.
+Please refer to the [report](doc/Report_ADL4CV_Group_5.pdf) for more information.
 
 ### &beta;-VAE with questions
 
