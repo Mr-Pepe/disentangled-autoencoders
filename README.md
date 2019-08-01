@@ -23,7 +23,7 @@ in the dataset directory.
 
 The models can be trained and evaluated with, e.g.,
 
-    python question_AE.py --train true --eval true
+    python beta_VAE_with_questions_and_physics.py --train true --eval true
     
 inside the final_runs directory. The evaluation can be run straight away using the provided saves.
 
