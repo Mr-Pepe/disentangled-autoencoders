@@ -33,16 +33,18 @@ inside the final_runs directory.
 A sample of 2000 sequences was used to calculate the latent encoding for the three architectures.
 Afterwards, walks over the latent variables were performed one by one.
 
+Please refer to the report for more information.
 
-### Question Autoencoder
+### &beta;-VAE with questions
 
-![Alt text](doc/gifs/question_AE.gif) 
+![Alt text](doc/gifs/beta_VAE_with_questions.gif) 
 
-### Beta VAE
+### &beta;-VAE with physics layer
 
-![Alt text](doc/gifs/beta_vae.gif) 
+![Alt text](doc/gifs/beta_VAE_with_physics_layer.gif) 
 
 
-### Annealed VAE
+### &beta;-VAE with physics layer and questions
 
-![Alt text](doc/gifs/annealed_VAE.gif)
+![Alt text](doc/gifs/beta_VAE_with_questions_and_physics.gif)
+

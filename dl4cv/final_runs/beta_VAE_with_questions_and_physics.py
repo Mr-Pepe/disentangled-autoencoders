@@ -4,7 +4,7 @@ from dl4cv.utils import Config, str2bool
 
 import argparse
 
-SAVE_PATH = '../../saves/beta_question_physics_new_dataset'
+SAVE_PATH = '../../saves/beta_VAE_with_questions_and_physics'
 DATA_PATH = '../../../datasets/ball'
 EVAL_DATA_PATH = '../../../datasets/evalDataset'
 
@@ -60,12 +60,12 @@ config = Config({
 
     ######### EVAL ##########################
 
-    'analyze_dataset': False,            # Plot positions of the desired datapoints
-    'show_solver_history': False,        # Plot losses of the training
-    'show_latent_variables': False,      # Show the latent variables for the desired datapoints
-    'show_model_output': False,          # Show the model output for the desired datapoints
-    'eval_correlation': False,           # Plot the correlation between the latent variables and ground truth
-    'print_training_config': False,       # Print the config that was used for training the model
+    'analyze_dataset': True,            # Plot positions of the desired datapoints
+    'show_solver_history': True,        # Plot losses of the training
+    'show_latent_variables': True,      # Show the latent variables for the desired datapoints
+    'show_model_output': True,          # Show the model output for the desired datapoints
+    'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
+    'print_training_config': True,       # Print the config that was used for training the model
     'latent_walk_gifs': True,
     'walk_over_question': True,
     'eval_disentanglement': True,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--train', default=False, type=str2bool, help='Train model')
-    parser.add_argument('--eval', default=True, type=str2bool, help='Evaluate model')
+    parser.add_argument('--eval', default=False, type=str2bool, help='Evaluate model')
 
     args = parser.parse_args()
 

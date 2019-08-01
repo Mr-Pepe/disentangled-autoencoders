@@ -4,7 +4,7 @@ from dl4cv.utils import Config, str2bool
 
 import argparse
 
-SAVE_PATH = '../../saves/beta_VAE'
+SAVE_PATH = '../../saves/AE_with_questions'
 DATA_PATH = '../../../datasets/ball'
 EVAL_DATA_PATH = '../../../datasets/evalDataset'
 
@@ -42,7 +42,7 @@ config = Config({
     'C_max': 100,
     'C_stop_iter': 5e4,
     'gamma': 0,
-    'beta': 1,
+    'beta': 0,
 
     # Model parameters
     'z_dim_encoder': 6,
@@ -65,13 +65,14 @@ config = Config({
     'show_latent_variables': True,      # Show the latent variables for the desired datapoints
     'show_model_output': True,          # Show the model output for the desired datapoints
     'eval_correlation': True,           # Plot the correlation between the latent variables and ground truth
+    'latent_variable_slideshow': True,   # Create a slideshow varying over all latent variables
     'print_training_config': True,       # Print the config that was used for training the model
     'latent_walk_gifs': True,
     'walk_over_question': True,
     'eval_disentanglement': True,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
     'mutual_information_gap': True,     # Evaluate disentanglement according to the MIG score
 
-    'num_samples': 2000,                # Use the whole dataset if none for latent variables
+    'num_samples': 2000,               # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True
 
     'question': True,

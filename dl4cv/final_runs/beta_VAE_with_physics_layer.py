@@ -60,7 +60,7 @@ config = Config({
 
     ######### EVAL ##########################
 
-    'analyze_dataset': False,            # Plot positions of the desired datapoints
+    'analyze_dataset': True,            # Plot positions of the desired datapoints
     'show_solver_history': True,        # Plot losses of the training
     'show_latent_variables': True,      # Show the latent variables for the desired datapoints
     'show_model_output': True,          # Show the model output for the desired datapoints
@@ -68,8 +68,8 @@ config = Config({
     'print_training_config': True,       # Print the config that was used for training the model
     'latent_walk_gifs': True,
     'walk_over_question': True,
-    'eval_disentanglement': False,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
-    'mutual_information_gap': False,     # Evaluate disentanglement according to the MIG score
+    'eval_disentanglement': True,       # Evaluate disentanglement according to the metric from the BetaVAE paper.
+    'mutual_information_gap': True,     # Evaluate disentanglement according to the MIG score
 
     'num_samples': 2000,                # Use the whole dataset if none for latent variables
     'num_show_images': 10,              # Number of outputs to show when show_model_output is True

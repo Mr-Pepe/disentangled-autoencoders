@@ -91,6 +91,9 @@ class VariationalAutoEncoder(BaseModel):
                 z_decoder = torch.cat((z_encoder, q.view(-1, 1)), dim=1)
         else:
             if self.use_physics:
+                if len(z_encoder.shape) == 1:
+                    z_encoder = torch.unsqueeze(z_encoder, 0)
+
                 z_decoder = self.physics_layer(z_encoder, torch.ones((z_encoder.shape[0]),
                                                                      device=next(self.parameters()).device))
             else:
