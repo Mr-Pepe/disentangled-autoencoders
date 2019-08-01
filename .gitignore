@@ -1,12 +1,15 @@
 /datasets/**
 /saves/**
 */**/__pycache__
-
+/tensorboard_log/**
 \.idea/
 
 *.directory
 
 !*.gitkeep
+!/saves/beta_VAE_with_physics_layer
+!/saves/beta_VAE_with_questions
+!/saves/beta_VAE_with_questions_and_physics
 
 # ignore tensorboard log file
-/tensorboard_log/**
+

@@ -25,7 +25,7 @@ The models can be trained and evaluated with, e.g.,
 
     python question_AE.py --train true --eval true
     
-inside the final_runs directory.
+inside the final_runs directory. The evaluation can be run straight away using the provided saves.
 
 
 ## Results
